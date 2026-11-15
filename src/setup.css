@@ -1,0 +1,193 @@
+[data-surface="setup"] body {
+  background: #f4f6f1;
+}
+.setup {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #22302a;
+}
+.setupHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(51, 90, 73, 0.15);
+  background: #fff;
+}
+.setupHeader strong {
+  font-size: 17px;
+}
+.setupHeader .langSelect {
+  margin-left: auto;
+  margin-right: 0;
+}
+.setupMain {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+  box-sizing: border-box;
+}
+.setupMain h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+.setupMain .lead {
+  margin: 0 0 18px;
+  color: #4d5b54;
+  line-height: 1.6;
+}
+.setupStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(51, 90, 73, 0.2);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.setupStatus small {
+  font-weight: 400;
+  color: #6b766f;
+}
+.setupStatus .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b9b9b0;
+}
+.setupStatus.ready .dot {
+  background: #d8a43a;
+}
+.setupStatus.on .dot {
+  background: #3f8a5c;
+}
+.steps {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+.steps > li {
+  counter-increment: step;
+  position: relative;
+  background: #fff;
+  border: 1px solid rgba(51, 90, 73, 0.15);
+  border-radius: 14px;
+  padding: 18px 20px 18px 64px;
+}
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #335a49;
+  color: #f1eedc;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.steps h2 {
+  margin: 4px 0 6px;
+  font-size: 17px;
+}
+.steps p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+  color: #3d4a43;
+}
+.steps .hint {
+  font-size: 13px;
+  color: #6b766f;
+}
+.extLink {
+  color: #335a49;
+  font-weight: 600;
+  text-decoration: none;
+}
+.extLink:hover {
+  text-decoration: underline;
+}
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.copyField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f4f6f1;
+  border: 1px dashed rgba(51, 90, 73, 0.4);
+  border-radius: 10px;
+  padding: 8px 8px 8px 12px;
+  margin-bottom: 10px;
+}
+.copyField code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.clientForm {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.clientForm input {
+  flex: 1 1 280px;
+  min-width: 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+}
+.setupNotes {
+  margin-top: 22px;
+  font-size: 14px;
+  color: #4d5b54;
+}
+.setupNotes h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+.setupNotes ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  line-height: 1.7;
+}
+.setup .text.danger {
+  color: #a23b32;
+}
+.setup footer {
+  margin-top: auto;
+}
+@media (max-width: 520px) {
+  .steps > li {
+    padding: 16px 16px 16px 54px;
+  }
+  .steps > li::before {
+    left: 14px;
+  }
+  .setupMain h1 {
+    font-size: 23px;
+  }
+}
+.setupMain .lead,
+.steps p {
+  font-size: 15px;
+}
+.steps .hint {
+  font-size: 13px;
+}
+.extLink {
+  font-size: 14px;
+}

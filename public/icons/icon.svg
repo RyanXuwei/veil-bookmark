@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<title>Veil Bookmark — private bookmarks</title>
+<rect width="64" height="64" rx="15" fill="#335A49"/>
+<path d="M18 11H46V54L32 45L18 54Z" fill="#F3F0DE"/>
+<circle cx="32" cy="26" r="5" fill="#335A49"/>
+<path d="M29 29H35L37 37H27Z" fill="#335A49"/>
+</svg>

@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "Veil Bookmark — Private Bookmarks"
+  },
+  "appDesc": {
+    "message": "Encrypted private bookmarks for regular and incognito windows. Developed by BitingBox Studio."
+  },
+  "actionTitle": {
+    "message": "Open Veil Bookmark"
+  }
+}

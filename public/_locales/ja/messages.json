@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "Veil Bookmark — プライベートブックマーク"
+  },
+  "appDesc": {
+    "message": "通常ウィンドウとシークレットウィンドウで使える暗号化プライベートブックマーク。Developed by BitingBox Studio."
+  },
+  "actionTitle": {
+    "message": "Veil Bookmark を開く"
+  }
+}

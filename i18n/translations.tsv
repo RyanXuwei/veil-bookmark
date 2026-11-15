@@ -1,0 +1,201 @@
+請將 dist 載入 Chrome 擴充功能後使用|Load the dist folder as a Chrome extension first.|まず dist フォルダを Chrome 拡張機能として読み込んでください。
+背景服務沒有回應|The background service did not respond.|バックグラウンドサービスが応答していません。
+全部書籤|All bookmarks|すべてのブックマーク
+兩次密碼不一致|The passwords do not match.|パスワードが一致しません。
+請選擇加密備份檔|Choose an encrypted backup file.|暗号化バックアップを選択してください。
+備份檔過大|The backup file is too large.|バックアップファイルが大きすぎます。
+請在想收藏的 HTTP / HTTPS 網頁上開啟工具列浮框，再按收藏目前網頁|Open the toolbar popup on an HTTP / HTTPS page, then choose Save current page.|HTTP / HTTPS ページでツールバーのポップアップを開き、「現在のページを保存」を選択してください。
+目前沒有可開啟書籤的分頁|There is no active tab to open the bookmark in.|ブックマークを開くタブがありません。
+無痕開啟|Open incognito|シークレットで開く
+無痕新分頁|New incognito tab|シークレットの新しいタブ
+新分頁開啟|Open in new tab|新しいタブで開く
+編輯|Edit|編集
+刪除|Delete|削除
+已匯出加密備份，請妥善保留主密碼。|Encrypted backup exported. Keep your master password safe.|暗号化バックアップを出力しました。マスターパスワードを大切に保管してください。
+關於|About|このアプリについて
+關於 Veil Bookmark|About Veil Bookmark|Veil Bookmark について
+無痕|Incognito|シークレット
+無痕視窗 · 加密保護|Incognito · Encrypted|シークレット · 暗号化済み
+一般視窗 · 加密保護|Regular window · Encrypted|通常ウィンドウ · 暗号化済み
+上鎖|Lock|ロック
+立即上鎖 ↗|Lock now ↗|今すぐロック ↗
+關閉錯誤|Dismiss error|エラーを閉じる
+正在讀取…|Loading…|読み込み中…
+值得收藏的，|Keep what matters.|大切なものを、
+留給自己。|Just for you.|あなただけの場所に。
+靈感、計畫，或只想私藏的好去處。|Ideas, plans, and places you want to keep to yourself.|アイデア、計画、自分だけに残したいページ。
+用一把只有你知道的鑰匙，好好收著。|Keep them safe with a key only you know.|あなただけが知る鍵で、大切にしまいましょう。
+先加密，再儲存|Encrypt first. Store second.|暗号化してから保存
+網址、標籤與筆記一起保護|Protect URLs, tags, and notes together.|URL、タグ、メモをまとめて保護
+歡迎回來|Welcome back|おかえりなさい
+找回你的收藏|Restore your bookmarks|ブックマークを復元
+建立你的私密空間|Create your private space|自分だけの保管庫を作成
+輸入主密碼，打開你的收藏。|Enter your master password to unlock your bookmarks.|マスターパスワードを入力してください。
+主密碼不會上傳，也無法重設。請妥善保存。|Your master password is never uploaded and cannot be reset. Keep it safe.|マスターパスワードは送信されず、再設定もできません。大切に保管してください。
+主密碼|Master password|マスターパスワード
+輸入主密碼|Enter your master password|マスターパスワードを入力
+至少 4 個字元|At least 4 characters|4 文字以上
+再次輸入密碼|Confirm password|パスワードの確認
+加密備份檔|Encrypted backup file|暗号化バックアップファイル
+處理中…|Working…|処理中…
+解鎖保險庫 →|Unlock vault →|保管庫を開く →
+從檔案還原 →|Restore from file →|ファイルから復元 →
+建立保險庫 →|Create vault →|保管庫を作成 →
+建立新的保險庫|Create a new vault|新しい保管庫を作成
+已有備份？從加密檔案還原|Have a backup? Restore from an encrypted file|バックアップがある場合はファイルから復元
+從 Google Drive 還原|Restore from Google Drive|Google Drive から復元
+◷ 閒置 15 分鐘或關閉所有 Chrome 視窗後上鎖|◷ Locks after 15 min of inactivity or closing all Chrome windows|◷ 15 分間操作しない場合、または Chrome の全ウィンドウを閉じるとロック
+搜尋書籤|Search bookmarks|ブックマークを検索
+搜尋書籤…|Search bookmarks…|ブックマークを検索…
+＋ 收藏目前網頁|＋ Save current page|＋ 現在のページを保存
+手動新增網址|Add a URL manually|URL を手動で追加
+手動新增書籤|Add a bookmark manually|ブックマークを手動で追加
+手動新增|Add manually|手動で追加
+私人書籤清單|Private bookmark list|プライベートブックマーク一覧
+搜尋結果 ·|Results ·|検索結果 ·
+沒有符合的書籤|No matching bookmarks|一致するブックマークがありません
+還沒有私人書籤|No private bookmarks yet|ブックマークはまだありません
+試試其他關鍵字|Try another keyword|別のキーワードをお試しください
+按上方「收藏目前網頁」開始收藏。|Choose Save current page above to get started.|上の「現在のページを保存」から始めましょう。
+個私人書籤|private bookmarks|件のブックマーク
+同步與備份|Sync & backup|同期とバックアップ
+你的空間|Your space|あなたのスペース
+▤ 全部書籤|▤ All bookmarks|▤ すべてのブックマーク
+資料夾|Folder|フォルダー
+新增書籤時，輸入資料夾名稱即可分類。|Enter a folder name when adding a bookmark to organize it.|追加するときにフォルダー名を入力して分類できます。
+● 本機加密保護|● Encrypted on this device|● この端末で暗号化
+⚙ 同步與備份|⚙ Sync & backup|⚙ 同期とバックアップ
+讓每一個好去處，都有自己的位置。|A home for every place worth keeping.|大切なページに、それぞれの居場所を。
+＋ 新增書籤|＋ Add bookmark|＋ ブックマークを追加
+⌕ 搜尋名稱、網址、標籤或筆記|⌕ Search title, URL, tags, or notes|⌕ 名前、URL、タグ、メモを検索
+收藏剛才的網頁|Save the previous page|直前のページを保存
+個收藏|bookmarks|件のブックマーク
+依最近更新排序 ↓|Recently updated ↓|更新日時順 ↓
+未分類|Unfiled|未分類
+開啟 ↗|Open ↗|開く ↗
+沒有符合的收藏|No matching bookmarks|一致するブックマークがありません
+把第一個好去處，留在這裡。|Save your first good find here.|最初のお気に入りを、ここに。
+試試其他關鍵字。|Try another keyword.|別のキーワードをお試しください。
+新增網址，或從 Chrome 工具列收藏正在看的網頁。|Add a URL or save your current page from the Chrome toolbar.|URL を追加するか、ツールバーから現在のページを保存してください。
+＋ 新增第一個書籤|＋ Add your first bookmark|＋ 最初のブックマークを追加
+◇ 收藏不會加入 Chrome 書籤列，也不載入外部網站圖示。|◇ Bookmarks stay out of Chrome's bookmark bar. No external site icons are loaded.|◇ Chrome のブックマークバーには追加せず、外部サイトのアイコンも読み込みません。
+書籤編輯|Bookmark editor|ブックマークの編集
+編輯書籤|Edit bookmark|ブックマークを編集
+留下一個好去處|Save a good find|お気に入りのページを保存
+關閉|Close|閉じる
+名稱|Title|名前
+網址|URL|URL
+標籤（逗號分隔）|Tags (comma-separated)|タグ（カンマ区切り）
+私人筆記|Private notes|プライベートメモ
+儲存中…|Saving…|保存中…
+加密儲存 →|Encrypt & save →|暗号化して保存 →
+這項刪除也會在下次同步時套用到其他裝置。|This deletion will apply to other devices on the next sync.|次回の同期で、この削除は他の端末にも反映されます。
+取消|Cancel|キャンセル
+確定刪除|Delete bookmark|削除する
+在無痕視窗使用|Use in incognito|シークレットで使う
+前往擴充功能詳細資料，啟用「允許在無痕模式中執行」。一般視窗不需要這項授權。|In extension details, enable Allow in Incognito. Regular windows do not need this permission.|拡張機能の詳細で「シークレット モードでの実行を許可する」を有効にしてください。通常ウィンドウでは不要です。
+開啟擴充功能設定 ↗|Open extension settings ↗|拡張機能の設定を開く ↗
+使用 Google Drive 隱藏應用程式資料夾同步加密快照。|Sync encrypted snapshots in Google Drive's hidden app data folder.|Google Drive の非表示アプリデータフォルダーで暗号化スナップショットを同期します。
+自動同步已啟用：解鎖期間每 5 分鐘同步。|Auto-sync is on: every 5 minutes while unlocked.|自動同期は有効です。ロック解除中は 5 分ごとに同期します。
+目前僅儲存在這台電腦。|Currently stored only on this device.|現在はこの端末のみに保存されています。
+已合併並同步加密收藏。|Encrypted bookmarks merged and synced.|暗号化ブックマークを統合して同期しました。
+立即同步|Sync now|今すぐ同期
+連接 Google Drive|Connect Google Drive|Google Drive に接続
+中斷連線|Disconnect|接続を解除
+加密備份|Encrypted backup|暗号化バックアップ
+備份檔仍需要主密碼才能還原。新裝置請先還原同一個保險庫，再開啟同步。|Restoring needs your master password. On a new device, restore the same vault before enabling sync.|復元にはマスターパスワードが必要です。新しい端末では同じ保管庫を復元してから同期してください。
+匯出加密備份 ↓|Export encrypted backup ↓|暗号化バックアップを出力 ↓
+書籤在目前視窗模式開啟；一般模式可能留下瀏覽紀錄。加密收藏會保留在本機。遺失主密碼無法復原。同步採逐筆最後更新優先，裝置時間需正確。|Links keep the current window mode. Regular browsing may leave history. Encrypted bookmarks stay on this device. Lost passwords cannot be recovered. Sync uses the latest record update; keep device clocks accurate.|リンクは現在のウィンドウのモードで開きます。通常モードでは履歴が残る場合があります。暗号化データは端末に保存されます。パスワードは復元できません。同期では更新日時が新しいデータを優先するため、端末の時刻を正しく設定してください。
+Veil Bookmark 書籤鎖孔圖示|Veil Bookmark bookmark and keyhole icon|Veil Bookmark のブックマークと鍵穴のアイコン
+你的收藏，由你保管。|Your bookmarks. In your hands.|あなたのブックマークは、あなたの手で。
+已上鎖，請重新解鎖|Locked. Please unlock again.|ロックされています。再度解除してください。
+瀏覽器工作階段已結束，請重新解鎖|The browser session ended. Please unlock again.|ブラウザーのセッションが終了しました。再度ロックを解除してください。
+請開啟 Chrome 視窗後使用 Veil Bookmark|Open a Chrome window to use Veil Bookmark.|Chrome ウィンドウを開いてから Veil Bookmark を使用してください。
+請先建立或還原保險庫|Create or restore a vault first.|まず保管庫を作成または復元してください。
+Drive 含有另一個保險庫。請保留本機備份，於新安裝中從 Drive 還原，避免覆蓋。|Drive contains another vault. Keep a local backup and restore from Drive in a fresh installation to avoid overwriting data.|Drive に別の保管庫があります。上書きを避けるためローカルにバックアップし、新規インストール環境で Drive から復元してください。
+已有保險庫|A vault already exists.|保管庫はすでに存在します。
+主密碼至少 4 個字元|The master password must be at least 4 characters.|マスターパスワードは 4 文字以上にしてください。
+嘗試次數過多，請稍後再試|Too many attempts. Try again later.|試行回数が多すぎます。しばらくしてから再試行してください。
+尚無保險庫|No vault exists yet.|保管庫がまだありません。
+只可在空白安裝還原，請先保留現有備份|Restore is available only in a fresh installation. Back up your existing vault first.|復元は保管庫のない環境でのみ可能です。既存の保管庫を先にバックアップしてください。
+只可在空白安裝從 Drive 還原|Drive restore requires a fresh installation without a vault.|Drive からの復元は保管庫のない環境でのみ可能です。
+Drive 尚無 Veil Bookmark 備份|No Veil Bookmark backup was found in Drive.|Drive に Veil Bookmark のバックアップがありません。
+Drive 含有不同保險庫，請改用加密檔案還原|Drive contains different vaults. Restore from an encrypted file instead.|Drive に異なる保管庫があります。暗号化ファイルから復元してください。
+請填寫書籤名稱|Enter a bookmark title.|ブックマークの名前を入力してください。
+書籤不存在|The bookmark no longer exists.|ブックマークが見つかりません。
+目標分頁不在目前視窗，請重新開啟浮框再試|The target tab is not in this window. Reopen the popup and try again.|対象のタブが現在のウィンドウにありません。ポップアップを開き直してください。
+目前視窗已關閉，請重新開啟浮框|The window was closed. Open the popup again.|ウィンドウが閉じられました。ポップアップを開き直してください。
+未知操作|Unknown action.|不明な操作です。
+不支援或損壞的加密備份|Unsupported or damaged encrypted backup.|未対応、または破損した暗号化バックアップです。
+加密資料格式錯誤|Invalid encrypted data format.|暗号化データの形式が正しくありません。
+密碼不正確，或加密資料已損壞|Incorrect password or damaged encrypted data.|パスワードが違うか、暗号化データが破損しています。
+書籤資料格式錯誤|Invalid bookmark data format.|ブックマークデータの形式が正しくありません。
+請輸入完整的 https:// 或 http:// 網址|Enter a complete https:// or http:// URL.|https:// または http:// で始まる完全な URL を入力してください。
+僅接受不含帳密的 HTTP / HTTPS 網址|Only HTTP / HTTPS URLs without embedded credentials are accepted.|認証情報を含まない HTTP / HTTPS URL のみ使用できます。
+這是不同的保險庫，請使用原始備份或從 Drive 還原|This is a different vault. Use its original backup or restore from Drive.|異なる保管庫です。元のバックアップを使用するか、Drive から復元してください。
+尚未取得 Google 授權|Google authorization has not been granted.|Google の認証がまだ完了していません。
+Google 授權已失效，請重新連線|Google authorization expired. Connect again.|Google の認証が失効しました。再接続してください。
+Drive 快照超過 2000 份，請先匯出備份並整理|Drive has more than 2,000 snapshots. Export a backup and organize them first.|Drive のスナップショットが 2,000 件を超えています。バックアップを出力して整理してください。
+Drive 備份過大|The Drive backup is too large.|Drive のバックアップが大きすぎます。
+更多操作：{title}|More actions: {title}|その他の操作：{title}
+刪除「{title}」？|Delete “{title}”?|「{title}」を削除しますか？
+{count} 個私人書籤|Private bookmarks: {count}|ブックマーク：{count} 件
+{count} 個收藏|Bookmarks: {count}|ブックマーク：{count} 件
+上次同步：{time}|Last sync: {time}|前回の同期：{time}
+一般與無痕皆適用|Regular & incognito|通常・シークレット両対応
+Chrome 私密書籤|Private bookmarks for Chrome|Chrome のプライベートブックマーク
+介面語言|Language|表示言語
+語言設定儲存失敗，請重試|Could not save the language setting. Please try again.|言語設定を保存できませんでした。再試行してください。
+開啟 Veil Bookmark|Open Veil Bookmark|Veil Bookmark を開く
+加密備份檔案不是有效的 JSON|The encrypted backup is not valid JSON.|暗号化バックアップは有効な JSON ではありません。
+Drive 請求失敗 ({status})，本機資料已保留|Drive request failed ({status}). Local data was preserved.|Drive へのリクエストが失敗しました（{status}）。ローカルデータは保持されています。
+繁體中文|Traditional Chinese|繁体字中国語
+Veil Bookmark · 私藏好去處|Veil Bookmark · Private bookmarks|Veil Bookmark · プライベートブックマーク
+Veil Bookmark — 私密書籤|Veil Bookmark — Private Bookmarks|Veil Bookmark — プライベートブックマーク
+一般與無痕視窗皆可使用的加密私人書籤。Developed by BitingBox Studio.|Encrypted private bookmarks for regular and incognito windows. Developed by BitingBox Studio.|通常ウィンドウとシークレットウィンドウで使える暗号化プライベートブックマーク。Developed by BitingBox Studio.
+製作者|Creator|制作者
+工作室|Studio|スタジオ
+版本|Version|バージョン
+程式製作年份|Production year|制作年
+程式製作日期|Production date|制作日
+最後更新日期|Last updated|最終更新日
+在 GitHub 查看 Ryan Hsu 的作品|Explore Ryan Hsu's work on GitHub|GitHub で Ryan Hsu の作品を見る
+尚未設定 Google Drive。依說明頁完成一次設定即可啟用。|Google Drive is not set up yet. Complete the one-time setup guide to enable it.|Google Drive は未設定です。設定ガイドを一度完了すると有効になります。
+Drive 尚未設定，請先完成「Google Drive 設定」說明頁；本機功能可直接使用。|Drive is not set up. Complete the Google Drive setup guide first; local features work without it.|Drive は未設定です。先に Google Drive の設定ガイドを完了してください。ローカル機能はそのまま使えます。
+開啟設定說明 ↗|Open setup guide ↗|設定ガイドを開く ↗
+Drive 設定|Drive settings|Drive の設定
+設定 Google Drive 同步|Set up Google Drive sync|Google Drive 同期の設定
+Veil Bookmark 使用你自己的 Google Cloud 專案連線 Drive，不經過任何第三方伺服器。只需設定一次，約 10 分鐘。|Veil Bookmark connects to Drive through your own Google Cloud project, with no third-party server in between. It's a one-time setup that takes about 10 minutes.|Veil Bookmark はあなた自身の Google Cloud プロジェクトで Drive に接続し、第三者のサーバーを経由しません。設定は一度だけで、約 10 分です。
+已連接，自動同步中|Connected · auto-sync on|接続済み・自動同期中
+已設定，尚未連接|Set up · not connected yet|設定済み・未接続
+尚未設定|Not set up|未設定
+使用建置時內建的用戶端 ID|Using the client ID built into this package|ビルドに組み込まれたクライアント ID を使用中
+啟用 Google Drive API|Enable the Google Drive API|Google Drive API を有効にする
+登入 Google Cloud Console，建立（或選擇）一個專案，然後按「啟用」。|Sign in to Google Cloud Console, create (or pick) a project, then click Enable.|Google Cloud Console にログインし、プロジェクトを作成（または選択）して「有効にする」を押します。
+開啟 Drive API 頁面|Open the Drive API page|Drive API のページを開く
+設定 OAuth 同意畫面|Configure the OAuth consent screen|OAuth 同意画面を設定する
+應用程式名稱可填 Veil Bookmark，使用者類型選「外部」。在「目標對象」把你自己的 Gmail 加入測試使用者。|Use Veil Bookmark as the app name and choose External as the user type. Under Audience, add your own Gmail as a test user.|アプリ名は Veil Bookmark、ユーザーの種類は「外部」を選びます。「対象」で自分の Gmail をテストユーザーに追加します。
+開啟 OAuth 同意畫面|Open the OAuth consent screen|OAuth 同意画面を開く
+開啟目標對象（測試使用者）|Open Audience (test users)|対象（テストユーザー）を開く
+建立 OAuth 用戶端|Create an OAuth client|OAuth クライアントを作成する
+應用程式類型選「網頁應用程式」。在「已授權的重新導向 URI」貼上下方網址，然後按「建立」。|Choose Web application as the type. Paste the address below under Authorized redirect URIs, then click Create.|種類は「ウェブ アプリケーション」を選びます。「承認済みのリダイレクト URI」に下のアドレスを貼り付けて「作成」を押します。
+每台電腦的網址可能不同。在其他電腦設定時，把那台電腦顯示的網址加到同一個用戶端即可，不必重建。|This address can differ on each computer. When setting up another computer, add the address it shows to the same client — no need to create a new one.|このアドレスはパソコンごとに異なる場合があります。別のパソコンでは、表示されたアドレスを同じクライアントに追加するだけで済みます。
+開啟建立用戶端頁面|Open the create-client page|クライアント作成ページを開く
+貼上用戶端 ID 並連接|Paste the client ID and connect|クライアント ID を貼り付けて接続する
+複製剛建立的「用戶端 ID」貼在下方。不需要用戶端密碼（Client Secret），請勿貼上。|Copy the new Client ID and paste it below. The Client Secret is not needed — don't paste it.|作成した「クライアント ID」をコピーして下に貼り付けます。クライアント シークレットは不要です。貼り付けないでください。
+用戶端 ID|Client ID|クライアント ID
+儲存並連接 Google Drive →|Save & connect Google Drive →|保存して Google Drive に接続 →
+用戶端 ID 格式不正確，應以 .apps.googleusercontent.com 結尾|Invalid client ID. It should end with .apps.googleusercontent.com|クライアント ID の形式が正しくありません。.apps.googleusercontent.com で終わる必要があります。
+已儲存。請在工具列浮框解鎖後，回到此頁按「連接 Google Drive」。|Saved. Unlock from the toolbar popup, then come back here and click Connect Google Drive.|保存しました。ツールバーのポップアップでロックを解除してから、このページで「Google Drive に接続」を押してください。
+已儲存。新電腦請在工具列浮框輸入主密碼，按「從 Google Drive 還原」。|Saved. On a new computer, enter your master password in the toolbar popup and choose Restore from Google Drive.|保存しました。新しいパソコンでは、ツールバーのポップアップでマスターパスワードを入力し「Google Drive から復元」を選んでください。
+隱私說明|Privacy|プライバシー
+只請求 drive.appdata 權限：資料放在 Drive 中你看不到的應用程式資料夾，不會讀取你的其他檔案。|Only the drive.appdata permission is requested: data lives in a hidden app folder in your Drive, and your other files are never read.|要求するのは drive.appdata 権限のみです。データは Drive の非表示アプリフォルダーに保存され、他のファイルは読み取りません。
+上傳前已用主密碼加密，Google 看不到書籤內容。|Everything is encrypted with your master password before upload; Google can't see your bookmarks.|アップロード前にマスターパスワードで暗号化されるため、Google はブックマークの内容を見られません。
+授權約 1 小時到期，解鎖期間會自動在背景更新；瀏覽器重新啟動後可能需要再按一次連接。|Authorization expires after about an hour and renews in the background while unlocked. After restarting the browser you may need to click Connect again.|認証は約 1 時間で期限切れになり、ロック解除中はバックグラウンドで更新されます。ブラウザーの再起動後はもう一度「接続」が必要な場合があります。
+移除 Google Drive 設定|Remove Google Drive setup|Google Drive の設定を削除
+已移除 Google Drive 設定，本機收藏不受影響。|Google Drive setup removed. Your local bookmarks are unaffected.|Google Drive の設定を削除しました。ローカルのブックマークには影響しません。
+複製|Copy|コピー
+已複製|Copied|コピーしました
+Google 授權未完成或已取消|Google sign-in was not completed or was cancelled.|Google の認証が完了しなかったか、キャンセルされました。
+Google 授權回應無效，請重試|Invalid response from Google. Please try again.|Google からの応答が無効です。もう一度お試しください。
+請在 Google 授權畫面允許存取應用程式資料|Please allow access to app data on the Google consent screen.|Google の同意画面でアプリデータへのアクセスを許可してください。
