@@ -9,10 +9,13 @@ export type Entry = {
   revision: string;
   deleted: boolean;
 };
+export const MEMO_MAX = 500_000;
 export type Memo = {
   id: string;
   title: string;
   body: string;
+  // "html" for notebook documents (sanitized in the page); plain text otherwise.
+  format?: "html" | "text";
   updated: number;
   revision: string;
   deleted: boolean;
@@ -428,7 +431,8 @@ export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
       typeof x.id !== "string" ||
       typeof x.title !== "string" ||
       typeof x.body !== "string" ||
-      x.body.length > 100_000 ||
+      x.body.length > MEMO_MAX ||
+      (x.format !== undefined && x.format !== "html" && x.format !== "text") ||
       !Number.isSafeInteger(x.updated) ||
       typeof x.revision !== "string" ||
       typeof x.deleted !== "boolean"

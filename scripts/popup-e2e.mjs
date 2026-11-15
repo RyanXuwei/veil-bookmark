@@ -546,40 +546,18 @@ try {
       !!document.querySelector('.quickMore[aria-label="更多操作：一般網頁"]'),
   );
   await screenshot("17-private-shared-bookmarks.png");
-  // Encrypted notes: create, list, reopen, delete.
-  const MEMO_TEXT =
-    "secret memo text" + String.fromCharCode(10) + "second line";
+  // Notes tab: lists notes and links to the full notebook page (tested in
+  // scripts/notebook-e2e.mjs).
   await click("記事本");
   await wait(() => !!document.querySelector(".quickCapture"));
-  await click("＋ 新增記事");
-  await wait(() => !!document.querySelector("textarea.memoBody"));
-  await fill(".memoModal input", "銀行提示");
-  await fill("textarea.memoBody", MEMO_TEXT);
-  await screenshot("29-memo-editor.png");
-  await click("加密儲存 →");
-  await wait(() => !document.querySelector(".memoModal"));
-  await wait(() =>
-    [...document.querySelectorAll(".memoLink strong")].some(
-      (x) => x.textContent === "銀行提示",
+  assert(
+    await evaluate(() =>
+      [...document.querySelectorAll("button")].some(
+        (b) => b.textContent.trim() === "開啟筆記本 ↗",
+      ),
     ),
   );
   await screenshot("30-memo-list.png");
-  assert(
-    !JSON.stringify(
-      await worker.evaluate(() => chrome.storage.local.get("vault")),
-    ).includes("secret memo text"),
-    "memo is encrypted at rest",
-  );
-  await evaluate(() => document.querySelector(".memoLink").click());
-  await wait(() => !!document.querySelector("textarea.memoBody"));
-  assert.equal(
-    await evaluate(() => document.querySelector("textarea.memoBody").value),
-    MEMO_TEXT,
-  );
-  await click("刪除");
-  await wait(() => !!document.querySelector("[role=alertdialog]"));
-  await click("確定刪除");
-  await wait(() => !document.querySelector(".memoLink"));
   await click("書籤");
   await wait(() => !!document.querySelector(".quickList .quickLink"));
   async function setLanguage(code) {
@@ -668,7 +646,7 @@ try {
   await click("解鎖保險庫 →");
   await wait(() => !!document.querySelector(".quickList .quickLink"));
   console.log(
-    "PASS: recovery key shown once, not stored, forgot-password reset with new password and rotated key; password ack gate; encrypted notes create/reopen/delete; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
+    "PASS: recovery key shown once, not stored, forgot-password reset with new password and rotated key; password ack gate; notes tab links to notebook; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
     dimensions,
     "; no automatic management tab; activeTab current-page capture; 4-char create/unlock; folders/search/edit/delete; lock/reopen; opening bookmark.",
   );

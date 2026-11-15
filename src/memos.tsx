@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { memoText } from "./sanitize";
 import type { Memo } from "./crypto";
 import { lang, t } from "./i18n";
 
@@ -11,8 +12,8 @@ const firstLine = (s: string) =>
     .map((x) => x.trim())
     .find(Boolean) || "";
 
-export function memoTitle(m: { title: string; body: string }) {
-  return m.title || firstLine(m.body).slice(0, 60) || t("未命名記事");
+export function memoTitle(m: { title: string; body: string; format?: string }) {
+  return m.title || firstLine(memoText(m)).slice(0, 60) || t("未命名記事");
 }
 
 export function MemoList({
@@ -48,17 +49,21 @@ export function MemoList({
         >
           {t("＋ 新增記事")}
         </button>
+        <button onClick={() => onOpen({ ...emptyMemo })}>
+          {t("開啟筆記本 ↗")}
+        </button>
       </div>
       <div className="quickList" aria-label={t("加密記事清單")}>
         <ul>
           {shown.map((m) => {
-            const preview =
-              m.title && firstLine(m.body) ? firstLine(m.body) : "";
+            const text = memoText(m);
+            const preview = m.title && firstLine(text) ? firstLine(text) : "";
             return (
               <li className="quickItem" key={m.id}>
                 <div className="quickRow">
                   <button
                     className="quickLink memoLink"
+                    title={t("在筆記本中開啟")}
                     onClick={() =>
                       onOpen({ id: m.id, title: m.title, body: m.body })
                     }
@@ -90,92 +95,5 @@ export function MemoList({
         )}
       </div>
     </>
-  );
-}
-
-export function MemoEditor({
-  memo,
-  busy,
-  onChange,
-  onSave,
-  onDelete,
-  onClose,
-}: {
-  memo: MemoDraft;
-  busy: boolean;
-  onChange: (m: MemoDraft) => void;
-  onSave: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <div className="overlay">
-      <section
-        className="modal card memoModal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("記事編輯")}
-      >
-        <div className="modalTitle">
-          <h2>{memo.id ? t("編輯記事") : t("新增加密記事")}</h2>
-          <button onClick={onClose} aria-label={t("關閉")}>
-            ×
-          </button>
-        </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSave();
-          }}
-        >
-          <label>
-            {t("標題")}
-            <input
-              maxLength={300}
-              value={memo.title}
-              placeholder={t("選填")}
-              onChange={(e) => onChange({ ...memo, title: e.target.value })}
-            />
-          </label>
-          <label>
-            {t("內容")}
-            <textarea
-              className="memoBody"
-              autoFocus
-              rows={12}
-              maxLength={100_000}
-              value={memo.body}
-              onChange={(e) => onChange({ ...memo, body: e.target.value })}
-            />
-          </label>
-          <div className="memoActions">
-            {memo.id && (
-              <button type="button" className="danger" onClick={onDelete}>
-                {t("刪除")}
-              </button>
-            )}
-            <button
-              type="button"
-              disabled={!memo.body}
-              onClick={() =>
-                navigator.clipboard.writeText(memo.body).then(() => {
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                })
-              }
-            >
-              {copied ? t("已複製") : t("複製內容")}
-            </button>
-            <button
-              className="primary"
-              disabled={busy || (!memo.title.trim() && !memo.body.trim())}
-            >
-              {busy ? t("儲存中…") : t("加密儲存 →")}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
   );
 }

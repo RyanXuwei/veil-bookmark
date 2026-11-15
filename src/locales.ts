@@ -1359,5 +1359,350 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "救援密钥格式不正确，应为 32 个英数字",
   "en": "Invalid recovery key format. It should be 32 letters and digits.",
   "ja": "リカバリーキーの形式が正しくありません。32 文字の英数字で入力してください。"
+ },
+ "記事內容過長": {
+  "zh-CN": "记事内容过长",
+  "en": "The note is too long.",
+  "ja": "メモが長すぎます。"
+ },
+ "內文": {
+  "zh-CN": "内文",
+  "en": "Normal",
+  "ja": "標準"
+ },
+ "標題 1": {
+  "zh-CN": "标题 1",
+  "en": "Heading 1",
+  "ja": "見出し 1"
+ },
+ "標題 2": {
+  "zh-CN": "标题 2",
+  "en": "Heading 2",
+  "ja": "見出し 2"
+ },
+ "標題 3": {
+  "zh-CN": "标题 3",
+  "en": "Heading 3",
+  "ja": "見出し 3"
+ },
+ "引文": {
+  "zh-CN": "引文",
+  "en": "Quote",
+  "ja": "引用"
+ },
+ "程式碼": {
+  "zh-CN": "代码",
+  "en": "Code",
+  "ja": "コード"
+ },
+ "刪除這份記事？內容會立即清除，無法復原。": {
+  "zh-CN": "删除这份记事？内容会立即清除，无法复原。",
+  "en": "Delete this note? Its content is erased immediately and cannot be recovered.",
+  "ja": "このメモを削除しますか？内容はすぐに消去され、復元できません。"
+ },
+ "輸入連結網址（https://）": {
+  "zh-CN": "输入链接网址（https://）",
+  "en": "Enter the link address (https://)",
+  "ja": "リンク先の URL を入力（https://）"
+ },
+ "加密筆記本": {
+  "zh-CN": "加密笔记本",
+  "en": "Encrypted Notebook",
+  "ja": "暗号化ノート"
+ },
+ "保險庫已上鎖。輸入主密碼以開啟你的記事。": {
+  "zh-CN": "保险库已上锁。输入主密码以打开你的记事。",
+  "en": "The vault is locked. Enter your master password to open your notes.",
+  "ja": "保管庫はロックされています。マスターパスワードを入力してメモを開いてください。"
+ },
+ "請先在工具列浮框建立保險庫。": {
+  "zh-CN": "请先在工具列浮框创建保险库。",
+  "en": "Create a vault from the toolbar popup first.",
+  "ja": "まずツールバーのポップアップで保管庫を作成してください。"
+ },
+ "尚未儲存": {
+  "zh-CN": "尚未保存",
+  "en": "Not saved yet",
+  "ja": "未保存"
+ },
+ "已加密儲存 {time}": {
+  "zh-CN": "已加密保存 {time}",
+  "en": "Encrypted & saved {time}",
+  "ja": "暗号化して保存済み {time}"
+ },
+ "已加密儲存": {
+  "zh-CN": "已加密保存",
+  "en": "Encrypted & saved",
+  "ja": "暗号化して保存済み"
+ },
+ "文件標題": {
+  "zh-CN": "文档标题",
+  "en": "Document title",
+  "ja": "文書のタイトル"
+ },
+ "新增記事": {
+  "zh-CN": "添加记事",
+  "en": "New note",
+  "ja": "新しいメモ"
+ },
+ "＋ 新增": {
+  "zh-CN": "＋ 添加",
+  "en": "＋ New",
+  "ja": "＋ 新規"
+ },
+ "常用": {
+  "zh-CN": "常用",
+  "en": "Home",
+  "ja": "ホーム"
+ },
+ "插入": {
+  "zh-CN": "插入",
+  "en": "Insert",
+  "ja": "挿入"
+ },
+ "檢視": {
+  "zh-CN": "查看",
+  "en": "View",
+  "ja": "表示"
+ },
+ "功能區": {
+  "zh-CN": "功能区",
+  "en": "Ribbon",
+  "ja": "リボン"
+ },
+ "復原": {
+  "zh-CN": "复原",
+  "en": "Undo",
+  "ja": "元に戻す"
+ },
+ "取消復原": {
+  "zh-CN": "取消复原",
+  "en": "Redo",
+  "ja": "やり直し"
+ },
+ "字型大小": {
+  "zh-CN": "字体大小",
+  "en": "Font size",
+  "ja": "フォント サイズ"
+ },
+ "小": {
+  "zh-CN": "小",
+  "en": "Small",
+  "ja": "小"
+ },
+ "標準": {
+  "zh-CN": "标准",
+  "en": "Normal",
+  "ja": "標準"
+ },
+ "大": {
+  "zh-CN": "大",
+  "en": "Large",
+  "ja": "大"
+ },
+ "特大": {
+  "zh-CN": "特大",
+  "en": "Extra large",
+  "ja": "特大"
+ },
+ "超大": {
+  "zh-CN": "超大",
+  "en": "Huge",
+  "ja": "極大"
+ },
+ "粗體": {
+  "zh-CN": "粗体",
+  "en": "Bold",
+  "ja": "太字"
+ },
+ "斜體": {
+  "zh-CN": "斜体",
+  "en": "Italic",
+  "ja": "斜体"
+ },
+ "底線": {
+  "zh-CN": "底线",
+  "en": "Underline",
+  "ja": "下線"
+ },
+ "刪除線": {
+  "zh-CN": "删除线",
+  "en": "Strikethrough",
+  "ja": "取り消し線"
+ },
+ "字型色彩": {
+  "zh-CN": "字体色彩",
+  "en": "Font color",
+  "ja": "フォントの色"
+ },
+ "醒目提示": {
+  "zh-CN": "醒目提示",
+  "en": "Highlight",
+  "ja": "蛍光ペン"
+ },
+ "清除格式設定": {
+  "zh-CN": "清除格式设置",
+  "en": "Clear formatting",
+  "ja": "書式のクリア"
+ },
+ "字型": {
+  "zh-CN": "字体",
+  "en": "Font",
+  "ja": "フォント"
+ },
+ "項目符號": {
+  "zh-CN": "项目符号",
+  "en": "Bullets",
+  "ja": "箇条書き"
+ },
+ "編號": {
+  "zh-CN": "编号",
+  "en": "Numbering",
+  "ja": "段落番号"
+ },
+ "減少縮排": {
+  "zh-CN": "减少缩进",
+  "en": "Decrease indent",
+  "ja": "インデントを減らす"
+ },
+ "增加縮排": {
+  "zh-CN": "增加缩进",
+  "en": "Increase indent",
+  "ja": "インデントを増やす"
+ },
+ "靠左對齊": {
+  "zh-CN": "靠左对齐",
+  "en": "Align left",
+  "ja": "左揃え"
+ },
+ "置中": {
+  "zh-CN": "置中",
+  "en": "Center",
+  "ja": "中央揃え"
+ },
+ "靠右對齊": {
+  "zh-CN": "靠右对齐",
+  "en": "Align right",
+  "ja": "右揃え"
+ },
+ "左右對齊": {
+  "zh-CN": "左右对齐",
+  "en": "Justify",
+  "ja": "両端揃え"
+ },
+ "段落": {
+  "zh-CN": "段落",
+  "en": "Paragraph",
+  "ja": "段落"
+ },
+ "樣式": {
+  "zh-CN": "样式",
+  "en": "Styles",
+  "ja": "スタイル"
+ },
+ "連結": {
+  "zh-CN": "链接",
+  "en": "Link",
+  "ja": "リンク"
+ },
+ "水平線": {
+  "zh-CN": "水平线",
+  "en": "Horizontal line",
+  "ja": "横線"
+ },
+ "日期和時間": {
+  "zh-CN": "日期和时间",
+  "en": "Date & time",
+  "ja": "日付と時刻"
+ },
+ "核取方塊": {
+  "zh-CN": "复选框",
+  "en": "Checkbox",
+  "ja": "チェックボックス"
+ },
+ "導覽窗格": {
+  "zh-CN": "导览窗格",
+  "en": "Navigation pane",
+  "ja": "ナビゲーション ウィンドウ"
+ },
+ "頁寬": {
+  "zh-CN": "页宽",
+  "en": "Page width",
+  "ja": "ページ幅"
+ },
+ "顯示": {
+  "zh-CN": "显示",
+  "en": "Show",
+  "ja": "表示"
+ },
+ "列印": {
+  "zh-CN": "打印",
+  "en": "Print",
+  "ja": "印刷"
+ },
+ "刪除記事": {
+  "zh-CN": "删除记事",
+  "en": "Delete note",
+  "ja": "メモを削除"
+ },
+ "文件": {
+  "zh-CN": "文档",
+  "en": "Document",
+  "ja": "文書"
+ },
+ "記事清單": {
+  "zh-CN": "记事清单",
+  "en": "Note list",
+  "ja": "メモ一覧"
+ },
+ "記事內容": {
+  "zh-CN": "记事内容",
+  "en": "Note content",
+  "ja": "メモの内容"
+ },
+ "第 {page} 頁，共 {pages} 頁": {
+  "zh-CN": "第 {page} 页，共 {pages} 页",
+  "en": "Page {page} of {pages}",
+  "ja": "{pages} ページ中 {page} ページ"
+ },
+ "{count} 個字": {
+  "zh-CN": "{count} 个字",
+  "en": "{count} words",
+  "ja": "{count} 語"
+ },
+ "{count} 個字元": {
+  "zh-CN": "{count} 个字符",
+  "en": "{count} characters",
+  "ja": "{count} 文字"
+ },
+ "AES-256 加密": {
+  "zh-CN": "AES-256 加密",
+  "en": "AES-256 encrypted",
+  "ja": "AES-256 暗号化"
+ },
+ "縮小": {
+  "zh-CN": "缩小",
+  "en": "Zoom out",
+  "ja": "縮小"
+ },
+ "縮放": {
+  "zh-CN": "缩放",
+  "en": "Zoom",
+  "ja": "ズーム"
+ },
+ "放大": {
+  "zh-CN": "放大",
+  "en": "Zoom in",
+  "ja": "拡大"
+ },
+ "在筆記本中開啟": {
+  "zh-CN": "在笔记本中打开",
+  "en": "Open in notebook",
+  "ja": "ノートで開く"
+ },
+ "開啟筆記本 ↗": {
+  "zh-CN": "打开笔记本 ↗",
+  "en": "Open notebook ↗",
+  "ja": "ノートを開く ↗"
  }
 };

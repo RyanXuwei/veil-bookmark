@@ -395,7 +395,7 @@ test("memo create, edit, delete tombstone, limits, and lock protection", async (
     /記事標題或內容/,
   );
   await assert.rejects(
-    rpc("MEMO_UPSERT", { memo: { title: "big", body: "x".repeat(100_001) } }),
+    rpc("MEMO_UPSERT", { memo: { title: "big", body: "x".repeat(500_001) } }),
     /過長/,
   );
   const created = await rpc("MEMO_UPSERT", {

@@ -17,6 +17,7 @@ import {
   verifySlots,
   validateEnvelope,
   type Memo,
+  MEMO_MAX,
   type Envelope,
   type SealedEnvelope,
   type KeySlots,
@@ -435,18 +436,23 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const x = m.memo || {};
     const old = v.memos.find((y) => y.id === x.id);
     const body = String(x.body || "");
-    if (body.length > 100_000) throw Error("記事內容過長（上限 100,000 字）");
+    if (body.length > MEMO_MAX) throw Error("記事內容過長");
     const memo: Memo = {
       id: old?.id || crypto.randomUUID(),
       title: String(x.title || "")
         .trim()
         .slice(0, 300),
       body,
+      format: x.format === "html" ? "html" : "text",
       updated: Math.max(Date.now(), (old?.updated || 0) + 1),
       revision: crypto.randomUUID(),
       deleted: false,
     };
-    if (!memo.title && !memo.body.trim()) throw Error("請輸入記事標題或內容");
+    const visible =
+      memo.format === "html"
+        ? memo.body.replace(/<[^>]*>|&nbsp;/g, "").trim()
+        : memo.body.trim();
+    if (!memo.title && !visible) throw Error("請輸入記事標題或內容");
     if (!old && v.memos.filter((y) => !y.deleted).length >= 5000)
       throw Error("記事數量已達上限");
     v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);

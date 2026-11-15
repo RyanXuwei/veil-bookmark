@@ -8,6 +8,7 @@ for (const f of [
   "src/memos.tsx",
   "src/disclaimer.tsx",
   "src/recovery.tsx",
+  "src/notebook.tsx",
   "src/background.ts",
   "src/crypto.ts",
   "src/drive.ts",
@@ -22,6 +23,13 @@ for (const f of [
       missing.add(`${f}: ${k}`);
   }
 }
+// The notebook passes labels as props (label="…") and constants; check every
+// CJK string literal there.
+for (const m of readFileSync("src/notebook.tsx", "utf8").matchAll(
+  /"([^"\n]*[\u3400-\u9fff][^"\n]*)"/g,
+))
+  if (!L.includes(JSON.stringify(m[1]) + ":"))
+    missing.add(`src/notebook.tsx: ${m[1]}`);
 // Disclaimer items are listed as plain strings and translated with t(x).
 for (const m of readFileSync("src/disclaimer.tsx", "utf8").matchAll(
   /^\s+"([^"]+)",$/gm,

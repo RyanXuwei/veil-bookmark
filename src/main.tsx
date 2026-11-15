@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { SetupPage } from "./setup";
 import { Disclaimer } from "./disclaimer";
 import { RecoverForm, RecoveryKeyModal, RecoverySection } from "./recovery";
-import { MemoEditor, MemoList, memoTitle, type MemoDraft } from "./memos";
+import { MemoList } from "./memos";
+import { NotebookPage } from "./notebook";
 import type { Vault, Entry } from "./crypto";
 import "./style.css";
 import { LANGS, lang, loadLang, saveLang, t, tError, type Lang } from "./i18n";
@@ -16,9 +17,9 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.0 Beta",
+  version: "0.2.1 Beta",
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-15",
+  lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -36,15 +37,24 @@ async function rpc(type: string, data: Record<string, unknown> = {}) {
 }
 const isPopup = new URLSearchParams(location.search).has("popup");
 const isSetup = new URLSearchParams(location.search).has("setup");
+const isNotes = new URLSearchParams(location.search).has("notes");
+async function openNotebook(id = "") {
+  await chrome.tabs.create({
+    url: chrome.runtime.getURL(`index.html?notes#${id || "new"}`),
+  });
+  if (isPopup) window.close();
+}
 async function openSetup() {
   await chrome.tabs.create({ url: chrome.runtime.getURL("index.html?setup") });
   if (isPopup) window.close();
 }
-document.documentElement.dataset.surface = isSetup
-  ? "setup"
-  : isPopup
-    ? "popup"
-    : "manager";
+document.documentElement.dataset.surface = isNotes
+  ? "notes"
+  : isSetup
+    ? "setup"
+    : isPopup
+      ? "popup"
+      : "manager";
 const empty = { id: "", title: "", url: "", folder: "", tags: "", notes: "" };
 function App() {
   const [status, setStatus] = useState<any>(null),
@@ -64,8 +74,6 @@ function App() {
   const [uiLang, setUiLang] = useState<Lang>(lang());
   const [menuId, setMenuId] = useState<string | null>(null);
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
-  const [memo, setMemo] = useState<MemoDraft | null>(null);
-  const [deletingMemo, setDeletingMemo] = useState<MemoDraft | null>(null);
   const [ack, setAck] = useState(false);
   const [recoveryShown, setRecoveryShown] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -74,14 +82,12 @@ function App() {
       document.documentElement.style.minHeight =
         editor ||
         deleting ||
-        memo ||
-        deletingMemo ||
         recoveryShown ||
         panel === "settings" ||
         panel === "about"
           ? "570px"
           : "";
-  }, [editor, deleting, memo, deletingMemo, recoveryShown, panel]);
+  }, [editor, deleting, recoveryShown, panel]);
   async function refresh() {
     const s = await rpc("STATUS");
     setStatus(s);
@@ -92,8 +98,6 @@ function App() {
       setQuery("");
       setFolder(ALL);
       setDeleting(null);
-      setMemo(null);
-      setDeletingMemo(null);
     }
   }
   useEffect(() => {
@@ -108,8 +112,6 @@ function App() {
         setEditor(null);
         setQuery("");
         setDeleting(null);
-        setMemo(null);
-        setDeletingMemo(null);
         setMenuId(null);
         setPassword("");
         void refresh();
@@ -650,7 +652,10 @@ function App() {
             </button>
           )}
           {view === "memos" ? (
-            <MemoList memos={vault.memos || []} onOpen={setMemo} />
+            <MemoList
+              memos={vault.memos || []}
+              onOpen={(m) => void openNotebook(m.id)}
+            />
           ) : (
             <>
               <div className="quickSearch">
@@ -992,51 +997,6 @@ function App() {
           onDone={() => setRecoveryShown(null)}
         />
       )}
-      {memo && (
-        <MemoEditor
-          memo={memo}
-          busy={busy}
-          onChange={setMemo}
-          onClose={() => setMemo(null)}
-          onDelete={() => {
-            setDeletingMemo(memo);
-            setMemo(null);
-          }}
-          onSave={() =>
-            void run(async () => {
-              await rpc("MEMO_UPSERT", { memo });
-              setMemo(null);
-              await refresh();
-            })
-          }
-        />
-      )}
-      {deletingMemo && (
-        <div className="overlay">
-          <section className="modal card" role="alertdialog" aria-modal="true">
-            <h2>
-              {t("刪除「{title}」？", { title: memoTitle(deletingMemo) })}
-            </h2>
-            <p className="muted">{t("記事內容會立即清除，無法復原。")}</p>
-            <div className="row">
-              <button onClick={() => setDeletingMemo(null)}>{t("取消")}</button>
-              <button
-                className="danger"
-                disabled={busy}
-                onClick={() =>
-                  run(async () => {
-                    await rpc("MEMO_DELETE", { id: deletingMemo.id });
-                    setDeletingMemo(null);
-                    await refresh();
-                  })
-                }
-              >
-                {t("確定刪除")}
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
       {deleting && (
         <div className="overlay">
           <section className="modal card" role="alertdialog" aria-modal="true">
@@ -1199,7 +1159,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.0 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.1 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">
@@ -1248,7 +1208,13 @@ function App() {
 }
 void loadLang().then(() =>
   createRoot(document.getElementById("root")!).render(
-    isSetup ? <SetupPage rpc={rpc} /> : <App />,
+    isNotes ? (
+      <NotebookPage rpc={rpc} />
+    ) : isSetup ? (
+      <SetupPage rpc={rpc} />
+    ) : (
+      <App />
+    ),
   ),
 );
 import "./popup.css";

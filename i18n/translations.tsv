@@ -270,3 +270,72 @@ Google 授權回應無效，請重試|Invalid response from Google. Please try a
 這個保險庫尚未建立救援金鑰|This vault has no recovery key.|この保管庫にはリカバリーキーがありません。
 救援金鑰不正確|Incorrect recovery key.|リカバリーキーが正しくありません。
 救援金鑰格式不正確，應為 32 個英數字|Invalid recovery key format. It should be 32 letters and digits.|リカバリーキーの形式が正しくありません。32 文字の英数字で入力してください。
+記事內容過長|The note is too long.|メモが長すぎます。
+內文|Normal|標準
+標題 1|Heading 1|見出し 1
+標題 2|Heading 2|見出し 2
+標題 3|Heading 3|見出し 3
+引文|Quote|引用
+程式碼|Code|コード
+刪除這份記事？內容會立即清除，無法復原。|Delete this note? Its content is erased immediately and cannot be recovered.|このメモを削除しますか？内容はすぐに消去され、復元できません。
+輸入連結網址（https://）|Enter the link address (https://)|リンク先の URL を入力（https://）
+加密筆記本|Encrypted Notebook|暗号化ノート
+保險庫已上鎖。輸入主密碼以開啟你的記事。|The vault is locked. Enter your master password to open your notes.|保管庫はロックされています。マスターパスワードを入力してメモを開いてください。
+請先在工具列浮框建立保險庫。|Create a vault from the toolbar popup first.|まずツールバーのポップアップで保管庫を作成してください。
+尚未儲存|Not saved yet|未保存
+已加密儲存 {time}|Encrypted & saved {time}|暗号化して保存済み {time}
+已加密儲存|Encrypted & saved|暗号化して保存済み
+文件標題|Document title|文書のタイトル
+新增記事|New note|新しいメモ
+＋ 新增|＋ New|＋ 新規
+常用|Home|ホーム
+插入|Insert|挿入
+檢視|View|表示
+功能區|Ribbon|リボン
+復原|Undo|元に戻す
+取消復原|Redo|やり直し
+字型大小|Font size|フォント サイズ
+小|Small|小
+標準|Normal|標準
+大|Large|大
+特大|Extra large|特大
+超大|Huge|極大
+粗體|Bold|太字
+斜體|Italic|斜体
+底線|Underline|下線
+刪除線|Strikethrough|取り消し線
+字型色彩|Font color|フォントの色
+醒目提示|Highlight|蛍光ペン
+清除格式設定|Clear formatting|書式のクリア
+字型|Font|フォント
+項目符號|Bullets|箇条書き
+編號|Numbering|段落番号
+減少縮排|Decrease indent|インデントを減らす
+增加縮排|Increase indent|インデントを増やす
+靠左對齊|Align left|左揃え
+置中|Center|中央揃え
+靠右對齊|Align right|右揃え
+左右對齊|Justify|両端揃え
+段落|Paragraph|段落
+樣式|Styles|スタイル
+連結|Link|リンク
+水平線|Horizontal line|横線
+日期和時間|Date & time|日付と時刻
+核取方塊|Checkbox|チェックボックス
+導覽窗格|Navigation pane|ナビゲーション ウィンドウ
+頁寬|Page width|ページ幅
+顯示|Show|表示
+列印|Print|印刷
+刪除記事|Delete note|メモを削除
+文件|Document|文書
+記事清單|Note list|メモ一覧
+記事內容|Note content|メモの内容
+第 {page} 頁，共 {pages} 頁|Page {page} of {pages}|{pages} ページ中 {page} ページ
+{count} 個字|{count} words|{count} 語
+{count} 個字元|{count} characters|{count} 文字
+AES-256 加密|AES-256 encrypted|AES-256 暗号化
+縮小|Zoom out|縮小
+縮放|Zoom|ズーム
+放大|Zoom in|拡大
+在筆記本中開啟|Open in notebook|ノートで開く
+開啟筆記本 ↗|Open notebook ↗|ノートを開く ↗
