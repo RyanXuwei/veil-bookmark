@@ -282,6 +282,19 @@ try {
   await screenshot("11-incognito-create.png");
   await fill("input[type=password]", "1234");
   await fill("label:nth-of-type(2) input[type=password]", "1234");
+  // Creating requires acknowledging that a lost password cannot be recovered.
+  assert.equal(
+    await evaluate(
+      () =>
+        [...document.querySelectorAll("button")].find(
+          (b) => b.textContent.trim() === "建立保險庫 →",
+        ).disabled,
+    ),
+    true,
+  );
+  assert(await evaluate(() => !!document.querySelector(".pwWarning")));
+  await evaluate(() => document.querySelector(".ackRow input").click());
+  await screenshot("31-password-warning.png");
   await click("建立保險庫 →");
   await wait(() => document.querySelector(".quickList"));
   await click("＋ 收藏目前網頁");
@@ -481,6 +494,42 @@ try {
       !!document.querySelector('.quickMore[aria-label="更多操作：一般網頁"]'),
   );
   await screenshot("17-private-shared-bookmarks.png");
+  // Encrypted notes: create, list, reopen, delete.
+  const MEMO_TEXT =
+    "secret memo text" + String.fromCharCode(10) + "second line";
+  await click("記事本");
+  await wait(() => !!document.querySelector(".quickCapture"));
+  await click("＋ 新增記事");
+  await wait(() => !!document.querySelector("textarea.memoBody"));
+  await fill(".memoModal input", "銀行提示");
+  await fill("textarea.memoBody", MEMO_TEXT);
+  await screenshot("29-memo-editor.png");
+  await click("加密儲存 →");
+  await wait(() => !document.querySelector(".memoModal"));
+  await wait(() =>
+    [...document.querySelectorAll(".memoLink strong")].some(
+      (x) => x.textContent === "銀行提示",
+    ),
+  );
+  await screenshot("30-memo-list.png");
+  assert(
+    !JSON.stringify(
+      await worker.evaluate(() => chrome.storage.local.get("vault")),
+    ).includes("secret memo text"),
+    "memo is encrypted at rest",
+  );
+  await evaluate(() => document.querySelector(".memoLink").click());
+  await wait(() => !!document.querySelector("textarea.memoBody"));
+  assert.equal(
+    await evaluate(() => document.querySelector("textarea.memoBody").value),
+    MEMO_TEXT,
+  );
+  await click("刪除");
+  await wait(() => !!document.querySelector("[role=alertdialog]"));
+  await click("確定刪除");
+  await wait(() => !document.querySelector(".memoLink"));
+  await click("書籤");
+  await wait(() => !!document.querySelector(".quickList .quickLink"));
   async function setLanguage(code) {
     await evaluate((code) => {
       const el = document.querySelector("select.langSelect");
@@ -544,7 +593,7 @@ try {
     ).includes("一般網頁"),
   );
   console.log(
-    "PASS: language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
+    "PASS: password ack gate; encrypted notes create/reopen/delete; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
     dimensions,
     "; no automatic management tab; activeTab current-page capture; 4-char create/unlock; folders/search/edit/delete; lock/reopen; opening bookmark.",
   );

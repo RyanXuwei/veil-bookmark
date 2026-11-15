@@ -5,6 +5,8 @@ const missing = new Set();
 for (const f of [
   "src/main.tsx",
   "src/setup.tsx",
+  "src/memos.tsx",
+  "src/disclaimer.tsx",
   "src/background.ts",
   "src/crypto.ts",
   "src/drive.ts",
@@ -19,6 +21,12 @@ for (const f of [
       missing.add(`${f}: ${k}`);
   }
 }
+// Disclaimer items are listed as plain strings and translated with t(x).
+for (const m of readFileSync("src/disclaimer.tsx", "utf8").matchAll(
+  /^\s+"([^"]+)",$/gm,
+))
+  if (!L.includes(JSON.stringify(m[1]) + ":"))
+    missing.add(`src/disclaimer.tsx: ${m[1]}`);
 if (/[\u0000]/.test(readFileSync("src/main.tsx", "utf8")))
   missing.add("src/main.tsx contains a NUL character");
 if (missing.size) {

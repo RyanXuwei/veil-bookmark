@@ -200,3 +200,36 @@ Google 授權未完成或已取消|Google sign-in was not completed or was cance
 Google 授權回應無效，請重試|Invalid response from Google. Please try again.|Google からの応答が無効です。もう一度お試しください。
 請在 Google 授權畫面允許存取應用程式資料|Please allow access to app data on the Google consent screen.|Google の同意画面でアプリデータへのアクセスを許可してください。
 隱私權政策|Privacy policy|プライバシーポリシー
+書籤|Bookmarks|ブックマーク
+記事本|Notes|メモ帳
+搜尋記事|Search notes|メモを検索
+搜尋記事…|Search notes…|メモを検索…
+＋ 新增記事|＋ New note|＋ 新しいメモ
+加密記事清單|Encrypted note list|暗号化メモ一覧
+未命名記事|Untitled note|無題のメモ
+沒有符合的記事|No matching notes|一致するメモがありません
+還沒有加密記事|No encrypted notes yet|暗号化メモはまだありません
+密碼提示、帳號資訊或私人想法，都能加密記下。|Password hints, account details or private thoughts — all encrypted.|パスワードのヒント、アカウント情報、個人的なメモを暗号化して保存できます。
+記事編輯|Note editor|メモの編集
+編輯記事|Edit note|メモを編集
+新增加密記事|New encrypted note|新しい暗号化メモ
+標題|Title|タイトル
+選填|Optional|任意
+內容|Content|内容
+複製內容|Copy content|内容をコピー
+{count} 則加密記事|Encrypted notes: {count}|暗号化メモ：{count} 件
+記事內容會立即清除，無法復原。|The note content is erased immediately and cannot be recovered.|メモの内容はすぐに消去され、復元できません。
+記事資料格式錯誤|Invalid note data format.|メモデータの形式が正しくありません。
+記事內容過長（上限 100,000 字）|The note is too long (limit 100,000 characters).|メモが長すぎます（上限 100,000 文字）。
+請輸入記事標題或內容|Enter a title or some content for the note.|メモのタイトルまたは内容を入力してください。
+記事數量已達上限|You have reached the maximum number of notes.|メモの数が上限に達しました。
+請務必記住主密碼|Remember your master password|マスターパスワードを必ず覚えておいてください
+主密碼不會在任何地方備份，也沒有救援或重設方式。一旦遺失，所有書籤與記事將永久無法開啟。|Your master password is not backed up anywhere, and there is no way to recover or reset it. If you lose it, all bookmarks and notes become permanently inaccessible.|マスターパスワードはどこにもバックアップされず、復旧やリセットの方法もありません。紛失すると、すべてのブックマークとメモが永久に開けなくなります。
+我了解遺失主密碼後無法救援，並會自行妥善保管。|I understand a lost master password cannot be recovered, and I will keep it safe.|マスターパスワードを紛失すると復旧できないことを理解し、自分で大切に保管します。
+請先確認已了解主密碼無法救援|Please confirm that you understand the master password cannot be recovered.|マスターパスワードは復旧できないことを確認してください。
+重要聲明|Important notice|重要なお知らせ
+主密碼只存在你的記憶中。Veil Bookmark 不會在任何地方（本機、Google Drive 或開發者）儲存、備份或傳送你的主密碼。|Your master password exists only in your memory. Veil Bookmark never stores, backs up or transmits it anywhere — not on this device, in Google Drive, or with the developer.|マスターパスワードはあなたの記憶の中にだけあります。Veil Bookmark はマスターパスワードをどこにも（この端末、Google Drive、開発者のいずれにも）保存・バックアップ・送信しません。
+沒有任何密碼救援或重設機制，開發者也無法協助找回密碼或解密資料。|There is no password recovery or reset, and the developer cannot help recover your password or decrypt your data.|パスワードの復旧やリセットの仕組みはなく、開発者もパスワードの復元やデータの復号をお手伝いできません。
+一旦遺失主密碼，所有加密的書籤與記事將永久無法開啟。|If you lose your master password, all encrypted bookmarks and notes become permanently inaccessible.|マスターパスワードを紛失すると、暗号化されたすべてのブックマークとメモは永久に開けなくなります。
+請自行妥善保管主密碼，並定期匯出加密備份；備份檔同樣需要主密碼才能還原。|Keep your master password safe and export encrypted backups regularly; backups also need the master password to restore.|マスターパスワードは各自で大切に保管し、暗号化バックアップを定期的に出力してください。バックアップの復元にもマスターパスワードが必要です。
+本軟體依「現狀」提供，不提供任何明示或默示擔保。在法律允許的範圍內，開發者對資料遺失、無法存取或其他損害不負任何責任。|This software is provided "as is", without warranty of any kind, express or implied. To the extent permitted by law, the developer is not liable for any data loss, loss of access or other damages.|本ソフトウェアは「現状のまま」提供され、明示・黙示を問わずいかなる保証もありません。法律で認められる範囲において、開発者はデータの損失、アクセス不能、その他の損害について一切責任を負いません。

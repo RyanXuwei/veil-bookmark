@@ -9,7 +9,23 @@ export type Entry = {
   revision: string;
   deleted: boolean;
 };
-export type Vault = { version: 1; id: string; entries: Entry[] };
+export type Memo = {
+  id: string;
+  title: string;
+  body: string;
+  updated: number;
+  revision: string;
+  deleted: boolean;
+};
+// Vault v2 adds encrypted memos. Older releases reject v2 instead of silently
+// dropping memos during a sync merge.
+export type Vault = { version: 2; id: string; entries: Entry[]; memos: Memo[] };
+export const emptyVault = (id: string): Vault => ({
+  version: 2,
+  id,
+  entries: [],
+  memos: [],
+});
 export type Envelope = {
   version: 1;
   id: string;
@@ -101,7 +117,10 @@ export async function encrypt(
 }
 export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
   const e = validateEnvelope(input);
-  let v: Vault;
+  let v: Omit<Vault, "version" | "memos"> & {
+    version: 1 | 2;
+    memos?: Memo[];
+  };
   try {
     v = JSON.parse(
       new TextDecoder().decode(
@@ -116,12 +135,27 @@ export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
     throw Error("密碼不正確，或加密資料已損壞");
   }
   if (
-    v.version !== 1 ||
+    (v.version !== 1 && v.version !== 2) ||
     v.id !== e.id ||
     !Array.isArray(v.entries) ||
     v.entries.length > 20000
   )
     throw Error("書籤資料格式錯誤");
+  if (v.version === 1) v.memos = [];
+  v.version = 2;
+  if (!Array.isArray(v.memos) || v.memos.length > 5000)
+    throw Error("記事資料格式錯誤");
+  for (const x of v.memos)
+    if (
+      typeof x.id !== "string" ||
+      typeof x.title !== "string" ||
+      typeof x.body !== "string" ||
+      x.body.length > 100_000 ||
+      !Number.isSafeInteger(x.updated) ||
+      typeof x.revision !== "string" ||
+      typeof x.deleted !== "boolean"
+    )
+      throw Error("記事資料格式錯誤");
   for (const x of v.entries) {
     if (
       typeof x.id !== "string" ||
@@ -138,7 +172,7 @@ export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
       throw Error("書籤資料格式錯誤");
     safeUrl(x.url);
   }
-  return v;
+  return v as Vault;
 }
 export function safeUrl(value: string) {
   let u: URL;
@@ -152,11 +186,12 @@ export function safeUrl(value: string) {
   return u.href;
 }
 // LWW records with deterministic tie-break; tombstones prevent deleted records returning.
-export function merge(a: Vault, b: Vault): Vault {
-  if (a.id !== b.id)
-    throw Error("這是不同的保險庫，請使用原始備份或從 Drive 還原");
-  const map = new Map<string, Entry>();
-  for (const x of [...a.entries, ...b.entries]) {
+function lww<T extends { id: string; updated: number; revision: string }>(
+  a: T[],
+  b: T[],
+): T[] {
+  const map = new Map<string, T>();
+  for (const x of [...a, ...b]) {
     const old = map.get(x.id);
     if (
       !old ||
@@ -165,9 +200,15 @@ export function merge(a: Vault, b: Vault): Vault {
     )
       map.set(x.id, x);
   }
+  return [...map.values()].sort((x, y) => x.id.localeCompare(y.id));
+}
+export function merge(a: Vault, b: Vault): Vault {
+  if (a.id !== b.id)
+    throw Error("這是不同的保險庫，請使用原始備份或從 Drive 還原");
   return {
-    version: 1,
+    version: 2,
     id: a.id,
-    entries: [...map.values()].sort((x, y) => x.id.localeCompare(y.id)),
+    entries: lww(a.entries, b.entries),
+    memos: lww(a.memos || [], b.memos || []),
   };
 }

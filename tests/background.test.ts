@@ -375,3 +375,40 @@ test("runtime client ID: validation, web auth flow, token cache, state check, 40
     await rpc("LOCK");
   }
 });
+
+test("memo create, edit, delete tombstone, limits, and lock protection", async () => {
+  await rpc("UNLOCK", { password: "1234" });
+  await assert.rejects(
+    rpc("MEMO_UPSERT", { memo: { title: " ", body: " " } }),
+    /記事標題或內容/,
+  );
+  await assert.rejects(
+    rpc("MEMO_UPSERT", { memo: { title: "big", body: "x".repeat(100_001) } }),
+    /過長/,
+  );
+  const created = await rpc("MEMO_UPSERT", {
+    memo: { title: "銀行提示", body: "secret memo text" },
+  });
+  assert(created.id);
+  const edited = await rpc("MEMO_UPSERT", {
+    memo: { id: created.id, title: "銀行提示", body: "updated text" },
+  });
+  assert.equal(edited.id, created.id);
+  assert(edited.updated > created.updated);
+  let v = await rpc("LIST");
+  assert.equal(v.memos.filter((x: any) => !x.deleted).length, 1);
+  assert(
+    !JSON.stringify(local.vault).includes("updated text"),
+    "memo stays encrypted at rest",
+  );
+  await rpc("MEMO_DELETE", { id: created.id });
+  v = await rpc("LIST");
+  const tomb = v.memos.find((x: any) => x.id === created.id);
+  assert.equal(tomb.deleted, true);
+  assert.equal(tomb.body, "", "deleted memo content is wiped");
+  await rpc("LOCK");
+  await assert.rejects(
+    rpc("MEMO_UPSERT", { memo: { title: "x", body: "y" } }),
+    /上鎖/,
+  );
+});

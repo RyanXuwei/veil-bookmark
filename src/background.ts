@@ -6,6 +6,8 @@ import {
   encrypt,
   decrypt,
   merge,
+  emptyVault,
+  type Memo,
   safeUrl,
   type Envelope,
   type Vault,
@@ -125,7 +127,7 @@ async function sync(interactive = false) {
   const snapshot = await encrypt(v, key, s.salt);
   await chrome.storage.local.set({ vault: snapshot });
   const canonical = JSON.stringify(merge(v, v));
-  let remoteUnion: Vault = { version: 1, id: v.id, entries: [] };
+  let remoteUnion: Vault = emptyVault(v.id);
   for (const remote of envelopes)
     remoteUnion = merge(remoteUnion, await decrypt(remote, key));
   // Upload when Drive is missing changes, or consolidate several snapshots
@@ -190,7 +192,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       throw Error("主密碼至少 4 個字元");
     const salt = b64(random(16));
     const key = await derive(m.password, salt);
-    const v: Vault = { version: 1, id: crypto.randomUUID(), entries: [] };
+    const v: Vault = emptyVault(crypto.randomUUID());
     const e = await encrypt(v, key, salt);
     await chrome.storage.local.set({ vault: e });
     await unlock(e, m.password);
@@ -303,6 +305,39 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const x = v.entries.find((x) => x.id === m.id);
     if (x) {
       x.deleted = true;
+      x.updated = Math.max(Date.now(), x.updated + 1);
+      x.revision = crypto.randomUUID();
+      await save(v, s);
+    }
+    await touch(s);
+  } else if (m.type === "MEMO_UPSERT") {
+    const x = m.memo || {};
+    const old = v.memos.find((y) => y.id === x.id);
+    const body = String(x.body || "");
+    if (body.length > 100_000) throw Error("記事內容過長（上限 100,000 字）");
+    const memo: Memo = {
+      id: old?.id || crypto.randomUUID(),
+      title: String(x.title || "")
+        .trim()
+        .slice(0, 300),
+      body,
+      updated: Math.max(Date.now(), (old?.updated || 0) + 1),
+      revision: crypto.randomUUID(),
+      deleted: false,
+    };
+    if (!memo.title && !memo.body.trim()) throw Error("請輸入記事標題或內容");
+    if (!old && v.memos.filter((y) => !y.deleted).length >= 5000)
+      throw Error("記事數量已達上限");
+    v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);
+    await save(v, s);
+    await touch(s);
+    return memo;
+  } else if (m.type === "MEMO_DELETE") {
+    const x = v.memos.find((y) => y.id === m.id);
+    if (x) {
+      x.deleted = true;
+      x.body = "";
+      x.title = "";
       x.updated = Math.max(Date.now(), x.updated + 1);
       x.revision = crypto.randomUUID();
       await save(v, s);

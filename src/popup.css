@@ -390,3 +390,17 @@ html[data-surface="popup"] {
 .productIcon{width:36px;height:36px;object-fit:contain;flex-shrink:0}[data-surface="popup"] .productIcon{width:28px;height:28px}
 .langSelect{font:inherit;font-size:12px;padding:3px 6px;border:1px solid rgba(51,90,73,.25);border-radius:8px;background:transparent;color:inherit;cursor:pointer;margin-left:auto;margin-right:8px;max-width:110px}
 .langSelect:focus-visible{outline:2px solid #335a49;outline-offset:1px}
+.viewTabs{display:flex;gap:4px;padding:10px 14px 0;border-bottom:1px solid rgba(51,90,73,.15)}
+.viewTabs button{flex:1;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:6px 0 8px;font-weight:600;color:#6b766f;cursor:pointer}
+.viewTabs button[aria-selected="true"]{color:#335a49;border-bottom-color:#335a49}
+.memoBody{font-family:inherit;line-height:1.6;resize:vertical;min-height:180px}
+.memoActions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.memoActions .primary{margin-left:auto}
+.memoLink .quickText small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.pwWarning{border:1px solid #d9a441;background:#fdf6e6;border-radius:10px;padding:10px 12px;margin:4px 0 10px;font-size:13px;color:#5a4214}
+.pwWarning p{margin:4px 0 8px;line-height:1.5}
+.ackRow{display:flex !important;gap:8px;align-items:flex-start;font-weight:600;cursor:pointer}
+.ackRow input{width:auto !important;margin-top:3px;flex:none}
+.disclaimer{font-size:12px;color:#5a4214;background:#fdf6e6;border:1px solid #ecd39b;border-radius:10px;padding:10px 12px}
+.disclaimer h3{margin:0 0 6px;font-size:14px}
+.disclaimer ol{margin:0;padding-left:18px;line-height:1.55}

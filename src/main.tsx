@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { SetupPage } from "./setup";
+import { Disclaimer } from "./disclaimer";
+import { MemoEditor, MemoList, memoTitle, type MemoDraft } from "./memos";
 import type { Vault, Entry } from "./crypto";
 import "./style.css";
 import { LANGS, lang, loadLang, saveLang, t, tError, type Lang } from "./i18n";
@@ -13,7 +15,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.1.8 Beta",
+  version: "0.1.9 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-15",
   copyrightYear: "2026",
@@ -60,14 +62,23 @@ function App() {
   const activity = useRef(0);
   const [uiLang, setUiLang] = useState<Lang>(lang());
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
+  const [memo, setMemo] = useState<MemoDraft | null>(null);
+  const [deletingMemo, setDeletingMemo] = useState<MemoDraft | null>(null);
+  const [ack, setAck] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isPopup)
       document.documentElement.style.minHeight =
-        editor || deleting || panel === "settings" || panel === "about"
+        editor ||
+        deleting ||
+        memo ||
+        deletingMemo ||
+        panel === "settings" ||
+        panel === "about"
           ? "570px"
           : "";
-  }, [editor, deleting, panel]);
+  }, [editor, deleting, memo, deletingMemo, panel]);
   async function refresh() {
     const s = await rpc("STATUS");
     setStatus(s);
@@ -78,6 +89,8 @@ function App() {
       setQuery("");
       setFolder(ALL);
       setDeleting(null);
+      setMemo(null);
+      setDeletingMemo(null);
     }
   }
   useEffect(() => {
@@ -92,6 +105,8 @@ function App() {
         setEditor(null);
         setQuery("");
         setDeleting(null);
+        setMemo(null);
+        setDeletingMemo(null);
         setMenuId(null);
         setPassword("");
         void refresh();
@@ -123,6 +138,8 @@ function App() {
     await run(async () => {
       if (mode === "CREATE" && password !== confirmPassword)
         throw Error("兩次密碼不一致");
+      if (mode === "CREATE" && !ack)
+        throw Error("請先確認已了解主密碼無法救援");
       let data: any = { password };
       if (mode === "RESTORE") {
         if (!file) throw Error("請選擇加密備份檔");
@@ -447,6 +464,26 @@ function App() {
                   />
                 </label>
               )}
+              {!status?.exists && panel !== "restore" && (
+                <div className="pwWarning" role="note">
+                  <strong>⚠ {t("請務必記住主密碼")}</strong>
+                  <p>
+                    {t(
+                      "主密碼不會在任何地方備份，也沒有救援或重設方式。一旦遺失，所有書籤與記事將永久無法開啟。",
+                    )}
+                  </p>
+                  <label className="ackRow">
+                    <input
+                      type="checkbox"
+                      checked={ack}
+                      onChange={(e) => setAck(e.target.checked)}
+                    />
+                    <span>
+                      {t("我了解遺失主密碼後無法救援，並會自行妥善保管。")}
+                    </span>
+                  </label>
+                </div>
+              )}
               {panel === "restore" && !status?.exists && (
                 <label>
                   {t("加密備份檔")}
@@ -457,7 +494,14 @@ function App() {
                   />
                 </label>
               )}
-              <button className="primary full" disabled={busy || !status}>
+              <button
+                className="primary full"
+                disabled={
+                  busy ||
+                  !status ||
+                  (!status.exists && panel !== "restore" && !ack)
+                }
+              >
                 {busy
                   ? t("處理中…")
                   : status?.exists
@@ -498,76 +542,104 @@ function App() {
         </main>
       ) : isPopup ? (
         <main className="quickLibrary">
-          <div className="quickSearch">
-            <input
-              autoFocus
-              aria-label={t("搜尋書籤")}
-              placeholder={t("搜尋書籤…")}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="quickTools">
-            <button className="quickCapture" onClick={addCurrent}>
-              {t("＋ 收藏目前網頁")}
+          <div className="viewTabs" role="tablist">
+            <button
+              role="tab"
+              aria-selected={view === "bookmarks"}
+              onClick={() => setView("bookmarks")}
+            >
+              {t("書籤")}
             </button>
             <button
-              title={t("手動新增網址")}
-              aria-label={t("手動新增書籤")}
-              onClick={() => setEditor({ ...empty })}
+              role="tab"
+              aria-selected={view === "memos"}
+              onClick={() => setView("memos")}
             >
-              {t("手動新增")}
+              {t("記事本")}
             </button>
           </div>
-          <div className="quickList" aria-label={t("私人書籤清單")}>
-            {query ? (
-              <>
-                <div className="quickCaption">
-                  {t("搜尋結果 ·")} {visible.length}
-                </div>
-                <ul>{visible.map(popupRow)}</ul>
-              </>
-            ) : (
-              <>
-                {folders.map((f) => (
-                  <details className="quickFolder" key={f}>
-                    <summary>
-                      <span>▰</span>
-                      <strong>{f}</strong>
-                      <small>
-                        {entries.filter((x) => x.folder === f).length}
-                      </small>
-                    </summary>
+          {view === "memos" ? (
+            <MemoList memos={vault.memos || []} onOpen={setMemo} />
+          ) : (
+            <>
+              <div className="quickSearch">
+                <input
+                  autoFocus
+                  aria-label={t("搜尋書籤")}
+                  placeholder={t("搜尋書籤…")}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <div className="quickTools">
+                <button className="quickCapture" onClick={addCurrent}>
+                  {t("＋ 收藏目前網頁")}
+                </button>
+                <button
+                  title={t("手動新增網址")}
+                  aria-label={t("手動新增書籤")}
+                  onClick={() => setEditor({ ...empty })}
+                >
+                  {t("手動新增")}
+                </button>
+              </div>
+              <div className="quickList" aria-label={t("私人書籤清單")}>
+                {query ? (
+                  <>
+                    <div className="quickCaption">
+                      {t("搜尋結果 ·")} {visible.length}
+                    </div>
+                    <ul>{visible.map(popupRow)}</ul>
+                  </>
+                ) : (
+                  <>
+                    {folders.map((f) => (
+                      <details className="quickFolder" key={f}>
+                        <summary>
+                          <span>▰</span>
+                          <strong>{f}</strong>
+                          <small>
+                            {entries.filter((x) => x.folder === f).length}
+                          </small>
+                        </summary>
+                        <ul>
+                          {entries
+                            .filter((x) => x.folder === f)
+                            .sort((a, b) => a.title.localeCompare(b.title))
+                            .map(popupRow)}
+                        </ul>
+                      </details>
+                    ))}
                     <ul>
                       {entries
-                        .filter((x) => x.folder === f)
+                        .filter((x) => !x.folder)
                         .sort((a, b) => a.title.localeCompare(b.title))
                         .map(popupRow)}
                     </ul>
-                  </details>
-                ))}
-                <ul>
-                  {entries
-                    .filter((x) => !x.folder)
-                    .sort((a, b) => a.title.localeCompare(b.title))
-                    .map(popupRow)}
-                </ul>
-              </>
-            )}
-            {(!entries.length || (query && !visible.length)) && (
-              <div className="quickEmpty">
-                <span>▱</span>
-                <p>{query ? t("沒有符合的書籤") : t("還沒有私人書籤")}</p>
-                <small>
-                  {query
-                    ? t("試試其他關鍵字")
-                    : t("按上方「收藏目前網頁」開始收藏。")}
-                </small>
+                  </>
+                )}
+                {(!entries.length || (query && !visible.length)) && (
+                  <div className="quickEmpty">
+                    <span>▱</span>
+                    <p>{query ? t("沒有符合的書籤") : t("還沒有私人書籤")}</p>
+                    <small>
+                      {query
+                        ? t("試試其他關鍵字")
+                        : t("按上方「收藏目前網頁」開始收藏。")}
+                    </small>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
           <div className="quickBottom">
-            <span>{t("{count} 個私人書籤", { count: entries.length })}</span>
+            <span>
+              {view === "memos"
+                ? t("{count} 則加密記事", {
+                    count: (vault.memos || []).filter((x) => !x.deleted).length,
+                  })
+                : t("{count} 個私人書籤", { count: entries.length })}
+            </span>
             <button onClick={() => setPanel("settings")}>
               {t("同步與備份")}
             </button>
@@ -823,6 +895,51 @@ function App() {
           </section>
         </div>
       )}
+      {memo && (
+        <MemoEditor
+          memo={memo}
+          busy={busy}
+          onChange={setMemo}
+          onClose={() => setMemo(null)}
+          onDelete={() => {
+            setDeletingMemo(memo);
+            setMemo(null);
+          }}
+          onSave={() =>
+            void run(async () => {
+              await rpc("MEMO_UPSERT", { memo });
+              setMemo(null);
+              await refresh();
+            })
+          }
+        />
+      )}
+      {deletingMemo && (
+        <div className="overlay">
+          <section className="modal card" role="alertdialog" aria-modal="true">
+            <h2>
+              {t("刪除「{title}」？", { title: memoTitle(deletingMemo) })}
+            </h2>
+            <p className="muted">{t("記事內容會立即清除，無法復原。")}</p>
+            <div className="row">
+              <button onClick={() => setDeletingMemo(null)}>{t("取消")}</button>
+              <button
+                className="danger"
+                disabled={busy}
+                onClick={() =>
+                  run(async () => {
+                    await rpc("MEMO_DELETE", { id: deletingMemo.id });
+                    setDeletingMemo(null);
+                    await refresh();
+                  })
+                }
+              >
+                {t("確定刪除")}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {deleting && (
         <div className="overlay">
           <section className="modal card" role="alertdialog" aria-modal="true">
@@ -968,6 +1085,8 @@ function App() {
                     "書籤在目前視窗模式開啟；一般模式可能留下瀏覽紀錄。加密收藏會保留在本機。遺失主密碼無法復原。同步採逐筆最後更新優先，裝置時間需正確。",
                   )}
                 </p>
+                <hr />
+                <Disclaimer />
               </>
             ) : (
               <div className="about">
@@ -977,7 +1096,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.1.8 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.1.9 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

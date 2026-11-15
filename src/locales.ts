@@ -1009,5 +1009,170 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "隐私权政策",
   "en": "Privacy policy",
   "ja": "プライバシーポリシー"
+ },
+ "書籤": {
+  "zh-CN": "书签",
+  "en": "Bookmarks",
+  "ja": "ブックマーク"
+ },
+ "記事本": {
+  "zh-CN": "记事本",
+  "en": "Notes",
+  "ja": "メモ帳"
+ },
+ "搜尋記事": {
+  "zh-CN": "搜索记事",
+  "en": "Search notes",
+  "ja": "メモを検索"
+ },
+ "搜尋記事…": {
+  "zh-CN": "搜索记事…",
+  "en": "Search notes…",
+  "ja": "メモを検索…"
+ },
+ "＋ 新增記事": {
+  "zh-CN": "＋ 添加记事",
+  "en": "＋ New note",
+  "ja": "＋ 新しいメモ"
+ },
+ "加密記事清單": {
+  "zh-CN": "加密记事清单",
+  "en": "Encrypted note list",
+  "ja": "暗号化メモ一覧"
+ },
+ "未命名記事": {
+  "zh-CN": "未命名记事",
+  "en": "Untitled note",
+  "ja": "無題のメモ"
+ },
+ "沒有符合的記事": {
+  "zh-CN": "没有符合的记事",
+  "en": "No matching notes",
+  "ja": "一致するメモがありません"
+ },
+ "還沒有加密記事": {
+  "zh-CN": "还没有加密记事",
+  "en": "No encrypted notes yet",
+  "ja": "暗号化メモはまだありません"
+ },
+ "密碼提示、帳號資訊或私人想法，都能加密記下。": {
+  "zh-CN": "密码提示、帐号信息或私人想法，都能加密记下。",
+  "en": "Password hints, account details or private thoughts — all encrypted.",
+  "ja": "パスワードのヒント、アカウント情報、個人的なメモを暗号化して保存できます。"
+ },
+ "記事編輯": {
+  "zh-CN": "记事编辑",
+  "en": "Note editor",
+  "ja": "メモの編集"
+ },
+ "編輯記事": {
+  "zh-CN": "编辑记事",
+  "en": "Edit note",
+  "ja": "メモを編集"
+ },
+ "新增加密記事": {
+  "zh-CN": "添加加密记事",
+  "en": "New encrypted note",
+  "ja": "新しい暗号化メモ"
+ },
+ "標題": {
+  "zh-CN": "标题",
+  "en": "Title",
+  "ja": "タイトル"
+ },
+ "選填": {
+  "zh-CN": "选填",
+  "en": "Optional",
+  "ja": "任意"
+ },
+ "內容": {
+  "zh-CN": "内容",
+  "en": "Content",
+  "ja": "内容"
+ },
+ "複製內容": {
+  "zh-CN": "拷贝内容",
+  "en": "Copy content",
+  "ja": "内容をコピー"
+ },
+ "{count} 則加密記事": {
+  "zh-CN": "{count} 则加密记事",
+  "en": "Encrypted notes: {count}",
+  "ja": "暗号化メモ：{count} 件"
+ },
+ "記事內容會立即清除，無法復原。": {
+  "zh-CN": "记事内容会立即清除，无法复原。",
+  "en": "The note content is erased immediately and cannot be recovered.",
+  "ja": "メモの内容はすぐに消去され、復元できません。"
+ },
+ "記事資料格式錯誤": {
+  "zh-CN": "记事数据格式错误",
+  "en": "Invalid note data format.",
+  "ja": "メモデータの形式が正しくありません。"
+ },
+ "記事內容過長（上限 100,000 字）": {
+  "zh-CN": "记事内容过长（上限 100,000 字）",
+  "en": "The note is too long (limit 100,000 characters).",
+  "ja": "メモが長すぎます（上限 100,000 文字）。"
+ },
+ "請輸入記事標題或內容": {
+  "zh-CN": "请输入记事标题或内容",
+  "en": "Enter a title or some content for the note.",
+  "ja": "メモのタイトルまたは内容を入力してください。"
+ },
+ "記事數量已達上限": {
+  "zh-CN": "记事数量已达上限",
+  "en": "You have reached the maximum number of notes.",
+  "ja": "メモの数が上限に達しました。"
+ },
+ "請務必記住主密碼": {
+  "zh-CN": "请务必记住主密码",
+  "en": "Remember your master password",
+  "ja": "マスターパスワードを必ず覚えておいてください"
+ },
+ "主密碼不會在任何地方備份，也沒有救援或重設方式。一旦遺失，所有書籤與記事將永久無法開啟。": {
+  "zh-CN": "主密码不会在任何地方备份，也没有救援或重设方式。一旦遗失，所有书签与记事将永久无法打开。",
+  "en": "Your master password is not backed up anywhere, and there is no way to recover or reset it. If you lose it, all bookmarks and notes become permanently inaccessible.",
+  "ja": "マスターパスワードはどこにもバックアップされず、復旧やリセットの方法もありません。紛失すると、すべてのブックマークとメモが永久に開けなくなります。"
+ },
+ "我了解遺失主密碼後無法救援，並會自行妥善保管。": {
+  "zh-CN": "我了解遗失主密码后无法救援，并会自行妥善保管。",
+  "en": "I understand a lost master password cannot be recovered, and I will keep it safe.",
+  "ja": "マスターパスワードを紛失すると復旧できないことを理解し、自分で大切に保管します。"
+ },
+ "請先確認已了解主密碼無法救援": {
+  "zh-CN": "请先确认已了解主密码无法救援",
+  "en": "Please confirm that you understand the master password cannot be recovered.",
+  "ja": "マスターパスワードは復旧できないことを確認してください。"
+ },
+ "重要聲明": {
+  "zh-CN": "重要声明",
+  "en": "Important notice",
+  "ja": "重要なお知らせ"
+ },
+ "主密碼只存在你的記憶中。Veil Bookmark 不會在任何地方（本機、Google Drive 或開發者）儲存、備份或傳送你的主密碼。": {
+  "zh-CN": "主密码只存在你的记忆中。Veil Bookmark 不会在任何地方（本机、Google Drive 或开发者）保存、备份或发送你的主密码。",
+  "en": "Your master password exists only in your memory. Veil Bookmark never stores, backs up or transmits it anywhere — not on this device, in Google Drive, or with the developer.",
+  "ja": "マスターパスワードはあなたの記憶の中にだけあります。Veil Bookmark はマスターパスワードをどこにも（この端末、Google Drive、開発者のいずれにも）保存・バックアップ・送信しません。"
+ },
+ "沒有任何密碼救援或重設機制，開發者也無法協助找回密碼或解密資料。": {
+  "zh-CN": "没有任何密码救援或重设机制，开发者也无法协助找回密码或解密数据。",
+  "en": "There is no password recovery or reset, and the developer cannot help recover your password or decrypt your data.",
+  "ja": "パスワードの復旧やリセットの仕組みはなく、開発者もパスワードの復元やデータの復号をお手伝いできません。"
+ },
+ "一旦遺失主密碼，所有加密的書籤與記事將永久無法開啟。": {
+  "zh-CN": "一旦遗失主密码，所有加密的书签与记事将永久无法打开。",
+  "en": "If you lose your master password, all encrypted bookmarks and notes become permanently inaccessible.",
+  "ja": "マスターパスワードを紛失すると、暗号化されたすべてのブックマークとメモは永久に開けなくなります。"
+ },
+ "請自行妥善保管主密碼，並定期匯出加密備份；備份檔同樣需要主密碼才能還原。": {
+  "zh-CN": "请自行妥善保管主密码，并定期导出加密备份；备份档同样需要主密码才能还原。",
+  "en": "Keep your master password safe and export encrypted backups regularly; backups also need the master password to restore.",
+  "ja": "マスターパスワードは各自で大切に保管し、暗号化バックアップを定期的に出力してください。バックアップの復元にもマスターパスワードが必要です。"
+ },
+ "本軟體依「現狀」提供，不提供任何明示或默示擔保。在法律允許的範圍內，開發者對資料遺失、無法存取或其他損害不負任何責任。": {
+  "zh-CN": "本软件依「现状」提供，不提供任何明示或默示担保。在法律允许的范围内，开发者对数据遗失、无法访问或其他损害不负任何责任。",
+  "en": "This software is provided \"as is\", without warranty of any kind, express or implied. To the extent permitted by law, the developer is not liable for any data loss, loss of access or other damages.",
+  "ja": "本ソフトウェアは「現状のまま」提供され、明示・黙示を問わずいかなる保証もありません。法律で認められる範囲において、開発者はデータの損失、アクセス不能、その他の損害について一切責任を負いません。"
  }
 };
