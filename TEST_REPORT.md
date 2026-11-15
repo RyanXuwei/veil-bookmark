@@ -1,4 +1,4 @@
-# Veil Bookmark 0.1.7 Beta 驗證紀錄
+# Veil Bookmark 0.1.8 Beta 驗證紀錄
 
 驗證日期：2026-11-15（Asia/Taipei）。所有內容為合成資料，未讀取使用者真實 Chrome 設定檔、書籤或帳號。
 
@@ -76,3 +76,11 @@
 - `scripts/setup-e2e.mjs`（Chrome for Testing）：歡迎畫面「從 Google Drive 還原」在未設定時開啟說明頁；顯示正確的 `https://<ID>.chromiumapp.org/`；4 個 Google Cloud 連結目的地正確；Client Secret 樣式輸入被拒、合成 ID 可儲存並顯示「已設定，尚未連接」；380px 無水平捲動；英文版正常；移除設定後回到未設定；整個測試沒有對外連線。截圖 previews/24–26。
 - 浮框、多語、關於頁回歸測試全部重跑通過。
 - **未驗證**：真實 Google Cloud 專案與帳戶的授權、實際 Drive 上傳／下載、兩台電腦同步、`prompt=none` 背景更新權杖在真實環境的行為。
+
+## 0.1.8 固定 ID、快照清理、隱私權政策
+
+- Chrome for Testing 載入 dist 後，實際擴充功能 ID 為 `edehlgkopbgmnopdaepadcopfnkgcpab`，與由公開金鑰計算的 ID 一致；設定頁顯示 `https://edehlgkopbgmnopdaepadcopfnkgcpab.chromiumapp.org/`。
+- 8 組 Node 測試通過。Drive 測試更新：兩份快照時上傳合併快照並刪除兩份舊快照，Drive 只剩一份且內容包含遠端新增項目；列表後消失的快照（下載 404）會略過；其他保險庫被拒絕時不刪除任何檔案；Drive 內容沒有明文。
+- 浮框、多語、關於頁（含 GitHub 與隱私權政策兩個連結、版本號）、Drive 設定頁 E2E 全部重跑通過。
+- docs/index.html、docs/privacy.html：1100px 與 380px 無水平捲動、圖片正常載入；隱私權政策所述加密方式（PBKDF2-SHA256、AES-256-GCM）與程式一致。截圖 previews/27–28。
+- **未驗證**：GitHub Pages 尚未啟用，隱私權政策網址目前無法開啟；真實 Google OAuth 與 Drive 同步仍未驗證。

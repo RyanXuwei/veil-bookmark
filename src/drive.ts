@@ -98,7 +98,12 @@ async function token(interactive: boolean) {
     );
   return webFlowToken(clientId, interactive);
 }
-async function request(t: string, url: string, init: RequestInit = {}) {
+async function request(
+  t: string,
+  url: string,
+  init: RequestInit = {},
+  allow404 = false,
+) {
   const r = await fetch(url, {
     ...init,
     headers: { ...init.headers, Authorization: `Bearer ${t}` },
@@ -110,6 +115,7 @@ async function request(t: string, url: string, init: RequestInit = {}) {
       await chrome.identity.removeCachedAuthToken({ token: t });
     throw Error("Google 授權已失效，請重新連線");
   }
+  if (allow404 && r.status === 404) return null;
   if (!r.ok) throw Error(`Drive 請求失敗 (${r.status})，本機資料已保留`);
   return r;
 }
@@ -125,20 +131,29 @@ export async function readRemote(interactive: boolean) {
       pageSize: "1000",
     });
     if (page) q.set("pageToken", page);
-    const data = await (await request(t, `${API}?${q}`)).json();
+    const data = await (await request(t, `${API}?${q}`))!.json();
     files.push(...data.files);
     page = data.nextPageToken || "";
     if (files.length > 2000)
       throw Error("Drive 快照超過 2000 份，請先匯出備份並整理");
   } while (page);
   const envelopes: Envelope[] = [];
+  const ids: string[] = [];
   for (const f of files) {
-    const r = await request(t, `${API}/${encodeURIComponent(f.id)}?alt=media`);
+    // Another device may have consolidated (deleted) this snapshot meanwhile.
+    const r = await request(
+      t,
+      `${API}/${encodeURIComponent(f.id)}?alt=media`,
+      {},
+      true,
+    );
+    if (!r) continue;
     const raw = await r.text();
     if (raw.length > 12_000_000) throw Error("Drive 備份過大");
     envelopes.push(validateEnvelope(JSON.parse(raw)));
+    ids.push(f.id);
   }
-  return { t, envelopes };
+  return { t, envelopes, ids };
 }
 // Immutable snapshots: concurrent devices never overwrite another device's changes.
 export async function upload(t: string, e: Envelope) {
@@ -159,4 +174,17 @@ export async function upload(t: string, e: Envelope) {
       body,
     },
   );
+}
+
+// Removes snapshots whose contents are already merged into a newer upload.
+// Only ids that were read in this sync are deleted, so a snapshot another
+// device uploads concurrently is never lost.
+export async function removeSnapshots(t: string, ids: string[]) {
+  for (const id of ids)
+    await request(
+      t,
+      `${API}/${encodeURIComponent(id)}`,
+      { method: "DELETE" },
+      true,
+    );
 }

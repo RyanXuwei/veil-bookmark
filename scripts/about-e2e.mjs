@@ -38,13 +38,28 @@ try {
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
   const text = await dialog.innerText();
-  for (const s of ["Ryan Hsu", "BitingBox Studio", "2026-11-15", "程式製作年份", "0.1.6"])
+  const version = (await worker.evaluate(() => chrome.runtime.getManifest()))
+    .version;
+  for (const s of [
+    "Ryan Hsu",
+    "BitingBox Studio",
+    "2026-11-15",
+    "程式製作年份",
+    "隱私權政策",
+    version,
+  ])
     assert(text.includes(s), s);
-  assert(text.includes("© 2026 Ryan Hsu. All rights reserved."), "copyright line");
+  assert(
+    text.includes("© 2026 Ryan Hsu. All rights reserved."),
+    "copyright line",
+  );
   assert(!/\{|null/.test(text), "no placeholders");
-  assert.equal(
-    await dialog.getByRole("link").getAttribute("href"),
-    "https://github.com/RyanXuwei",
+  assert.deepEqual(
+    await dialog.getByRole("link").evaluateAll((a) => a.map((x) => x.href)),
+    [
+      "https://github.com/RyanXuwei",
+      "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
+    ],
   );
   await page.screenshot({ path: resolve(shots, "22-about-zh-TW.png") });
   await page.getByRole("button", { name: "關閉" }).click();

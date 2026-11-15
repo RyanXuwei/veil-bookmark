@@ -12,7 +12,8 @@ const CREDITS = {
   creator: "Ryan Hsu",
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
-  version: "0.1.7 Beta",
+  privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
+  version: "0.1.8 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-15",
   copyrightYear: "2026",
@@ -976,7 +977,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.1.7 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.1.8 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">
@@ -1000,6 +1001,14 @@ function App() {
                     rel="noopener noreferrer"
                   >
                     {t("在 GitHub 查看 Ryan Hsu 的作品")} ↗
+                  </a>
+                  <br />
+                  <a
+                    href={CREDITS.privacy}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t("隱私權政策")} ↗
                   </a>
                 </p>
                 <p className="small muted">

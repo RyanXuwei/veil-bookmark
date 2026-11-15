@@ -1,4 +1,4 @@
-# Veil Bookmark · 0.1.7 Beta
+# Veil Bookmark · 0.1.8 Beta
 
 原專案代號 Veilmark；因 Chrome 商店已有同名產品，2026-11-15 由使用者正式改名為 Veil Bookmark。內部加密格式與同步協定識別碼保留 `veilmark`，避免破壞資料相容性。
 
@@ -114,7 +114,7 @@ Google OAuth 真實帳戶連線及無痕狀態下的互動授權尚未驗證；�
 - 工作室：BitingBox Studio
 - 程式製作年份：2026
 - 程式製作日期：2026-11-15（首次完成可交付版本 0.1.0，Asia/Taipei）
-- 最後更新日期：2026-11-15（0.1.7）
+- 最後更新日期：2026-11-15（0.1.8）
 - 發佈日期：尚未公開發佈
 - Copyright：© 2026 Ryan Hsu. All rights reserved.（權利人由使用者於 2026-11-15 確認；第三方套件保留各自授權，見 THIRD_PARTY_NOTICES.txt）
 - GitHub：https://github.com/RyanXuwei
@@ -127,3 +127,11 @@ Google OAuth 真實帳戶連線及無痕狀態下的互動授權尚未驗證；�
 - 其他電腦的擴充功能 ID 不同時，把那台電腦設定頁顯示的網址加到同一個用戶端的重新導向 URI 即可，所有電腦共用同一個 Drive 應用程式資料夾。
 - 若建置時已用 `VEILMARK_OAUTH_CLIENT_ID` 內建 Client ID，會優先使用內建設定，設定頁的輸入欄停用。
 - 尚未以真實 Google 帳戶驗證整個流程；第一次使用時請先匯出加密備份。
+
+## 0.1.8 固定擴充功能 ID、Drive 快照清理、隱私權政策
+
+- **固定擴充功能 ID：`edehlgkopbgmnopdaepadcopfnkgcpab`**。`manifest.json` 內含公開金鑰（`key`），不論安裝在哪台電腦、哪個資料夾，ID 都相同，可登記一個「Chrome 擴充功能」類型的 OAuth 用戶端給所有電腦使用。私鑰不在儲存庫中，未封裝安裝與上架都不需要它。
+- **從舊版升級會變成新的擴充功能**：ID 改變後，Chrome 會把它視為另一個擴充功能，舊版的本機保險庫不會自動帶過來。請先在舊版「同步與備份」匯出加密備份，再載入 0.1.8，於歡迎畫面選「已有備份？從加密檔案還原」。確認無誤後再移除舊版。
+- **Drive 快照清理**：同步時若 Drive 有多份快照，會先上傳合併後的新快照，再刪除本次已讀取並合併的舊快照，Drive 上維持一份。只刪除已合併的快照，其他電腦同時上傳的新快照不會被刪；下載途中被其他電腦清掉的快照會略過。
+- **隱私權政策與首頁**：`docs/`（GitHub Pages）。關於頁加入隱私權政策連結：https://ryanxuwei.github.io/veil-bookmark/privacy.html ；manifest `homepage_url` 指向 https://ryanxuwei.github.io/veil-bookmark/ 。
+- 上架 Chrome 線上應用程式商店時，商店會指派另一個 ID，屆時需以商店 ID 另建 OAuth 用戶端。

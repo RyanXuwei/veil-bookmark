@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_appName__",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "minimum_chrome_version": "120",
   "description": "__MSG_appDesc__",
   "permissions": [
@@ -38,5 +38,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
   },
-  "default_locale": "zh_TW"
+  "default_locale": "zh_TW",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1hPP3bmoFMokE4fxTMGtAVVriEFVoXQ60/M1zwfR5S0aSXNf7FIZt2RvIOdcRJ+NbKsC1+QLLLnecQlQp6PmTQEHwdv6hLHyhrCrWqwsXKsUllPRsUseMoGkA39Pxy2TWqDS0H6kPCSeApVvtCx6UNfqAJhgKvOuLj5ORMzX2EF5LkZiM7tLB/VZLctshDME8+7SoavGwTM6068QOwtEdAJ/Ljujg7yzYpfJ2ptbADRY15H09m6icvYxhUvUVAavzZzWM+1oZ1WmAt+3736H8KtLV/CfFxy2UF7NK8w2RphPAouNLLFTmr5GscRn0pGPCJrhDwMOegXvtlRryCVFqwIDAQAB",
+  "homepage_url": "https://ryanxuwei.github.io/veil-bookmark/"
 }

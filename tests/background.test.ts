@@ -137,10 +137,13 @@ test("background encryption, CRUD, export, lock, expiry and restart/session reco
     Date.now = realNow;
   }
 });
-test("Drive encrypted snapshot merge, no-op sync, tombstones, concurrent snapshots, different vault rejection and HTTP failure", async () => {
+test("Drive encrypted snapshot merge, no-op sync, tombstones, consolidation cleanup, vanished snapshots, different vault rejection and HTTP failure", async () => {
   const { derive, decrypt, encrypt } = await import("../src/crypto");
   const originalFetch = globalThis.fetch;
-  const remote: any[] = [];
+  const remote = new Map<string, any>();
+  let nextId = 0;
+  const deleted: string[] = [];
+  let ghost = false;
   let posts = 0;
   let fail = false;
   (chrome.runtime.getManifest as any) = () => ({
@@ -160,13 +163,22 @@ test("Drive encrypted snapshot merge, no-op sync, tombstones, concurrent snapsho
       const json = body
         .split("Content-Type: application/json\r\n\r\n")[1]
         .split("\r\n--")[0];
-      remote.push(JSON.parse(json));
+      const id = String(nextId++);
+      remote.set(id, JSON.parse(json));
       posts++;
-      return Response.json({ id: String(remote.length - 1) });
+      return Response.json({ id });
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE") {
+      deleted.push(id);
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
     }
     if (u.includes("alt=media"))
-      return Response.json(remote[Number(u.split("/").at(-1)?.split("?")[0])]);
-    return Response.json({ files: remote.map((_, i) => ({ id: String(i) })) });
+      return remote.has(id)
+        ? Response.json(remote.get(id))
+        : new Response("", { status: 404 });
+    const ids = [...remote.keys(), ...(ghost ? ["vanished"] : [])];
+    return Response.json({ files: ids.map((id) => ({ id })) });
   };
   try {
     await rpc("UNLOCK", { password: "1234" });
@@ -187,27 +199,48 @@ test("Drive encrypted snapshot merge, no-op sync, tombstones, concurrent snapsho
       revision: "remote-revision",
       deleted: false,
     });
-    remote.push(await encrypt(cloud, key, local.vault.salt));
+    remote.set("other-device", await encrypt(cloud, key, local.vault.salt));
     const merged = await rpc("SYNC");
     assert(merged.entries.some((x: any) => x.id === "remote-new"));
     assert(merged.entries.some((x: any) => x.deleted));
-    assert.equal(posts, 1);
+    // Two snapshots are consolidated into one; both read snapshots are removed.
+    assert.equal(posts, 2);
+    assert.deepEqual(deleted.sort(), ["0", "other-device"]);
+    assert.equal(remote.size, 1);
+    const [only] = remote.values();
+    assert(
+      (await decrypt(only, key)).entries.some(
+        (x: any) => x.id === "remote-new",
+      ),
+    );
+    // A snapshot that disappears between listing and download is skipped.
+    ghost = true;
+    await rpc("SYNC");
+    ghost = false;
+    assert.equal(posts, 2);
     await rpc("UPSERT", {
       entry: { title: "local change", url: "https://example.net" },
     });
     await rpc("SYNC");
-    assert.equal(posts, 2);
-    assert(!JSON.stringify(remote).includes("local change"));
-    assert(!JSON.stringify(remote).includes("remote secret"));
+    assert.equal(posts, 3);
+    assert.equal(remote.size, 1, "Drive keeps one current snapshot");
+    const cloudText = JSON.stringify([...remote.values()]);
+    assert(!cloudText.includes("local change"));
+    assert(!cloudText.includes("remote secret"));
     const before = structuredClone(local.vault);
     fail = true;
     await assert.rejects(rpc("SYNC"), /503/);
     assert.deepEqual(local.vault, before);
     fail = false;
-    remote.push({ ...remote[0], id: "different-vault" });
+    remote.set("foreign", {
+      ...[...remote.values()][0],
+      id: "different-vault",
+    });
+    const sizeBefore = remote.size;
     await assert.rejects(rpc("SYNC"), /另一個保險庫/);
     assert.deepEqual(local.vault, before);
-    remote.pop();
+    assert.equal(remote.size, sizeBefore, "nothing is deleted on rejection");
+    remote.delete("foreign");
     const normalFetch = globalThis.fetch;
     let release!: () => void;
     let started!: () => void;

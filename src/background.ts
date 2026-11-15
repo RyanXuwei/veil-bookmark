@@ -16,6 +16,7 @@ import {
   clearTokens,
   oauthSource,
   readRemote,
+  removeSnapshots,
   setClientId,
   upload,
   userClientId,
@@ -112,7 +113,7 @@ async function sync(interactive = false) {
   const e = await local();
   if (!e) throw Error("請先建立或還原保險庫");
   let v = await decrypt(e, key);
-  const { t, envelopes } = await readRemote(interactive);
+  const { t, envelopes, ids } = await readRemote(interactive);
   for (const remote of envelopes) {
     if (remote.id !== s.id || remote.salt !== s.salt)
       throw Error(
@@ -127,8 +128,16 @@ async function sync(interactive = false) {
   let remoteUnion: Vault = { version: 1, id: v.id, entries: [] };
   for (const remote of envelopes)
     remoteUnion = merge(remoteUnion, await decrypt(remote, key));
-  if (!envelopes.length || JSON.stringify(remoteUnion) !== canonical)
+  // Upload when Drive is missing changes, or consolidate several snapshots
+  // into one so Drive keeps a single current copy.
+  if (
+    !envelopes.length ||
+    envelopes.length > 1 ||
+    JSON.stringify(remoteUnion) !== canonical
+  ) {
     await upload(t, snapshot);
+    await removeSnapshots(t, ids);
+  }
   await chrome.storage.local.set({ lastSync: Date.now(), syncError: "" });
   return v;
 }

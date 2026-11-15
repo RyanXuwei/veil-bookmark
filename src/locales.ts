@@ -1004,5 +1004,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "请在 Google 授权画面允许访问应用程序数据",
   "en": "Please allow access to app data on the Google consent screen.",
   "ja": "Google の同意画面でアプリデータへのアクセスを許可してください。"
+ },
+ "隱私權政策": {
+  "zh-CN": "隐私权政策",
+  "en": "Privacy policy",
+  "ja": "プライバシーポリシー"
  }
 };
