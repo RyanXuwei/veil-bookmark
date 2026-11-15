@@ -13,6 +13,18 @@ const event = (name: string) => ({
     listeners[name] = f;
   },
 });
+// chrome.storage stores values like base::Value dictionaries: object keys come
+// back sorted, not in insertion order. Mimic that so order bugs surface here.
+const sortKeys = (x: any): any =>
+  Array.isArray(x)
+    ? x.map(sortKeys)
+    : x && typeof x === "object"
+      ? Object.fromEntries(
+          Object.keys(x)
+            .sort()
+            .map((k) => [k, sortKeys(x[k])]),
+        )
+      : x;
 const store = (data: Record<string, any>) => ({
   get: async (keys: any) => {
     if (keys === null) return { ...data };
@@ -22,7 +34,7 @@ const store = (data: Record<string, any>) => ({
     return structuredClone(result);
   },
   set: async (x: any) => {
-    Object.assign(data, structuredClone(x));
+    Object.assign(data, sortKeys(structuredClone(x)));
   },
   remove: async (keys: any) => {
     for (const k of typeof keys === "string" ? [keys] : keys) delete data[k];
@@ -138,7 +150,7 @@ test("background encryption, CRUD, export, lock, expiry and restart/session reco
   }
 });
 test("Drive encrypted snapshot merge, no-op sync, tombstones, consolidation cleanup, vanished snapshots, different vault rejection and HTTP failure", async () => {
-  const { derive, decrypt, encrypt } = await import("../src/crypto");
+  const { decrypt, importKey, seal } = await import("../src/crypto");
   const originalFetch = globalThis.fetch;
   const remote = new Map<string, any>();
   let nextId = 0;
@@ -186,7 +198,7 @@ test("Drive encrypted snapshot merge, no-op sync, tombstones, consolidation clea
     assert.equal(posts, 1);
     await rpc("SYNC");
     assert.equal(posts, 1);
-    const key = await derive("1234", local.vault.salt);
+    const key = await importKey(session.session.key);
     const cloud = await decrypt(local.vault, key);
     cloud.entries.push({
       id: "remote-new",
@@ -199,7 +211,7 @@ test("Drive encrypted snapshot merge, no-op sync, tombstones, consolidation clea
       revision: "remote-revision",
       deleted: false,
     });
-    remote.set("other-device", await encrypt(cloud, key, local.vault.salt));
+    remote.set("other-device", await seal(cloud, key, local.vault.keys));
     const merged = await rpc("SYNC");
     assert(merged.entries.some((x: any) => x.id === "remote-new"));
     assert(merged.entries.some((x: any) => x.deleted));
@@ -411,4 +423,156 @@ test("memo create, edit, delete tombstone, limits, and lock protection", async (
     rpc("MEMO_UPSERT", { memo: { title: "x", body: "y" } }),
     /上鎖/,
   );
+});
+
+test("recovery key: create, forgot-password reset, rotation, fresh-install recovery, legacy migration and synced key slots", async () => {
+  const c = await import("../src/crypto");
+  const clearAttempts = () => {
+    delete session.attempts;
+    delete session.nextAttempt;
+  };
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.driveEnabled;
+  const { recoveryKey } = await rpc("CREATE", { password: "1234" });
+  assert.match(recoveryKey, /^([0-9A-Z]{4}-){7}[0-9A-Z]{4}$/);
+  assert.equal(local.vault.version, 3);
+  assert(!JSON.stringify(local).includes(recoveryKey), "key is never stored");
+  assert.equal((await rpc("STATUS")).hasRecovery, true);
+  await rpc("UPSERT", {
+    entry: { title: "kept", url: "https://example.com/kept" },
+  });
+  await rpc("LOCK");
+
+  // Forgot password: wrong key rejected, right key (sloppy input) resets it.
+  await assert.rejects(
+    rpc("RECOVER", {
+      recoveryKey: c.newRecoveryCode().code,
+      newPassword: "5678",
+    }),
+    /救援金鑰不正確/,
+  );
+  clearAttempts();
+  await assert.rejects(
+    rpc("RECOVER", { recoveryKey: "nope", newPassword: "5678" }),
+    /格式不正確/,
+  );
+  await assert.rejects(
+    rpc("RECOVER", { recoveryKey, newPassword: "12" }),
+    /至少 4/,
+  );
+  const reset = await rpc("RECOVER", {
+    recoveryKey: recoveryKey.toLowerCase().replace(/-/g, " "),
+    newPassword: "5678",
+  });
+  assert.notEqual(reset.recoveryKey, recoveryKey, "a used key is replaced");
+  assert((await rpc("LIST")).entries.some((x: any) => x.title === "kept"));
+  await rpc("LOCK");
+  await assert.rejects(rpc("UNLOCK", { password: "1234" }), /密碼不正確/);
+  clearAttempts();
+  await rpc("UNLOCK", { password: "5678" });
+  await rpc("LOCK");
+  await assert.rejects(
+    rpc("RECOVER", { recoveryKey, newPassword: "9999" }),
+    /救援金鑰不正確/,
+  );
+  clearAttempts();
+
+  // Rotation requires the current password; the previous key stops working.
+  await rpc("UNLOCK", { password: "5678" });
+  await assert.rejects(
+    rpc("RECOVERY_CREATE", { password: "1234" }),
+    /密碼不正確/,
+  );
+  clearAttempts();
+  const rotated = await rpc("RECOVERY_CREATE", { password: "5678" });
+  const backup = await rpc("EXPORT");
+  await rpc("LOCK");
+  await assert.rejects(
+    rpc("RECOVER", { recoveryKey: reset.recoveryKey, newPassword: "0000" }),
+    /救援金鑰不正確/,
+  );
+  clearAttempts();
+
+  // New computer: backup file + recovery key.
+  delete local.vault;
+  await assert.rejects(
+    rpc("RECOVER", { recoveryKey: rotated.recoveryKey, newPassword: "abcd" }),
+  );
+  const fresh = await rpc("RECOVER", {
+    envelope: backup,
+    recoveryKey: rotated.recoveryKey,
+    newPassword: "abcd",
+  });
+  assert(fresh.recoveryKey);
+  assert((await rpc("LIST")).entries.some((x: any) => x.title === "kept"));
+  await rpc("LOCK");
+
+  // A legacy v1 vault opens with its password, is migrated, has no key yet.
+  const salt = c.b64(c.random(16));
+  local.vault = await c.encrypt(
+    { version: 2, id: "legacy-vault", entries: [], memos: [] },
+    await c.derive("1234", salt),
+    salt,
+  );
+  await rpc("UNLOCK", { password: "1234" });
+  assert.equal(local.vault.version, 3);
+  assert.equal(local.vault.keys.salt, salt);
+  assert.equal((await rpc("STATUS")).hasRecovery, false);
+  await rpc("RECOVERY_CREATE", { password: "1234" });
+  assert.equal((await rpc("STATUS")).hasRecovery, true);
+
+  // Sync: newer key slots from another device are adopted; forged ones rejected.
+  const originalFetch = globalThis.fetch;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async () => ({ token: "t" }),
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  const remote = new Map<string, any>();
+  let n = 0;
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    const u = String(input);
+    if (init.method === "POST") {
+      const json = String(init.body)
+        .split("Content-Type: application/json\r\n\r\n")[1]
+        .split("\r\n--")[0];
+      remote.set(String(n++), JSON.parse(json));
+      return Response.json({});
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE")
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
+    if (u.includes("alt=media")) return Response.json(remote.get(id));
+    return Response.json({ files: [...remote.keys()].map((id) => ({ id })) });
+  };
+  try {
+    const dek = await c.importKey(session.session.key);
+    const v = await c.decrypt(local.vault, dek);
+    const otherKeys = await c.setPassword(
+      dek,
+      v.id,
+      "newpass",
+      local.vault.keys,
+    );
+    remote.set("other", await c.seal(v, dek, otherKeys));
+    await rpc("SYNC");
+    assert.equal(local.vault.keys.updated, otherKeys.updated);
+    await rpc("LOCK");
+    await assert.rejects(rpc("UNLOCK", { password: "1234" }), /密碼不正確/);
+    clearAttempts();
+    await rpc("UNLOCK", { password: "newpass" });
+    const forged = await c.seal(v, dek, otherKeys);
+    forged.keys = { ...forged.keys, updated: forged.keys.updated + 1000 };
+    remote.clear();
+    remote.set("forged", forged);
+    await assert.rejects(rpc("SYNC"), /另一個保險庫/);
+    assert.equal(local.vault.keys.updated, otherKeys.updated);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await rpc("LOCK");
+  }
 });

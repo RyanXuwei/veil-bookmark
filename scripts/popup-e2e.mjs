@@ -9,7 +9,23 @@ const server = createServer((req, res) => {
     `<meta charset="utf-8"><title>${req.url === "/normal" ? "一般網頁" : "測試中的網頁"}</title><h1>Synthetic fixture</h1>`,
   );
 });
-await new Promise((r) => server.listen(0, "127.0.0.1", r));
+// Pick a port in 41000–41999: a random OS port can land on one of Chrome's
+// blocked ports (e.g. 3659) and fail with ERR_UNSAFE_PORT.
+for (let attempt = 0; ; attempt++) {
+  const port = 41000 + Math.floor(Math.random() * 1000);
+  try {
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(port, "127.0.0.1", () => {
+        server.off("error", reject);
+        resolve();
+      });
+    });
+    break;
+  } catch (e) {
+    if (attempt > 20) throw e;
+  }
+}
 const origin = `http://127.0.0.1:${server.address().port}`;
 const root = resolve(import.meta.dirname, ".."),
   shots = resolve(root, "../previews");
@@ -165,7 +181,12 @@ try {
       if (await evaluate(fn, arg, true)) return;
       await new Promise((r) => setTimeout(r, 100));
     }
-    throw Error("Popup condition timed out: " + fn);
+    const page = await evaluate(() => document.body.innerText).catch(
+      (e) => "(unreadable: " + e.message + ")",
+    );
+    throw Error(
+      "Popup condition timed out: " + fn + "\n--- popup text ---\n" + page,
+    );
   }
   async function click(text) {
     await evaluate((text) => {
@@ -296,7 +317,38 @@ try {
   await evaluate(() => document.querySelector(".ackRow input").click());
   await screenshot("31-password-warning.png");
   await click("建立保險庫 →");
+  // The recovery key is shown once and must be acknowledged.
+  await wait(() => !!document.querySelector("[data-testid=recovery-code]"));
+  const recoveryKey = await evaluate(
+    () => document.querySelector("[data-testid=recovery-code]").dataset.code,
+  );
+  assert.match(recoveryKey, /^([0-9A-Z]{4}-){7}[0-9A-Z]{4}$/);
+  assert(
+    !JSON.stringify(
+      await worker.evaluate(() => chrome.storage.local.get(null)),
+    ).includes(recoveryKey),
+    "recovery key is never stored",
+  );
+  await screenshot("32-recovery-key.png");
+  assert.equal(
+    await evaluate(
+      () =>
+        [...document.querySelectorAll("button")].find(
+          (b) => b.textContent.trim() === "完成",
+        ).disabled,
+    ),
+    true,
+  );
+  await evaluate(() =>
+    document.querySelector(".recoveryModal .ackRow input").click(),
+  );
+  await click("完成");
+  await wait(() => !document.querySelector(".recoveryModal"));
   await wait(() => document.querySelector(".quickList"));
+  assert(
+    await evaluate(() => !document.querySelector(".recoveryBanner")),
+    "no reminder once a recovery key exists",
+  );
   await click("＋ 收藏目前網頁");
   await wait(() => document.querySelector("[role=dialog]"));
   assert.equal(
@@ -592,8 +644,31 @@ try {
       await worker.evaluate(() => chrome.storage.local.get("vault")),
     ).includes("一般網頁"),
   );
+  // Forgot password: reset it with the recovery key from vault creation.
+  await click("忘記主密碼？使用救援金鑰");
+  await wait(() => !!document.querySelector(".recoveryInput"));
+  await fill(".recoveryInput", recoveryKey.toLowerCase());
+  await fill(".recoverForm label:nth-of-type(2) input", "5678");
+  await fill(".recoverForm label:nth-of-type(3) input", "5678");
+  await screenshot("33-forgot-password.png");
+  await click("重設主密碼 →");
+  await wait(() => !!document.querySelector("[data-testid=recovery-code]"));
+  const newKey = await evaluate(
+    () => document.querySelector("[data-testid=recovery-code]").dataset.code,
+  );
+  assert.notEqual(newKey, recoveryKey, "a used recovery key is replaced");
+  await evaluate(() =>
+    document.querySelector(".recoveryModal .ackRow input").click(),
+  );
+  await click("完成");
+  await wait(() => !!document.querySelector(".quickList .quickLink"));
+  await click("上鎖");
+  await wait(() => !!document.querySelector("input[type=password]"));
+  await fill("input[type=password]", "5678");
+  await click("解鎖保險庫 →");
+  await wait(() => !!document.querySelector(".quickList .quickLink"));
   console.log(
-    "PASS: password ack gate; encrypted notes create/reopen/delete; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
+    "PASS: recovery key shown once, not stored, forgot-password reset with new password and rotated key; password ack gate; encrypted notes create/reopen/delete; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
     dimensions,
     "; no automatic management tab; activeTab current-page capture; 4-char create/unlock; folders/search/edit/delete; lock/reopen; opening bookmark.",
   );

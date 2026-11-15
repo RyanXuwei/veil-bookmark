@@ -1174,5 +1174,190 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "本软件依「现状」提供，不提供任何明示或默示担保。在法律允许的范围内，开发者对数据遗失、无法访问或其他损害不负任何责任。",
   "en": "This software is provided \"as is\", without warranty of any kind, express or implied. To the extent permitted by law, the developer is not liable for any data loss, loss of access or other damages.",
   "ja": "本ソフトウェアは「現状のまま」提供され、明示・黙示を問わずいかなる保証もありません。法律で認められる範囲において、開発者はデータの損失、アクセス不能、その他の損害について一切責任を負いません。"
+ },
+ "救援金鑰": {
+  "zh-CN": "救援密钥",
+  "en": "Recovery key",
+  "ja": "リカバリーキー"
+ },
+ "忘記主密碼時，可用這組金鑰重設密碼。": {
+  "zh-CN": "忘记主密码时，可用这组密钥重设密码。",
+  "en": "If you forget your master password, use this key to reset it.",
+  "ja": "マスターパスワードを忘れたときは、このキーでリセットできます。"
+ },
+ "請離線妥善保管，不要存放在同一台電腦或與主密碼放在一起。": {
+  "zh-CN": "请脱机妥善保管，不要存放在同一台电脑或与主密码放在一起。",
+  "en": "Keep it offline and safe — not on this computer and not together with your master password.",
+  "ja": "オフラインで安全に保管し、このパソコンやマスターパスワードと一緒に保存しないでください。"
+ },
+ "建立日期：{date}": {
+  "zh-CN": "创建日期：{date}",
+  "en": "Created: {date}",
+  "ja": "作成日：{date}"
+ },
+ "你的救援金鑰": {
+  "zh-CN": "你的救援密钥",
+  "en": "Your recovery key",
+  "ja": "あなたのリカバリーキー"
+ },
+ "忘記主密碼時，這是唯一能救回資料的方式。這組金鑰只會顯示這一次，請現在就抄寫、列印或下載後離線保存。": {
+  "zh-CN": "忘记主密码时，这是唯一能救回数据的方式。这组密钥只会显示这一次，请现在就抄写、打印或下载后脱机保存。",
+  "en": "If you forget your master password, this is the only way to get your data back. It is shown only once — write it down, print it or download it now and keep it offline.",
+  "ja": "マスターパスワードを忘れたとき、データを取り戻す唯一の方法です。このキーは一度だけ表示されます。今すぐ書き留めるか、印刷またはダウンロードしてオフラインで保管してください。"
+ },
+ "下載文字檔 ↓": {
+  "zh-CN": "下载文字档 ↓",
+  "en": "Download text file ↓",
+  "ja": "テキストファイルをダウンロード ↓"
+ },
+ "取得這組金鑰的人可以重設你的密碼並開啟資料。不要和主密碼放在一起，也不要存在這台電腦。": {
+  "zh-CN": "取得这组密钥的人可以重设你的密码并打开数据。不要和主密码放在一起，也不要存在这台电脑。",
+  "en": "Anyone with this key can reset your password and open your data. Don't keep it with your master password or on this computer.",
+  "ja": "このキーを持つ人は誰でもパスワードをリセットしてデータを開けます。マスターパスワードと一緒に保管したり、このパソコンに保存したりしないでください。"
+ },
+ "我已將救援金鑰保存在安全的地方": {
+  "zh-CN": "我已将救援密钥保存在安全的地方",
+  "en": "I have stored my recovery key somewhere safe",
+  "ja": "リカバリーキーを安全な場所に保管しました"
+ },
+ "完成": {
+  "zh-CN": "完成",
+  "en": "Done",
+  "ja": "完了"
+ },
+ "新的主密碼": {
+  "zh-CN": "新的主密码",
+  "en": "New master password",
+  "ja": "新しいマスターパスワード"
+ },
+ "完成後會產生一組新的救援金鑰，舊的金鑰將無法再使用。": {
+  "zh-CN": "完成后会产生一组新的救援密钥，旧的密钥将无法再使用。",
+  "en": "A new recovery key will be created; the old one will stop working.",
+  "ja": "完了すると新しいリカバリーキーが作成され、古いキーは使えなくなります。"
+ },
+ "重設主密碼 →": {
+  "zh-CN": "重设主密码 →",
+  "en": "Reset master password →",
+  "ja": "マスターパスワードをリセット →"
+ },
+ "已建立。產生新的救援金鑰後，舊的金鑰會立即失效。": {
+  "zh-CN": "已创建。产生新的救援密钥后，旧的密钥会立即失效。",
+  "en": "Created. Generating a new recovery key immediately invalidates the old one.",
+  "ja": "作成済みです。新しいリカバリーキーを作成すると、古いキーはすぐに無効になります。"
+ },
+ "尚未建立救援金鑰。忘記主密碼時將無法救回資料，建議立即建立。": {
+  "zh-CN": "尚未创建救援密钥。忘记主密码时将无法救回数据，建议立即创建。",
+  "en": "No recovery key yet. If you forget your master password your data cannot be recovered — create one now.",
+  "ja": "リカバリーキーがまだありません。マスターパスワードを忘れるとデータを復元できません。今すぐ作成してください。"
+ },
+ "輸入目前的主密碼": {
+  "zh-CN": "输入目前的主密码",
+  "en": "Enter your current master password",
+  "ja": "現在のマスターパスワードを入力"
+ },
+ "確認": {
+  "zh-CN": "确认",
+  "en": "Confirm",
+  "ja": "確認"
+ },
+ "產生新的救援金鑰": {
+  "zh-CN": "产生新的救援密钥",
+  "en": "Generate a new recovery key",
+  "ja": "新しいリカバリーキーを作成"
+ },
+ "建立救援金鑰": {
+  "zh-CN": "创建救援密钥",
+  "en": "Create recovery key",
+  "ja": "リカバリーキーを作成"
+ },
+ "用救援金鑰重設主密碼": {
+  "zh-CN": "用救援密钥重设主密码",
+  "en": "Reset your master password with the recovery key",
+  "ja": "リカバリーキーでマスターパスワードをリセット"
+ },
+ "輸入建立保險庫時取得的救援金鑰，並設定新的主密碼。": {
+  "zh-CN": "输入创建保险库时取得的救援密钥，并设置新的主密码。",
+  "en": "Enter the recovery key you received when you created the vault, then set a new master password.",
+  "ja": "保管庫の作成時に受け取ったリカバリーキーを入力し、新しいマスターパスワードを設定してください。"
+ },
+ "選擇加密備份檔，輸入救援金鑰，並設定新的主密碼。": {
+  "zh-CN": "选择加密备份档，输入救援密钥，并设置新的主密码。",
+  "en": "Choose your encrypted backup, enter your recovery key and set a new master password.",
+  "ja": "暗号化バックアップを選び、リカバリーキーを入力して、新しいマスターパスワードを設定してください。"
+ },
+ "主密碼不會上傳。建立後會提供一組救援金鑰，請另外妥善保存。": {
+  "zh-CN": "主密码不会上传。创建后会提供一组救援密钥，请另外妥善保存。",
+  "en": "Your master password is never uploaded. You'll get a recovery key after creating the vault — keep it somewhere safe.",
+  "ja": "マスターパスワードは送信されません。作成後にリカバリーキーが表示されるので、別に大切に保管してください。"
+ },
+ "← 返回": {
+  "zh-CN": "← 返回",
+  "en": "← Back",
+  "ja": "← 戻る"
+ },
+ "忘記主密碼？使用救援金鑰": {
+  "zh-CN": "忘记主密码？使用救援密钥",
+  "en": "Forgot your master password? Use your recovery key",
+  "ja": "マスターパスワードを忘れた場合はリカバリーキーを使用"
+ },
+ "忘記密碼？用救援金鑰從備份還原": {
+  "zh-CN": "忘记密码？用救援密钥从备份还原",
+  "en": "Forgot the password? Restore a backup with your recovery key",
+  "ja": "パスワードを忘れた場合はリカバリーキーでバックアップを復元"
+ },
+ "主密碼不會在任何地方備份。建立後會顯示一組救援金鑰，是忘記密碼時唯一的救援方式；主密碼與救援金鑰都遺失時，所有書籤與記事將永久無法開啟。": {
+  "zh-CN": "主密码不会在任何地方备份。创建后会显示一组救援密钥，是忘记密码时唯一的救援方式；主密码与救援密钥都遗失时，所有书签与记事将永久无法打开。",
+  "en": "Your master password is not backed up anywhere. After creating the vault you'll see a recovery key — the only way back if you forget your password. If you lose both, all bookmarks and notes become permanently inaccessible.",
+  "ja": "マスターパスワードはどこにもバックアップされません。作成後に表示されるリカバリーキーが、パスワードを忘れたときの唯一の復旧手段です。両方を紛失すると、すべてのブックマークとメモが永久に開けなくなります。"
+ },
+ "我了解主密碼與救援金鑰都遺失後無法救援，並會自行妥善保管。": {
+  "zh-CN": "我了解主密码与救援密钥都遗失后无法救援，并会自行妥善保管。",
+  "en": "I understand that losing both the master password and the recovery key cannot be undone, and I will keep them safe.",
+  "ja": "マスターパスワードとリカバリーキーの両方を紛失すると復旧できないことを理解し、自分で大切に保管します。"
+ },
+ "尚未建立救援金鑰 · 立即建立": {
+  "zh-CN": "尚未创建救援密钥 · 立即创建",
+  "en": "No recovery key yet · Create one now",
+  "ja": "リカバリーキー未作成 · 今すぐ作成"
+ },
+ "主密碼與救援金鑰只由你保管。Veil Bookmark 不會在任何地方（本機、Google Drive 或開發者）儲存或傳送你的主密碼或救援金鑰。": {
+  "zh-CN": "主密码与救援密钥只由你保管。Veil Bookmark 不会在任何地方（本机、Google Drive 或开发者）保存或发送你的主密码或救援密钥。",
+  "en": "Only you hold your master password and recovery key. Veil Bookmark never stores or transmits either of them anywhere — not on this device, in Google Drive, or with the developer.",
+  "ja": "マスターパスワードとリカバリーキーはあなただけが保管します。Veil Bookmark はそのどちらも、この端末・Google Drive・開発者のいずれにも保存・送信しません。"
+ },
+ "忘記主密碼時，唯一的救援方式是使用救援金鑰；開發者無法協助找回密碼、救援金鑰或解密資料。": {
+  "zh-CN": "忘记主密码时，唯一的救援方式是使用救援密钥；开发者无法协助找回密码、救援密钥或解密数据。",
+  "en": "If you forget your master password, the recovery key is the only way back. The developer cannot recover your password or recovery key, or decrypt your data.",
+  "ja": "マスターパスワードを忘れた場合、唯一の復旧手段はリカバリーキーです。開発者はパスワードやリカバリーキーの復元、データの復号をお手伝いできません。"
+ },
+ "主密碼與救援金鑰都遺失時，所有加密的書籤與記事將永久無法開啟。": {
+  "zh-CN": "主密码与救援密钥都遗失时，所有加密的书签与记事将永久无法打开。",
+  "en": "If you lose both your master password and your recovery key, all encrypted bookmarks and notes become permanently inaccessible.",
+  "ja": "マスターパスワードとリカバリーキーの両方を紛失すると、暗号化されたすべてのブックマークとメモは永久に開けなくなります。"
+ },
+ "救援金鑰與主密碼同樣重要：取得救援金鑰的人可以重設密碼並開啟你的資料。請離線妥善保管，並定期匯出加密備份。": {
+  "zh-CN": "救援密钥与主密码同样重要：取得救援密钥的人可以重设密码并打开你的数据。请脱机妥善保管，并定期导出加密备份。",
+  "en": "Your recovery key is as important as your master password: anyone who has it can reset your password and open your data. Keep it offline and safe, and export encrypted backups regularly.",
+  "ja": "リカバリーキーはマスターパスワードと同じくらい重要です。キーを持つ人はパスワードをリセットしてデータを開けます。オフラインで安全に保管し、暗号化バックアップを定期的に出力してください。"
+ },
+ "保險庫金鑰資料無效或已被竄改": {
+  "zh-CN": "保险库密钥数据无效或已被窜改",
+  "en": "The vault's key data is invalid or has been tampered with.",
+  "ja": "保管庫のキーデータが無効か、改ざんされています。"
+ },
+ "這個保險庫尚未建立救援金鑰": {
+  "zh-CN": "这个保险库尚未创建救援密钥",
+  "en": "This vault has no recovery key.",
+  "ja": "この保管庫にはリカバリーキーがありません。"
+ },
+ "救援金鑰不正確": {
+  "zh-CN": "救援密钥不正确",
+  "en": "Incorrect recovery key.",
+  "ja": "リカバリーキーが正しくありません。"
+ },
+ "救援金鑰格式不正確，應為 32 個英數字": {
+  "zh-CN": "救援密钥格式不正确，应为 32 个英数字",
+  "en": "Invalid recovery key format. It should be 32 letters and digits.",
+  "ja": "リカバリーキーの形式が正しくありません。32 文字の英数字で入力してください。"
  }
 };

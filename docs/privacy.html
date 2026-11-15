@@ -15,7 +15,7 @@
     <main>
       <article id="zh" lang="zh-Hant">
         <h1>隱私權政策</h1>
-        <p class="meta">生效日期：2026-11-15　適用版本：0.1.9 起</p>
+        <p class="meta">生效日期：2026-11-15　適用版本：0.2.0 起</p>
 
         <h2>摘要</h2>
         <p>
@@ -26,6 +26,7 @@
         <h2>擴充功能處理的資料</h2>
         <ul>
           <li><strong>書籤與記事內容</strong>（名稱、網址、資料夾、標籤、筆記、記事標題與內文）：以 AES-256-GCM 加密後存在你電腦的 Chrome 擴充功能儲存空間。主密碼不會被儲存或傳送。</li>
+          <li><strong>救援金鑰</strong>：建立時只在畫面上顯示一次，不會被儲存或傳送；保險庫中只保存以救援金鑰加密的資料金鑰。</li>
           <li><strong>目前分頁的標題與網址</strong>：只有在你按「收藏目前網頁」時才讀取，用來填入新書籤。</li>
           <li><strong>設定</strong>（介面語言、同步狀態）：存在本機。</li>
           <li><strong>解鎖狀態與 Google 存取權杖</strong>：只存在瀏覽器工作階段記憶體，上鎖或關閉瀏覽器即清除。</li>
@@ -56,15 +57,15 @@
 
         <h2>安全</h2>
         <p>
-          加密在你的裝置上完成，金鑰由主密碼衍生（PBKDF2），開發者與 Google 都無法解密。遺失主密碼將無法復原資料，請妥善保存並定期匯出加密備份。
+          加密在你的裝置上完成。資料以隨機資料金鑰加密，資料金鑰再由主密碼（PBKDF2）與救援金鑰各加密一份，開發者與 Google 都無法解密。
         </p>
 
         <h2>重要聲明（免責聲明）</h2>
         <ol>
-          <li>主密碼只存在你的記憶中。Veil Bookmark 不會在任何地方（本機、Google Drive 或開發者）儲存、備份或傳送你的主密碼。</li>
-          <li>沒有任何密碼救援或重設機制，開發者也無法協助找回密碼或解密資料。</li>
-          <li>一旦遺失主密碼，所有加密的書籤與記事將永久無法開啟。</li>
-          <li>請自行妥善保管主密碼，並定期匯出加密備份；備份檔同樣需要主密碼才能還原。</li>
+          <li>主密碼與救援金鑰只由你保管。Veil Bookmark 不會在任何地方（本機、Google Drive 或開發者）儲存或傳送你的主密碼或救援金鑰。</li>
+          <li>忘記主密碼時，唯一的救援方式是使用救援金鑰；開發者無法協助找回密碼、救援金鑰或解密資料。</li>
+          <li>主密碼與救援金鑰都遺失時，所有加密的書籤與記事將永久無法開啟。</li>
+          <li>救援金鑰與主密碼同樣重要：取得救援金鑰的人可以重設密碼並開啟你的資料。請離線妥善保管，並定期匯出加密備份。</li>
           <li>本軟體依「現狀」提供，不提供任何明示或默示擔保。在法律允許的範圍內，開發者對資料遺失、無法存取或其他損害不負任何責任。</li>
         </ol>
 
@@ -85,7 +86,7 @@
 
       <article id="en" lang="en">
         <h1>Privacy Policy</h1>
-        <p class="meta">Effective date: 2026-11-15 · Applies to version 0.1.9 and later</p>
+        <p class="meta">Effective date: 2026-11-15 · Applies to version 0.2.0 and later</p>
 
         <h2>Summary</h2>
         <p>
@@ -97,6 +98,7 @@
         <h2>Data the extension handles</h2>
         <ul>
           <li><strong>Bookmark and note content</strong> (title, URL, folder, tags, notes, note titles and text): encrypted with AES-256-GCM and stored in Chrome's extension storage on your computer. Your master password is never stored or transmitted.</li>
+          <li><strong>Recovery key</strong>: shown on screen once when created and never stored or transmitted; the vault only keeps the data key encrypted with it.</li>
           <li><strong>Current tab title and URL</strong>: read only when you click "Save current page", to fill in the new bookmark.</li>
           <li><strong>Settings</strong> (interface language, sync status): stored locally.</li>
           <li><strong>Unlock state and Google access token</strong>: kept only in browser session memory and cleared when you lock or close the browser.</li>
@@ -131,16 +133,16 @@
 
         <h2>Security</h2>
         <p>
-          Encryption happens on your device with a key derived from your master password (PBKDF2); neither the developer nor Google can decrypt
-          it. A lost master password cannot be recovered, so keep it safe and export encrypted backups regularly.
+          Encryption happens on your device. Data is encrypted with a random data key, which is in turn encrypted by your master password (PBKDF2)
+          and by your recovery key; neither the developer nor Google can decrypt it.
         </p>
 
         <h2>Important notice (disclaimer)</h2>
         <ol>
-          <li>Your master password exists only in your memory. Veil Bookmark never stores, backs up or transmits it anywhere — not on this device, in Google Drive, or with the developer.</li>
-          <li>There is no password recovery or reset, and the developer cannot help recover your password or decrypt your data.</li>
-          <li>If you lose your master password, all encrypted bookmarks and notes become permanently inaccessible.</li>
-          <li>Keep your master password safe and export encrypted backups regularly; backups also need the master password to restore.</li>
+          <li>Only you hold your master password and recovery key. Veil Bookmark never stores or transmits either of them anywhere — not on this device, in Google Drive, or with the developer.</li>
+          <li>If you forget your master password, the recovery key is the only way back. The developer cannot recover your password or recovery key, or decrypt your data.</li>
+          <li>If you lose both your master password and your recovery key, all encrypted bookmarks and notes become permanently inaccessible.</li>
+          <li>Your recovery key is as important as your master password: anyone who has it can reset your password and open your data. Keep it offline and safe, and export encrypted backups regularly.</li>
           <li>This software is provided "as is", without warranty of any kind, express or implied. To the extent permitted by law, the developer is not liable for any data loss, loss of access or other damages.</li>
         </ol>
 

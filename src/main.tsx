@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { SetupPage } from "./setup";
 import { Disclaimer } from "./disclaimer";
+import { RecoverForm, RecoveryKeyModal, RecoverySection } from "./recovery";
 import { MemoEditor, MemoList, memoTitle, type MemoDraft } from "./memos";
 import type { Vault, Entry } from "./crypto";
 import "./style.css";
@@ -15,7 +16,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.1.9 Beta",
+  version: "0.2.0 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-15",
   copyrightYear: "2026",
@@ -66,6 +67,7 @@ function App() {
   const [memo, setMemo] = useState<MemoDraft | null>(null);
   const [deletingMemo, setDeletingMemo] = useState<MemoDraft | null>(null);
   const [ack, setAck] = useState(false);
+  const [recoveryShown, setRecoveryShown] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isPopup)
@@ -74,11 +76,12 @@ function App() {
         deleting ||
         memo ||
         deletingMemo ||
+        recoveryShown ||
         panel === "settings" ||
         panel === "about"
           ? "570px"
           : "";
-  }, [editor, deleting, memo, deletingMemo, panel]);
+  }, [editor, deleting, memo, deletingMemo, recoveryShown, panel]);
   async function refresh() {
     const s = await rpc("STATUS");
     setStatus(s);
@@ -140,19 +143,55 @@ function App() {
         throw Error("兩次密碼不一致");
       if (mode === "CREATE" && !ack)
         throw Error("請先確認已了解主密碼無法救援");
+      if (mode === "CREATE" && password.length < 4)
+        throw Error("主密碼至少 4 個字元");
       let data: any = { password };
       if (mode === "RESTORE") {
         if (!file) throw Error("請選擇加密備份檔");
         if (file.size > 12_000_000) throw Error("備份檔過大");
         data.envelope = JSON.parse(await file.text());
       }
-      await rpc(mode, data);
+      const r = await rpc(mode, data);
+      if (r?.recoveryKey) setRecoveryShown(r.recoveryKey);
       setPassword("");
       setConfirmPassword("");
       setPanel("");
       setFile(null);
       await refresh();
     });
+  }
+  async function recover(d: {
+    recoveryKey: string;
+    newPassword: string;
+    confirm: string;
+    file: File | null;
+  }) {
+    await run(async () => {
+      if (d.newPassword !== d.confirm) throw Error("兩次密碼不一致");
+      const data: any = {
+        recoveryKey: d.recoveryKey,
+        newPassword: d.newPassword,
+      };
+      if (!status?.exists) {
+        if (!d.file) throw Error("請選擇加密備份檔");
+        if (d.file.size > 12_000_000) throw Error("備份檔過大");
+        data.envelope = JSON.parse(await d.file.text());
+      }
+      const r = await rpc("RECOVER", data);
+      setRecoveryShown(r.recoveryKey);
+      setPanel("");
+      await refresh();
+    });
+  }
+  async function createRecovery(pw: string) {
+    let ok = false;
+    await run(async () => {
+      const r = await rpc("RECOVERY_CREATE", { password: pw });
+      setRecoveryShown(r.recoveryKey);
+      await refresh();
+      ok = true;
+    });
+    return ok;
   }
   function touch() {
     if (!vault || Date.now() - activity.current < 30000) return;
@@ -411,107 +450,140 @@ function App() {
           <section className="unlock card">
             <span className="eyebrow">PRIVATE BY DESIGN</span>
             <h2>
-              {status?.exists
-                ? t("歡迎回來")
-                : panel === "restore"
-                  ? t("找回你的收藏")
-                  : t("建立你的私密空間")}
+              {panel === "recover"
+                ? t("用救援金鑰重設主密碼")
+                : status?.exists
+                  ? t("歡迎回來")
+                  : panel === "restore"
+                    ? t("找回你的收藏")
+                    : t("建立你的私密空間")}
             </h2>
             <p className="muted">
-              {status?.exists
-                ? t("輸入主密碼，打開你的收藏。")
-                : t("主密碼不會上傳，也無法重設。請妥善保存。")}
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void auth(
-                  status?.exists
-                    ? "UNLOCK"
-                    : panel === "restore"
-                      ? "RESTORE"
-                      : "CREATE",
-                );
-              }}
-            >
-              <label>
-                {t("主密碼")}
-                <input
-                  ref={input}
-                  autoFocus
-                  type="password"
-                  autoComplete={
-                    status?.exists ? "current-password" : "new-password"
-                  }
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={status?.exists || panel === "restore" ? 1 : 4}
-                  required
-                  placeholder={
-                    status?.exists ? t("輸入主密碼") : t("至少 4 個字元")
-                  }
-                />
-              </label>
-              {!status?.exists && panel !== "restore" && (
-                <label>
-                  {t("再次輸入密碼")}
-                  <input
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </label>
-              )}
-              {!status?.exists && panel !== "restore" && (
-                <div className="pwWarning" role="note">
-                  <strong>⚠ {t("請務必記住主密碼")}</strong>
-                  <p>
-                    {t(
-                      "主密碼不會在任何地方備份，也沒有救援或重設方式。一旦遺失，所有書籤與記事將永久無法開啟。",
+              {panel === "recover"
+                ? status?.exists
+                  ? t("輸入建立保險庫時取得的救援金鑰，並設定新的主密碼。")
+                  : t("選擇加密備份檔，輸入救援金鑰，並設定新的主密碼。")
+                : status?.exists
+                  ? t("輸入主密碼，打開你的收藏。")
+                  : t(
+                      "主密碼不會上傳。建立後會提供一組救援金鑰，請另外妥善保存。",
                     )}
-                  </p>
-                  <label className="ackRow">
-                    <input
-                      type="checkbox"
-                      checked={ack}
-                      onChange={(e) => setAck(e.target.checked)}
-                    />
-                    <span>
-                      {t("我了解遺失主密碼後無法救援，並會自行妥善保管。")}
-                    </span>
-                  </label>
-                </div>
-              )}
-              {panel === "restore" && !status?.exists && (
+            </p>
+            {panel === "recover" ? (
+              <RecoverForm
+                needFile={!status?.exists}
+                busy={busy}
+                onSubmit={(d) => void recover(d)}
+              />
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void auth(
+                    status?.exists
+                      ? "UNLOCK"
+                      : panel === "restore"
+                        ? "RESTORE"
+                        : "CREATE",
+                  );
+                }}
+              >
                 <label>
-                  {t("加密備份檔")}
+                  {t("主密碼")}
                   <input
-                    type="file"
-                    accept=".json,application/json"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    ref={input}
+                    autoFocus
+                    type="password"
+                    autoComplete={
+                      status?.exists ? "current-password" : "new-password"
+                    }
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    minLength={status?.exists || panel === "restore" ? 1 : 4}
+                    required
+                    placeholder={
+                      status?.exists ? t("輸入主密碼") : t("至少 4 個字元")
+                    }
                   />
                 </label>
-              )}
-              <button
-                className="primary full"
-                disabled={
-                  busy ||
-                  !status ||
-                  (!status.exists && panel !== "restore" && !ack)
-                }
-              >
-                {busy
-                  ? t("處理中…")
-                  : status?.exists
-                    ? t("解鎖保險庫 →")
-                    : panel === "restore"
-                      ? t("從檔案還原 →")
-                      : t("建立保險庫 →")}
-              </button>
-            </form>
-            {!status?.exists && (
+                {!status?.exists && panel !== "restore" && (
+                  <label>
+                    {t("再次輸入密碼")}
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+                {!status?.exists && panel !== "restore" && (
+                  <div className="pwWarning" role="note">
+                    <strong>⚠ {t("請務必記住主密碼")}</strong>
+                    <p>
+                      {t(
+                        "主密碼不會在任何地方備份。建立後會顯示一組救援金鑰，是忘記密碼時唯一的救援方式；主密碼與救援金鑰都遺失時，所有書籤與記事將永久無法開啟。",
+                      )}
+                    </p>
+                    <label className="ackRow">
+                      <input
+                        type="checkbox"
+                        checked={ack}
+                        onChange={(e) => setAck(e.target.checked)}
+                      />
+                      <span>
+                        {t(
+                          "我了解主密碼與救援金鑰都遺失後無法救援，並會自行妥善保管。",
+                        )}
+                      </span>
+                    </label>
+                  </div>
+                )}
+                {panel === "restore" && !status?.exists && (
+                  <label>
+                    {t("加密備份檔")}
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                )}
+                <button
+                  className="primary full"
+                  disabled={
+                    busy ||
+                    !status ||
+                    (!status.exists && panel !== "restore" && !ack)
+                  }
+                >
+                  {busy
+                    ? t("處理中…")
+                    : status?.exists
+                      ? t("解鎖保險庫 →")
+                      : panel === "restore"
+                        ? t("從檔案還原 →")
+                        : t("建立保險庫 →")}
+                </button>
+              </form>
+            )}
+            {(status?.exists || panel === "recover") && (
+              <div className="restore">
+                <button
+                  className="text"
+                  onClick={() => {
+                    setPanel(panel === "recover" ? "" : "recover");
+                    setError("");
+                  }}
+                >
+                  {panel === "recover"
+                    ? t("← 返回")
+                    : t("忘記主密碼？使用救援金鑰")}
+                </button>
+              </div>
+            )}
+            {!status?.exists && panel !== "recover" && (
               <div className="restore">
                 <button
                   className="text"
@@ -524,6 +596,17 @@ function App() {
                     ? t("建立新的保險庫")
                     : t("已有備份？從加密檔案還原")}
                 </button>
+                {panel === "restore" && (
+                  <button
+                    className="text"
+                    onClick={() => {
+                      setPanel("recover");
+                      setError("");
+                    }}
+                  >
+                    {t("忘記密碼？用救援金鑰從備份還原")}
+                  </button>
+                )}
                 <button
                   className="text"
                   disabled={busy || (status?.configured && !password)}
@@ -558,6 +641,14 @@ function App() {
               {t("記事本")}
             </button>
           </div>
+          {!status?.hasRecovery && (
+            <button
+              className="recoveryBanner"
+              onClick={() => setPanel("settings")}
+            >
+              ⚠ {t("尚未建立救援金鑰 · 立即建立")}
+            </button>
+          )}
           {view === "memos" ? (
             <MemoList memos={vault.memos || []} onOpen={setMemo} />
           ) : (
@@ -895,6 +986,12 @@ function App() {
           </section>
         </div>
       )}
+      {recoveryShown && (
+        <RecoveryKeyModal
+          code={recoveryShown}
+          onDone={() => setRecoveryShown(null)}
+        />
+      )}
       {memo && (
         <MemoEditor
           memo={memo}
@@ -1070,6 +1167,12 @@ function App() {
                   )}
                 </div>
                 <hr />
+                <RecoverySection
+                  hasRecovery={!!status?.hasRecovery}
+                  busy={busy}
+                  onCreate={createRecovery}
+                />
+                <hr />
                 <h3>{t("加密備份")}</h3>
                 <p className="muted">
                   {t(
@@ -1096,7 +1199,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.1.9 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.0 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

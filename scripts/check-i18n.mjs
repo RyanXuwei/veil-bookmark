@@ -7,6 +7,7 @@ for (const f of [
   "src/setup.tsx",
   "src/memos.tsx",
   "src/disclaimer.tsx",
+  "src/recovery.tsx",
   "src/background.ts",
   "src/crypto.ts",
   "src/drive.ts",

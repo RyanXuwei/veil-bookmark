@@ -763,6 +763,19 @@ hr {
     font-size: 10px;
   }
 }
-.credits{display:grid;grid-template-columns:auto auto;justify-content:center;gap:4px 14px;margin:14px auto 10px;font-size:13px;text-align:left}
-.credits dt{color:#6b766f}
-.credits dd{margin:0;font-weight:600}
+.credits {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 14px auto 10px;
+  font-size: 13px;
+  text-align: left;
+}
+.credits dt {
+  color: #6b766f;
+}
+.credits dd {
+  margin: 0;
+  font-weight: 600;
+}
