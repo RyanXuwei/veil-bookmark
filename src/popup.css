@@ -575,4 +575,4 @@ html[data-surface="popup"] {
   padding: 0 3px;
 }
 
-.quickBottomActions{display:inline-flex;gap:14px;align-items:center}
+.quickBottom > .quickBottomActions{display:inline-flex;gap:14px;align-items:center;margin-left:auto;margin-right:0}
