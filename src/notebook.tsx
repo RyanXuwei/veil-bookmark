@@ -55,6 +55,11 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const timer = useRef<number>(0);
   const state = useRef({ current: "", title: "", dirty: false });
   const lastTouch = useRef(0);
+  const epoch = useRef(0);
+  const edits = useRef(0);
+  const saving = useRef<Promise<boolean> | null>(null);
+  const transition = useRef(false);
+  const [switching, setSwitching] = useState(false);
   // Document to show once the editor is mounted (undefined = nothing pending).
   const pending = useRef<Memo | null | undefined>(undefined);
   const pick = (list: Memo[] | null) => {
@@ -62,19 +67,44 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     pending.current =
       (list || []).find((m) => m.id === id && !m.deleted) || null;
   };
-  state.current.current = current;
-  state.current.title = title;
 
   const unlocked = !!status?.unlocked;
 
+  const clearView = useCallback(() => {
+    epoch.current++;
+    edits.current++;
+    window.clearTimeout(timer.current);
+    pending.current = undefined;
+    saving.current = null;
+    state.current = { current: "", title: "", dirty: false };
+    if (editor.current) editor.current.innerHTML = "";
+    setStatus((s: any) => (s ? { ...s, unlocked: false } : s));
+    setMemos([]);
+    setTitle("");
+    setCurrent("");
+    setQuery("");
+    setPassword("");
+    setSavedAt(0);
+    setSaveState("saved");
+    setCounts({ words: 0, chars: 0, pages: 1 });
+    setActive({});
+    setBlock("P");
+  }, []);
   const refresh = useCallback(async () => {
+    const requestEpoch = epoch.current;
     const s = await rpc("STATUS");
-    setStatus(s);
-    if (!s.unlocked) return null;
+    if (requestEpoch !== epoch.current) return null;
+    if (!s.unlocked) {
+      clearView();
+      setStatus(s);
+      return null;
+    }
     const v = await rpc("LIST");
+    if (requestEpoch !== epoch.current) return null;
+    setStatus(s);
     setMemos(v.memos || []);
     return v.memos as Memo[];
-  }, [rpc]);
+  }, [rpc, clearView]);
 
   function updateCounts() {
     const el = editor.current;
@@ -90,52 +120,86 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   function load(m: Memo | null) {
     const el = editor.current;
     if (!el) return;
+    window.clearTimeout(timer.current);
+    epoch.current++;
+    state.current = {
+      current: m?.id || "",
+      title: m?.title || "",
+      dirty: false,
+    };
     el.innerHTML = m ? memoHtml(m) : "<p><br></p>";
     setCurrent(m?.id || "");
     setTitle(m?.title || "");
-    state.current.dirty = false;
+    setSavedAt(m?.updated || 0);
     setSaveState("saved");
     history.replaceState(null, "", `#${m?.id || "new"}`);
     updateCounts();
     el.focus({ preventScroll: true });
   }
 
-  const save = useCallback(async () => {
+  // One writer per editor. Drain edits made while a save is in flight before
+  // allowing a document switch; the first response supplies the permanent ID.
+  const save = useCallback(async (): Promise<boolean> => {
     window.clearTimeout(timer.current);
-    const el = editor.current;
-    if (!el || !state.current.dirty) return;
-    const body = sanitizeHtml(el.innerHTML);
-    const titleNow = state.current.title;
-    if (!titleNow.trim() && !htmlToText(body)) return; // nothing to keep yet
-    state.current.dirty = false;
-    setSaveState("saving");
-    try {
-      const memo = await rpc("MEMO_UPSERT", {
-        memo: {
-          id: state.current.current,
-          title: titleNow,
-          body,
-          format: "html",
-        },
-      });
-      if (!state.current.current) {
-        setCurrent(memo.id);
-        state.current.current = memo.id;
-        history.replaceState(null, "", `#${memo.id}`);
+    if (saving.current) return saving.current;
+    const saveEpoch = epoch.current;
+    const task = (async () => {
+      try {
+        while (
+          state.current.dirty &&
+          editor.current &&
+          saveEpoch === epoch.current
+        ) {
+          const body = sanitizeHtml(editor.current.innerHTML);
+          const titleNow = state.current.title;
+          const id = state.current.current;
+          const revision = edits.current;
+          if (!titleNow.trim() && !htmlToText(body)) {
+            if (id) throw Error("請輸入記事標題或內容");
+            state.current.dirty = false;
+            setSaveState("saved");
+            return true;
+          }
+          setSaveState("saving");
+          const memo: Memo = await rpc("MEMO_UPSERT", {
+            memo: { id, title: titleNow, body, format: "html" },
+          });
+          if (saveEpoch !== epoch.current) return false;
+          if (!id) {
+            state.current.current = memo.id;
+            setCurrent(memo.id);
+            history.replaceState(null, "", `#${memo.id}`);
+          }
+          setMemos((list) =>
+            saveEpoch === epoch.current
+              ? [...list.filter((x) => x.id !== memo.id), memo]
+              : list,
+          );
+          state.current.dirty = edits.current !== revision;
+          setSavedAt(Date.now());
+          setSaveState(state.current.dirty ? "dirty" : "saved");
+          setError("");
+        }
+        return saveEpoch === epoch.current;
+      } catch (e) {
+        if (saveEpoch !== epoch.current) return false;
+        state.current.dirty = true;
+        setSaveState("dirty");
+        setError((e as Error).message);
+        void refresh().catch(() => {});
+        return false;
       }
-      setMemos((list) => [...list.filter((x) => x.id !== memo.id), memo]);
-      setSavedAt(Date.now());
-      setSaveState(state.current.dirty ? "dirty" : "saved");
-      setError("");
-    } catch (e) {
-      state.current.dirty = true;
-      setSaveState("dirty");
-      setError((e as Error).message);
-      void refresh().catch(() => {});
+    })();
+    saving.current = task;
+    try {
+      return await task;
+    } finally {
+      if (saving.current === task) saving.current = null;
     }
   }, [rpc, refresh]);
 
   function changed() {
+    edits.current++;
     state.current.dirty = true;
     setSaveState("dirty");
     updateCounts();
@@ -155,13 +219,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       .catch((e) => setError(e.message));
     const onStorage = (changes: any, area: string) => {
       if (area === "session" && changes.session && !changes.session.newValue) {
-        // Locked: wipe decrypted content from the page immediately.
-        window.clearTimeout(timer.current);
-        if (editor.current) editor.current.innerHTML = "";
-        setMemos([]);
-        setTitle("");
-        setCurrent("");
-        void refresh();
+        clearView();
+        void refresh().catch(() => {});
       }
     };
     chrome.storage.onChanged.addListener(onStorage);
@@ -175,6 +234,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     const onSel = () => refreshActive();
     document.addEventListener("selectionchange", onSel);
     return () => {
+      epoch.current++;
+      window.clearTimeout(timer.current);
       chrome.storage.onChanged.removeListener(onStorage);
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("selectionchange", onSel);
@@ -219,28 +280,64 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   }
 
   async function open(m: Memo | null) {
-    await save();
-    load(m);
+    if (transition.current || (m && m.id === state.current.current)) return;
+    transition.current = true;
+    setSwitching(true);
+    const navigationEpoch = epoch.current;
+    try {
+      if ((await save()) && navigationEpoch === epoch.current) load(m);
+    } finally {
+      transition.current = false;
+      setSwitching(false);
+    }
   }
 
   async function remove() {
-    if (!current) {
+    if (transition.current) return;
+    if (!state.current.current && !state.current.dirty) {
       load(null);
       return;
     }
     if (!confirm(t("刪除這份記事？內容會立即清除，無法復原。"))) return;
-    window.clearTimeout(timer.current);
-    state.current.dirty = false;
+    transition.current = true;
+    setSwitching(true);
+    const deletionEpoch = epoch.current;
     try {
-      await rpc("MEMO_DELETE", { id: current });
+      await save();
+      if (deletionEpoch !== epoch.current) return;
+      const id = state.current.current;
+      if (id) await rpc("MEMO_DELETE", { id });
       const list = await refresh();
+      if (deletionEpoch !== epoch.current) return;
       load(
         (list || [])
           .filter((m) => !m.deleted)
           .sort((a, b) => b.updated - a.updated)[0] || null,
       );
     } catch (e) {
-      setError((e as Error).message);
+      if (deletionEpoch === epoch.current) setError((e as Error).message);
+    } finally {
+      transition.current = false;
+      setSwitching(false);
+    }
+  }
+
+  async function lockNotebook() {
+    if (transition.current) return;
+    transition.current = true;
+    setSwitching(true);
+    const lockEpoch = epoch.current;
+    try {
+      const saved = await save();
+      if (lockEpoch !== epoch.current) return;
+      if (!saved && !confirm(t("無法儲存記事。仍要上鎖並捨棄未儲存的變更？")))
+        return;
+      await rpc("LOCK");
+    } catch (e) {
+      if (lockEpoch === epoch.current) setError((e as Error).message);
+    } finally {
+      transition.current = false;
+      setSwitching(false);
     }
   }
 
@@ -363,6 +460,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           placeholder={t("未命名記事")}
           value={title}
           maxLength={300}
+          disabled={switching}
           onChange={(e) => {
             setTitle(e.target.value);
             state.current.title = e.target.value;
@@ -375,10 +473,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
         <span className="nbSpacer" />
         <button
           className="nbTbBtn"
-          onClick={async () => {
-            await save();
-            await rpc("LOCK");
-          }}
+          disabled={switching}
+          onClick={() => void lockNotebook()}
         >
           🔒 {t("上鎖")}
         </button>
@@ -387,6 +483,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       <nav className="nbTabs" role="tablist">
         <button
           className="nbFile"
+          disabled={switching}
           onClick={() => void open(null)}
           title={t("新增記事")}
         >
@@ -598,6 +695,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                 <li key={m.id}>
                   <button
                     className={m.id === current ? "on" : ""}
+                    disabled={switching}
                     onClick={() => void open(m)}
                   >
                     <strong>{titleOf(m)}</strong>
@@ -624,7 +722,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             <div
               ref={editor}
               className="nbEditor"
-              contentEditable
+              contentEditable={!switching}
               suppressContentEditableWarning
               spellCheck
               role="textbox"

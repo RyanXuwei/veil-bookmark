@@ -339,3 +339,5 @@ AES-256 加密|AES-256 encrypted|AES-256 暗号化
 放大|Zoom in|拡大
 在筆記本中開啟|Open in notebook|ノートで開く
 開啟筆記本 ↗|Open notebook ↗|ノートを開く ↗
+
+無法儲存記事。仍要上鎖並捨棄未儲存的變更？|The note could not be saved. Lock and discard unsaved changes anyway?|記事を保存できませんでした。未保存の変更を破棄してロックしますか？

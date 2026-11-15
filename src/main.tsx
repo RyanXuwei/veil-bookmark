@@ -17,7 +17,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.1 Beta",
+  version: "0.2.2 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -71,6 +71,7 @@ function App() {
     [deleting, setDeleting] = useState<Entry | null>(null),
     [file, setFile] = useState<File | null>(null);
   const activity = useRef(0);
+  const viewEpoch = useRef(0);
   const [uiLang, setUiLang] = useState<Lang>(lang());
   const [menuId, setMenuId] = useState<string | null>(null);
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
@@ -89,11 +90,14 @@ function App() {
           : "";
   }, [editor, deleting, recoveryShown, panel]);
   async function refresh() {
+    const requestEpoch = viewEpoch.current;
     const s = await rpc("STATUS");
+    if (requestEpoch !== viewEpoch.current) return;
+    const v = s.unlocked ? await rpc("LIST") : null;
+    if (requestEpoch !== viewEpoch.current) return;
     setStatus(s);
-    if (s.unlocked) setVault(await rpc("LIST"));
-    else {
-      setVault(null);
+    setVault(v);
+    if (!s.unlocked) {
       setEditor(null);
       setQuery("");
       setFolder(ALL);
@@ -108,6 +112,12 @@ function App() {
     );
     const listener = (changes: any, area: string) => {
       if (area === "session" && changes.session && !changes.session.newValue) {
+        viewEpoch.current++;
+        setStatus((s: any) => (s ? { ...s, unlocked: false } : s));
+        setRecoveryShown(null);
+        setPanel("");
+        setConfirmPassword("");
+        setFile(null);
         setVault(null);
         setEditor(null);
         setQuery("");
@@ -141,6 +151,7 @@ function App() {
   }
   async function auth(mode: string) {
     await run(async () => {
+      const operationEpoch = viewEpoch.current;
       if (mode === "CREATE" && password !== confirmPassword)
         throw Error("兩次密碼不一致");
       if (mode === "CREATE" && !ack)
@@ -153,7 +164,9 @@ function App() {
         if (file.size > 12_000_000) throw Error("備份檔過大");
         data.envelope = JSON.parse(await file.text());
       }
+      if (operationEpoch !== viewEpoch.current) return;
       const r = await rpc(mode, data);
+      if (operationEpoch !== viewEpoch.current) return;
       if (r?.recoveryKey) setRecoveryShown(r.recoveryKey);
       setPassword("");
       setConfirmPassword("");
@@ -169,6 +182,7 @@ function App() {
     file: File | null;
   }) {
     await run(async () => {
+      const operationEpoch = viewEpoch.current;
       if (d.newPassword !== d.confirm) throw Error("兩次密碼不一致");
       const data: any = {
         recoveryKey: d.recoveryKey,
@@ -179,7 +193,9 @@ function App() {
         if (d.file.size > 12_000_000) throw Error("備份檔過大");
         data.envelope = JSON.parse(await d.file.text());
       }
+      if (operationEpoch !== viewEpoch.current) return;
       const r = await rpc("RECOVER", data);
+      if (operationEpoch !== viewEpoch.current) return;
       setRecoveryShown(r.recoveryKey);
       setPanel("");
       await refresh();
@@ -188,7 +204,9 @@ function App() {
   async function createRecovery(pw: string) {
     let ok = false;
     await run(async () => {
+      const operationEpoch = viewEpoch.current;
       const r = await rpc("RECOVERY_CREATE", { password: pw });
+      if (operationEpoch !== viewEpoch.current) return;
       setRecoveryShown(r.recoveryKey);
       await refresh();
       ok = true;
@@ -1159,7 +1177,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.1 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.2 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

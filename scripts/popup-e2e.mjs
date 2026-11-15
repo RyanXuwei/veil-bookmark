@@ -189,6 +189,13 @@ try {
     );
   }
   async function click(text) {
+    await wait(
+      (text) =>
+        Array.from(document.querySelectorAll("button")).some(
+          (b) => b.textContent.trim() === text && !b.disabled,
+        ),
+      text,
+    );
     await evaluate((text) => {
       const b = [...document.querySelectorAll("button")].find(
         (b) => b.textContent.trim() === text,

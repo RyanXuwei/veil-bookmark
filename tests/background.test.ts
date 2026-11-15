@@ -390,6 +390,8 @@ test("runtime client ID: validation, web auth flow, token cache, state check, 40
 
 test("memo create, edit, delete tombstone, limits, and lock protection", async () => {
   await rpc("UNLOCK", { password: "1234" });
+  local.driveEnabled = true;
+  delete alarms["veilmark-sync-soon"];
   await assert.rejects(
     rpc("MEMO_UPSERT", { memo: { title: " ", body: " " } }),
     /記事標題或內容/,
@@ -402,11 +404,19 @@ test("memo create, edit, delete tombstone, limits, and lock protection", async (
     memo: { title: "銀行提示", body: "secret memo text" },
   });
   assert(created.id);
+  assert.equal(
+    alarms["veilmark-sync-soon"]?.delayInMinutes,
+    0.5,
+    "new notebook edits must schedule sync just like bookmarks",
+  );
+  delete alarms["veilmark-sync-soon"];
   const edited = await rpc("MEMO_UPSERT", {
     memo: { id: created.id, title: "銀行提示", body: "updated text" },
   });
   assert.equal(edited.id, created.id);
   assert(edited.updated > created.updated);
+  assert.equal(alarms["veilmark-sync-soon"]?.delayInMinutes, 0.5);
+  local.driveEnabled = false;
   let v = await rpc("LIST");
   assert.equal(v.memos.filter((x: any) => !x.deleted).length, 1);
   assert(

@@ -1704,5 +1704,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "打开笔记本 ↗",
   "en": "Open notebook ↗",
   "ja": "ノートを開く ↗"
+ },
+ "無法儲存記事。仍要上鎖並捨棄未儲存的變更？": {
+  "zh-CN": "无法保存记事。仍要上锁并舍弃未保存的变更？",
+  "en": "The note could not be saved. Lock and discard unsaved changes anyway?",
+  "ja": "記事を保存できませんでした。未保存の変更を破棄してロックしますか？"
  }
 };

@@ -458,6 +458,9 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);
     await save(v, s);
     await touch(s);
+    const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
+    if (driveEnabled)
+      await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
     return memo;
   } else if (m.type === "MEMO_DELETE") {
     const x = v.memos.find((y) => y.id === m.id);
