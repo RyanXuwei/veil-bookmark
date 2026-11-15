@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./notebook.css";
 import { cleanDrawing, type Memo, type DrawingStroke } from "./crypto";
+import { ToolIcon } from "./tool-icon";
 import { DrawingLayer } from "./drawing";
 import { Recorder, AudioSticker } from "./recorder";
 import { cleanRecordings, type MemoRecording } from "./crypto";
@@ -743,111 +744,118 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             </div>
           </>
         )}
-      </div>
-      <div className="nbNoteTools" role="toolbar" aria-label={t("便簽工具")}>
-        <div className="rg nbPaperTools">
-          <div className="rgRow nbDrawingTools">
-            {(
-              [
-                ["text", "文字"],
-                ["pen", "鉛筆"],
-                ["eraser", "橡皮擦"],
-              ] as const
-            ).map(([mode, label]) => (
-              <button
-                key={mode}
-                type="button"
-                className={"rb" + (drawMode === mode ? " on" : "")}
-                aria-pressed={drawMode === mode}
-                disabled={switching}
-                onClick={() => setDrawMode(mode)}
-              >
-                {t(label)}
-              </button>
-            ))}
-            <input
-              type="color"
-              className="nbPaperCustom"
-              aria-label={t("筆色")}
-              value={penColor}
-              onChange={(e) => setPenColor(e.target.value)}
-            />
-            <select
-              className="rSelect"
-              aria-label={t("筆畫粗細")}
-              value={penWidth}
-              onChange={(e) => setPenWidth(Number(e.target.value))}
-            >
-              {[1, 2, 4, 8].map((n) => (
-                <option key={n} value={n}>
-                  {n} px
-                </option>
+        <div
+          className="nbNoteTools"
+          hidden={tab !== "home"}
+          aria-label={t("便簽工具")}
+        >
+          <div className="rg nbPaperTools">
+            <div className="rgRow nbDrawingTools">
+              {(
+                [
+                  ["text", "文字"],
+                  ["pen", "鉛筆"],
+                  ["eraser", "橡皮擦"],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={"rb" + (drawMode === mode ? " on" : "")}
+                  title={t(label)}
+                  aria-label={t(label)}
+                  aria-pressed={drawMode === mode}
+                  disabled={switching}
+                  onClick={() => setDrawMode(mode)}
+                >
+                  <ToolIcon name={mode} />
+                </button>
               ))}
-            </select>
-            <button
-              type="button"
-              className="rb"
-              disabled={switching || !drawing.length}
-              onClick={() => drawChanged(ink.current.slice(0, -1))}
-            >
-              {t("復原筆畫")}
-            </button>
-          </div>
-          <div className="rgRow">
-            {PAPER_COLORS.map((color) => (
+              <input
+                type="color"
+                className="nbPaperCustom"
+                aria-label={t("筆色")}
+                value={penColor}
+                onChange={(e) => setPenColor(e.target.value)}
+              />
+              <select
+                className="rSelect"
+                aria-label={t("筆畫粗細")}
+                value={penWidth}
+                onChange={(e) => setPenWidth(Number(e.target.value))}
+              >
+                {[1, 2, 4, 8].map((n) => (
+                  <option key={n} value={n}>
+                    {n} px
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                key={color}
-                className="nbSwatch"
-                style={{ backgroundColor: color }}
-                aria-label={`${t("紙張顏色")} ${color}`}
-                aria-pressed={paperColor === color}
+                className="rb"
+                disabled={switching || !drawing.length}
+                title={t("復原筆畫")}
+                aria-label={t("復原筆畫")}
+                onClick={() => drawChanged(ink.current.slice(0, -1))}
+              >
+                <ToolIcon name="undo" />
+              </button>
+            </div>
+            <div className="rgRow">
+              {PAPER_COLORS.map((color) => (
+                <button
+                  type="button"
+                  key={color}
+                  className="nbSwatch"
+                  style={{ backgroundColor: color }}
+                  aria-label={`${t("紙張顏色")} ${color}`}
+                  aria-pressed={paperColor === color}
+                  disabled={switching}
+                  onClick={() => {
+                    paper.current = color;
+                    setPaperColor(color);
+                    changed();
+                  }}
+                />
+              ))}
+              <input
+                type="color"
+                className="nbPaperCustom"
+                aria-label={t("自訂紙張顏色")}
+                title={t("自訂紙張顏色")}
+                value={paperColor}
                 disabled={switching}
-                onClick={() => {
-                  paper.current = color;
-                  setPaperColor(color);
+                onChange={(e) => {
+                  paper.current = e.target.value;
+                  setPaperColor(e.target.value);
                   changed();
                 }}
               />
-            ))}
-            <input
-              type="color"
-              className="nbPaperCustom"
-              aria-label={t("自訂紙張顏色")}
-              title={t("自訂紙張顏色")}
-              value={paperColor}
-              disabled={switching}
-              onChange={(e) => {
-                paper.current = e.target.value;
-                setPaperColor(e.target.value);
-                changed();
-              }}
-            />
+            </div>
+            <span className="rgName">{t("紙張顏色")}</span>
           </div>
-          <span className="rgName">{t("紙張顏色")}</span>
+          <Recorder
+            disabled={
+              switching ||
+              !!pendingAudio ||
+              recordings.length >= 5 ||
+              recordings.reduce((n, r) => n + r.data.length, 0) > 600000
+            }
+            onBusy={setRecording}
+            onRecorded={(r) => {
+              setPendingAudio(r);
+              setDrawMode("text");
+            }}
+          />
+          {(recording || pendingAudio) && (
+            <span className="nbRecordingHint" role="status">
+              {pendingAudio
+                ? t("點紙張任意位置放置錄音，之後可拖曳移動")
+                : t("上鎖或離開會捨棄尚未完成的錄音")}
+            </span>
+          )}
         </div>
-        <Recorder
-          disabled={
-            switching ||
-            !!pendingAudio ||
-            recordings.length >= 5 ||
-            recordings.reduce((n, r) => n + r.data.length, 0) > 600000
-          }
-          onBusy={setRecording}
-          onRecorded={(r) => {
-            setPendingAudio(r);
-            setDrawMode("text");
-          }}
-        />
-        {(recording || pendingAudio) && (
-          <span className="nbRecordingHint" role="status">
-            {pendingAudio
-              ? t("點紙張任意位置放置錄音，之後可拖曳移動")
-              : t("上鎖或離開會捨棄尚未完成的錄音")}
-          </span>
-        )}
       </div>
-
       {error && (
         <div className="nbAlert" role="alert">
           {tError(error)}

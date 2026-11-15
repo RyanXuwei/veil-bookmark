@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { MemoRecording } from "./crypto";
 import { t } from "./i18n";
+import { ToolIcon } from "./tool-icon";
 
 export function Recorder({
   disabled,
@@ -129,10 +130,12 @@ export function Recorder({
         {phase === "idle" ? (
           <button
             className="rb"
+            title={`${t("開始錄音")} · ${t("每段最長 3 分鐘")}`}
+            aria-label={t("開始錄音")}
             disabled={disabled}
             onClick={() => void start()}
           >
-            ● {t("開始錄音")}
+            <ToolIcon name="mic" />
           </button>
         ) : (
           <>
@@ -141,6 +144,8 @@ export function Recorder({
             </span>
             <button
               className="rb"
+              title={phase === "paused" ? t("繼續錄音") : t("暫停錄音")}
+              aria-label={phase === "paused" ? t("繼續錄音") : t("暫停錄音")}
               disabled={!["recording", "paused"].includes(phase)}
               onClick={() => {
                 if (phase === "recording") {
@@ -152,21 +157,21 @@ export function Recorder({
                 }
               }}
             >
-              {phase === "paused" ? t("繼續錄音") : t("暫停錄音")}
+              <ToolIcon name={phase === "paused" ? "play" : "pause"} />
             </button>
             <button
               className="rb"
+              title={t("停止錄音")}
+              aria-label={t("停止錄音")}
               disabled={!["recording", "paused"].includes(phase)}
               onClick={stop}
             >
-              {t("停止錄音")}
+              <ToolIcon name="stop" />
             </button>
           </>
         )}
       </div>
-      <span className="rgName">
-        {t("錄音機")} · {t("每段最長 3 分鐘")}
-      </span>
+      <span className="rgName">{t("錄音機")}</span>
       {error && (
         <span className="nbError" role="alert">
           {error}

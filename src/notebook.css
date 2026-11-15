@@ -455,32 +455,47 @@
 }
 .nbNoteTools {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 10px 18px;
-  background: #f4f1e7;
-  border-bottom: 1px solid #d5cfbd;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: transparent;
   flex: none;
+}
+.nbNoteTools[hidden] {
+  display: none;
 }
 .nbNoteTools .nbPaperTools {
   margin: 0;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 10px;
+  border-right: 1px solid var(--nb-line);
 }
 .nbNoteTools .nbDrawingTools {
   margin: 0;
 }
 .nbNoteTools .rgName {
-  padding: 0;
+  padding: 2px 0 4px;
 }
 .nbRecorder {
-  border: 0;
-  padding: 0;
-  gap: 6px;
+  padding: 0 10px;
+  gap: 4px;
+  min-width: 70px;
+  align-items: center;
+  justify-content: space-between;
+}
+.nbRecorder > .rgRow {
+  flex: 1;
+}
+.nbRecorder .rb {
+  width: 34px;
+  height: 34px;
+}
+.nbRecordingHint {
+  max-width: 170px;
+  align-self: center;
+  padding: 0 8px;
 }
 .nbRecordingHint {
   font-size: 12px;
