@@ -191,3 +191,8 @@
 .extLink {
   font-size: 14px;
 }
+
+.okLine {
+  color: #2f7a4f !important;
+  font-weight: 600;
+}

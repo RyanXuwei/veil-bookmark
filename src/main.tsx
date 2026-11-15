@@ -18,7 +18,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.7 Beta",
+  version: "0.2.8 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -1101,11 +1101,15 @@ function App() {
                 )}
                 <h3>Google Drive</h3>
                 <p className="muted">
-                  {status?.configured
-                    ? t("使用 Google Drive 隱藏應用程式資料夾同步加密快照。")
-                    : t(
-                        "尚未設定 Google Drive。依說明頁完成一次設定即可啟用。",
-                      )}
+                  {status?.oauthSource === "manifest"
+                    ? t(
+                        "一鍵連接：使用 Chrome 登入的 Google 帳號授權，加密快照存放在 Drive 的隱藏應用程式資料夾。",
+                      )
+                    : status?.configured
+                      ? t("使用 Google Drive 隱藏應用程式資料夾同步加密快照。")
+                      : t(
+                          "尚未設定 Google Drive。依說明頁完成一次設定即可啟用。",
+                        )}
                 </p>
                 <p className="small">
                   {status?.driveEnabled
@@ -1127,7 +1131,9 @@ function App() {
                     </button>
                   ) : (
                     <button className="text" onClick={() => run(openSetup)}>
-                      {t("Drive 設定")}
+                      {status?.oauthSource === "manifest"
+                        ? t("連接說明")
+                        : t("Drive 設定")}
                     </button>
                   )}
                   <button
@@ -1197,7 +1203,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.7 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.8 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

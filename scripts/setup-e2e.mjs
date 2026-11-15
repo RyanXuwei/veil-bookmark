@@ -1,5 +1,6 @@
-// Drive setup guide page: rendering, redirect URI, client ID validation/saving,
-// entry points from the popup. Never contacts Google (no vault is unlocked).
+// Google Drive connect guide (index.html?setup) with the built-in OAuth client:
+// one-click steps, no Google Cloud setup, entry points, layout and i18n.
+// Never starts a real Google sign-in and never contacts external hosts.
 import { chromium } from "playwright";
 import { resolve } from "node:path";
 import assert from "node:assert/strict";
@@ -28,81 +29,78 @@ try {
     context.serviceWorkers()[0] ||
     (await context.waitForEvent("serviceworker"));
   const id = new URL(worker.url()).host;
+  assert.equal(id, "edehlgkopbgmnopdaepadcopfnkgcpab");
+  const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
+  assert.match(manifest.oauth2.client_id, /\.apps\.googleusercontent\.com$/);
+  assert.deepEqual(manifest.oauth2.scopes, [
+    "https://www.googleapis.com/auth/drive.appdata",
+  ]);
 
-  // Entry point: the welcome screen's "restore from Drive" opens the guide when not set up.
+  // Fresh install: restore-from-Drive needs the master password, not setup.
   const popup = await context.newPage();
   await popup.setViewportSize({ width: 380, height: 600 });
   await popup.goto(`chrome-extension://${id}/index.html?popup`);
   await popup.getByRole("heading", { name: "建立你的私密空間" }).waitFor();
-  const [guide] = await Promise.all([
-    context.waitForEvent("page"),
-    popup.getByRole("button", { name: "從 Google Drive 還原" }).click(),
-  ]);
-  await guide.waitForLoadState();
-  assert(guide.url().endsWith("index.html?setup"));
+  assert(
+    await popup
+      .getByRole("button", { name: "從 Google Drive 還原" })
+      .isDisabled(),
+  );
+
+  // Guide while no vault exists.
+  const guide = await context.newPage();
   await guide.setViewportSize({ width: 1100, height: 1300 });
-  await guide
-    .getByRole("heading", { name: "設定 Google Drive 同步" })
-    .waitFor();
-  await guide.getByText("尚未設定", { exact: true }).waitFor();
-  const redirect = `https://${id}.chromiumapp.org/`;
-  assert.equal(await guide.locator(".copyField code").innerText(), redirect);
-  const hrefs = await guide
+  await guide.goto(`chrome-extension://${id}/index.html?setup`);
+  await guide.getByRole("heading", { name: "連接 Google Drive", exact: true }).waitFor();
+  await guide.getByText("尚未連接", { exact: true }).waitFor();
+  await guide.getByText("這台電腦還沒有保險庫", { exact: false }).waitFor();
+  assert.equal(
+    await guide.locator(".clientForm").count(),
+    0,
+    "no client ID form",
+  );
+  assert.equal(await guide.locator(".copyField").count(), 0, "no redirect URI");
+  const connect = guide.getByRole("button", { name: "連接 Google Drive", exact: true });
+  assert(await connect.isDisabled(), "connect needs an unlocked vault");
+
+  // Unlocked: the connect button becomes available (not clicked: no real sign-in).
+  await guide.evaluate(() =>
+    chrome.runtime.sendMessage({ type: "CREATE", password: "1234" }),
+  );
+  await guide.reload();
+  await guide.getByText("✓ 已解鎖").waitFor();
+  assert(!(await connect.isDisabled()));
+  const links = await guide
     .locator("a.extLink")
     .evaluateAll((a) => a.map((x) => x.href));
-  assert(
-    hrefs.length === 4 &&
-      hrefs.every((h) => h.startsWith("https://console.cloud.google.com/")),
-  );
+  assert.deepEqual(links, ["https://myaccount.google.com/permissions"]);
   await guide.screenshot({
     path: resolve(shots, "24-drive-setup.png"),
     fullPage: true,
   });
 
-  const input = guide.getByRole("textbox", { name: "用戶端 ID" });
-  const save = guide.getByRole("button", { name: "儲存並連接 Google Drive →" });
-  await input.fill("GOCSPX-secret-looking-value");
-  await guide.getByText("用戶端 ID 格式不正確").waitFor();
-  assert(await save.isDisabled());
-  await input.fill("1234567890-synthetic.apps.googleusercontent.com");
-  assert(await save.isEnabled());
-  await save.click();
-  await guide.getByText("已設定，尚未連接").waitFor();
-  await guide.getByText("新電腦請在工具列浮框輸入主密碼").waitFor();
-  const stored = await worker.evaluate(() =>
-    chrome.storage.local.get("oauthClientId"),
-  );
-  assert.equal(
-    stored.oauthClientId,
-    "1234567890-synthetic.apps.googleusercontent.com",
-  );
+  // Sync & backup panel points to the one-click flow.
+  await popup.reload();
+  await popup.getByRole("button", { name: "同步與備份", exact: true }).click();
+  await popup.getByText("一鍵連接", { exact: false }).waitFor();
+  await popup.getByRole("button", { name: "連接說明" }).waitFor();
 
-  // Narrow layout: no horizontal scroll.
+  // Narrow layout and English.
   await guide.setViewportSize({ width: 380, height: 900 });
   assert.equal(
     await guide.evaluate(() => document.documentElement.scrollWidth),
     380,
   );
   await guide.screenshot({ path: resolve(shots, "25-drive-setup-narrow.png") });
-
-  // English rendering.
   await guide.setViewportSize({ width: 1100, height: 1300 });
   await guide.selectOption("select.langSelect", "en");
-  await guide
-    .getByRole("heading", { name: "Set up Google Drive sync" })
-    .waitFor();
+  await guide.getByRole("heading", { name: "Connect Google Drive", exact: true }).waitFor();
   await guide.screenshot({
     path: resolve(shots, "26-drive-setup-en.png"),
     fullPage: true,
   });
-
-  // Removing the setup returns to "not set up".
-  await guide
-    .getByRole("button", { name: "Remove Google Drive setup" })
-    .click();
-  await guide.getByText("Not set up", { exact: true }).waitFor();
-  assert.deepEqual(external, [], "setup page must not contact external hosts");
-  console.log("PASS drive setup guide", redirect);
+  assert.deepEqual(external, [], "guide must not contact external hosts");
+  console.log("PASS drive connect guide (built-in OAuth client)", id);
 } finally {
   await context.close();
 }

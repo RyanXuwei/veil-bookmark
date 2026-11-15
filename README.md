@@ -2,7 +2,7 @@
 
 加密的私人書籤與記事本 Chrome 擴充功能，一般視窗與無痕視窗都能使用。
 
-Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.7 Beta
+Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.8 Beta
 
 ## 功能
 
@@ -23,7 +23,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 目前尚未上架 Chrome 線上應用程式商店，請手動安裝：
 
-1. 下載並解壓縮 `VeilBookmark_v0.2.7_Chrome.zip`，放在固定的資料夾。
+1. 下載並解壓縮 `VeilBookmark_v0.2.8_Chrome.zip`，放在固定的資料夾。
 2. 在 Chrome 網址列輸入 `chrome://extensions`，開啟右上角的「開發人員模式」。
 3. 按「載入未封裝項目」，選擇剛才解壓縮的資料夾。
 4. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。
@@ -52,11 +52,19 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 ## Google Drive 同步（選用）
 
-在「同步與備份」按「開啟設定說明」，依照擴充功能內的說明頁完成一次設定即可。新電腦可在歡迎畫面按「從 Google Drive 還原」。
+已內建 Google 授權，不需要建立 Google Cloud 專案或輸入任何金鑰：
+
+1. 解鎖後，在「同步與備份」按「連接 Google Drive」。
+2. 在 Google 授權視窗選擇要用來同步的帳號，按「允許」。若 Chrome 尚未登入 Google，會先請你登入。
+3. 完成。解鎖期間每 5 分鐘自動同步。
+
+換新電腦時，安裝後在歡迎畫面輸入原本的主密碼，按「從 Google Drive 還原」。
 
 - 只請求 `drive.appdata` 權限，資料放在 Drive 的隱藏應用程式資料夾，不會讀取你的其他檔案。
 - 上傳前已用主密碼加密，Google 看不到書籤與記事內容。
+- 可隨時在 [Google 帳戶的第三方存取權](https://myaccount.google.com/permissions)移除授權。
 - 同一筆資料在兩台電腦同時修改時，以最後修改的版本為準，請確認電腦時間正確。
+- 需要使用 Google Chrome（Chrome 的帳號授權功能）；其他 Chromium 瀏覽器可能無法連接。
 
 ## 安全與隱私
 

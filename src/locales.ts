@@ -1904,5 +1904,80 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "🔒 安全性",
   "en": "🔒 Security",
   "ja": "🔒 セキュリティ"
+ },
+ "Veil Bookmark 已內建 Google 授權，不需要建立 Google Cloud 專案或輸入任何金鑰。資料直接在你的瀏覽器與 Google Drive 之間傳輸，不經過任何第三方伺服器。": {
+  "zh-CN": "Veil Bookmark 已内置 Google 授权，不需要创建 Google Cloud 项目或输入任何密钥。数据直接在你的浏览器与 Google Drive 之间传输，不经过任何第三方服务器。",
+  "en": "Veil Bookmark has Google sign-in built in — no Google Cloud project or keys needed. Data travels directly between your browser and Google Drive, never through a third-party server.",
+  "ja": "Veil Bookmark には Google 認証が組み込まれているため、Google Cloud プロジェクトやキーの入力は不要です。データはブラウザーと Google Drive の間で直接やり取りされ、第三者のサーバーを経由しません。"
+ },
+ "尚未連接": {
+  "zh-CN": "尚未连接",
+  "en": "Not connected",
+  "ja": "未接続"
+ },
+ "解鎖保險庫": {
+  "zh-CN": "解锁保险库",
+  "en": "Unlock the vault",
+  "ja": "保管庫のロックを解除"
+ },
+ "在工具列浮框輸入主密碼解鎖，再回到這一頁。": {
+  "zh-CN": "在工具列浮框输入主密码解锁，再回到这一页。",
+  "en": "Unlock with your master password in the toolbar popup, then come back to this page.",
+  "ja": "ツールバーのポップアップでマスターパスワードを入力してロックを解除し、このページに戻ってください。"
+ },
+ "這台電腦還沒有保險庫：在工具列浮框輸入原本的主密碼，按「從 Google Drive 還原」即可取回資料。": {
+  "zh-CN": "这台电脑还没有保险库：在工具列浮框输入原本的主密码，按「从 Google Drive 还原」即可取回数据。",
+  "en": "There is no vault on this computer yet: enter your existing master password in the toolbar popup and choose Restore from Google Drive.",
+  "ja": "このパソコンにはまだ保管庫がありません。ツールバーのポップアップで既存のマスターパスワードを入力し、「Google Drive から復元」を選んでください。"
+ },
+ "已解鎖": {
+  "zh-CN": "已解锁",
+  "en": "Unlocked",
+  "ja": "ロック解除済み"
+ },
+ "按「連接 Google Drive」": {
+  "zh-CN": "按「连接 Google Drive」",
+  "en": "Click Connect Google Drive",
+  "ja": "「Google Drive に接続」を押す"
+ },
+ "Chrome 會開啟 Google 授權視窗。若 Chrome 尚未登入 Google，會先請你登入。": {
+  "zh-CN": "Chrome 会打开 Google 授权窗口。若 Chrome 尚未登录 Google，会先请你登录。",
+  "en": "Chrome opens a Google authorization window. If Chrome isn't signed in to Google, you'll be asked to sign in first.",
+  "ja": "Chrome が Google の認証画面を開きます。Chrome に Google アカウントでログインしていない場合は、先にログインを求められます。"
+ },
+ "選擇帳號並允許": {
+  "zh-CN": "选择帐号并允许",
+  "en": "Choose an account and allow",
+  "ja": "アカウントを選んで許可"
+ },
+ "選擇要用來同步的 Google 帳號，按「允許」。授權畫面會說明 Veil Bookmark 只能存取它自己在 Drive 中的應用程式資料。": {
+  "zh-CN": "选择要用来同步的 Google 帐号，按「允许」。授权画面会说明 Veil Bookmark 只能访问它自己在 Drive 中的应用程序数据。",
+  "en": "Choose the Google account to sync with and click Allow. The consent screen explains that Veil Bookmark can only access its own app data in Drive.",
+  "ja": "同期に使う Google アカウントを選び、「許可」を押します。同意画面には、Veil Bookmark が Drive 内の自分のアプリデータにしかアクセスできないことが表示されます。"
+ },
+ "解鎖期間每 5 分鐘自動同步。其他電腦安裝後，在歡迎畫面輸入同一個主密碼，按「從 Google Drive 還原」。": {
+  "zh-CN": "解锁期间每 5 分钟自动同步。其他电脑安装后，在欢迎画面输入同一个主密码，按「从 Google Drive 还原」。",
+  "en": "While unlocked it syncs every 5 minutes. On another computer, install it, enter the same master password on the welcome screen and choose Restore from Google Drive.",
+  "ja": "ロック解除中は 5 分ごとに自動同期します。別のパソコンではインストール後、ようこそ画面で同じマスターパスワードを入力し「Google Drive から復元」を選んでください。"
+ },
+ "授權由 Chrome 管理。可隨時在 Google 帳戶的「第三方存取權」移除 Veil Bookmark，或在「同步與備份」中斷連線。": {
+  "zh-CN": "授权由 Chrome 管理。可随时在 Google 帐户的「第三方访问权」移除 Veil Bookmark，或在「同步与备份」中断连接。",
+  "en": "Authorization is managed by Chrome. You can remove Veil Bookmark under Third-party access in your Google Account at any time, or disconnect in Sync & backup.",
+  "ja": "認証は Chrome が管理します。Google アカウントの「サードパーティによるアクセス」から Veil Bookmark をいつでも削除でき、「同期とバックアップ」で接続を解除することもできます。"
+ },
+ "Google 帳戶權限": {
+  "zh-CN": "Google 帐户权限",
+  "en": "Google Account permissions",
+  "ja": "Google アカウントの権限"
+ },
+ "一鍵連接：使用 Chrome 登入的 Google 帳號授權，加密快照存放在 Drive 的隱藏應用程式資料夾。": {
+  "zh-CN": "一键连接：使用 Chrome 登录的 Google 帐号授权，加密快照存放在 Drive 的隐藏应用程序文件夹。",
+  "en": "One-click connect: authorize with the Google account signed in to Chrome. Encrypted snapshots are stored in Drive's hidden app folder.",
+  "ja": "ワンクリック接続：Chrome にログインしている Google アカウントで認証し、暗号化スナップショットを Drive の非表示アプリフォルダーに保存します。"
+ },
+ "連接說明": {
+  "zh-CN": "连接说明",
+  "en": "How to connect",
+  "ja": "接続方法"
  }
 };

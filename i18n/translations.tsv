@@ -381,3 +381,18 @@ AES-256 加密|AES-256 encrypted|AES-256 暗号化
 錄音儲存空間已滿，請先刪除部分錄音|Recording storage is full. Delete some recordings first.|録音の保存容量が不足しています。一部の録音を削除してください
 安全性|Security|セキュリティ
 🔒 安全性|🔒 Security|🔒 セキュリティ
+Veil Bookmark 已內建 Google 授權，不需要建立 Google Cloud 專案或輸入任何金鑰。資料直接在你的瀏覽器與 Google Drive 之間傳輸，不經過任何第三方伺服器。|Veil Bookmark has Google sign-in built in — no Google Cloud project or keys needed. Data travels directly between your browser and Google Drive, never through a third-party server.|Veil Bookmark には Google 認証が組み込まれているため、Google Cloud プロジェクトやキーの入力は不要です。データはブラウザーと Google Drive の間で直接やり取りされ、第三者のサーバーを経由しません。
+尚未連接|Not connected|未接続
+解鎖保險庫|Unlock the vault|保管庫のロックを解除
+在工具列浮框輸入主密碼解鎖，再回到這一頁。|Unlock with your master password in the toolbar popup, then come back to this page.|ツールバーのポップアップでマスターパスワードを入力してロックを解除し、このページに戻ってください。
+這台電腦還沒有保險庫：在工具列浮框輸入原本的主密碼，按「從 Google Drive 還原」即可取回資料。|There is no vault on this computer yet: enter your existing master password in the toolbar popup and choose Restore from Google Drive.|このパソコンにはまだ保管庫がありません。ツールバーのポップアップで既存のマスターパスワードを入力し、「Google Drive から復元」を選んでください。
+已解鎖|Unlocked|ロック解除済み
+按「連接 Google Drive」|Click Connect Google Drive|「Google Drive に接続」を押す
+Chrome 會開啟 Google 授權視窗。若 Chrome 尚未登入 Google，會先請你登入。|Chrome opens a Google authorization window. If Chrome isn't signed in to Google, you'll be asked to sign in first.|Chrome が Google の認証画面を開きます。Chrome に Google アカウントでログインしていない場合は、先にログインを求められます。
+選擇帳號並允許|Choose an account and allow|アカウントを選んで許可
+選擇要用來同步的 Google 帳號，按「允許」。授權畫面會說明 Veil Bookmark 只能存取它自己在 Drive 中的應用程式資料。|Choose the Google account to sync with and click Allow. The consent screen explains that Veil Bookmark can only access its own app data in Drive.|同期に使う Google アカウントを選び、「許可」を押します。同意画面には、Veil Bookmark が Drive 内の自分のアプリデータにしかアクセスできないことが表示されます。
+解鎖期間每 5 分鐘自動同步。其他電腦安裝後，在歡迎畫面輸入同一個主密碼，按「從 Google Drive 還原」。|While unlocked it syncs every 5 minutes. On another computer, install it, enter the same master password on the welcome screen and choose Restore from Google Drive.|ロック解除中は 5 分ごとに自動同期します。別のパソコンではインストール後、ようこそ画面で同じマスターパスワードを入力し「Google Drive から復元」を選んでください。
+授權由 Chrome 管理。可隨時在 Google 帳戶的「第三方存取權」移除 Veil Bookmark，或在「同步與備份」中斷連線。|Authorization is managed by Chrome. You can remove Veil Bookmark under Third-party access in your Google Account at any time, or disconnect in Sync & backup.|認証は Chrome が管理します。Google アカウントの「サードパーティによるアクセス」から Veil Bookmark をいつでも削除でき、「同期とバックアップ」で接続を解除することもできます。
+Google 帳戶權限|Google Account permissions|Google アカウントの権限
+一鍵連接：使用 Chrome 登入的 Google 帳號授權，加密快照存放在 Drive 的隱藏應用程式資料夾。|One-click connect: authorize with the Google account signed in to Chrome. Encrypted snapshots are stored in Drive's hidden app folder.|ワンクリック接続：Chrome にログインしている Google アカウントで認証し、暗号化スナップショットを Drive の非表示アプリフォルダーに保存します。
+連接說明|How to connect|接続方法
