@@ -29,7 +29,8 @@ export function RecoveryKeyModal({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <div className="overlay">
+    // Always above other panels (e.g. Security), which also use .overlay.
+    <div className="overlay overlayTop">
       <section
         className="modal card recoveryModal"
         role="alertdialog"

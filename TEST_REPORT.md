@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 0.2.8 Beta
+# 測試報告 · Veil Bookmark 0.2.9 Beta
 
 測試日期：2026-11-16。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -106,4 +106,8 @@
 - `scripts/setup-e2e.mjs` 改為驗證一鍵連接引導：manifest 內建 OAuth 用戶端與 `drive.appdata` 權限；擴充功能 ID 為 `edehlgkopbgmnopdaepadcopfnkgcpab`；說明頁沒有用戶端 ID 表單與重新導向網址；未解鎖時「連接 Google Drive」停用、解鎖後可用；「同步與備份」顯示一鍵連接說明；窄螢幕與英文版正常；過程中沒有對外連線。
 - 單元測試 16 組與其餘 7 組瀏覽器測試重跑通過。
 - **未驗證**：以真實 Google 帳號在 Google Chrome 中完成授權與 Drive 同步（測試瀏覽器無法登入 Google）。Google 端設定生效可能需要數分鐘至數小時。
+
+## 0.2.9
+
+- `scripts/password-change-e2e.mjs` 新增回歸檢查：在「安全性」面板產生新的救援金鑰後，金鑰是畫面最上層的元素（修正前此檢查失敗，修正後通過）。截圖 previews/40。
 

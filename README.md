@@ -2,7 +2,7 @@
 
 加密的私人書籤與記事本 Chrome 擴充功能，一般視窗與無痕視窗都能使用。
 
-Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.8 Beta
+Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.9 Beta
 
 ## 功能
 
@@ -23,7 +23,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 目前尚未上架 Chrome 線上應用程式商店，請手動安裝：
 
-1. 下載並解壓縮 `VeilBookmark_v0.2.8_Chrome.zip`，放在固定的資料夾。
+1. 下載並解壓縮 `VeilBookmark_v0.2.9_Chrome.zip`，放在固定的資料夾。
 2. 在 Chrome 網址列輸入 `chrome://extensions`，開啟右上角的「開發人員模式」。
 3. 按「載入未封裝項目」，選擇剛才解壓縮的資料夾。
 4. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。

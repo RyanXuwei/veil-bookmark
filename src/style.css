@@ -779,3 +779,5 @@ hr {
   margin: 0;
   font-weight: 600;
 }
+
+.overlay.overlayTop{z-index:60}

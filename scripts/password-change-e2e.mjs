@@ -84,6 +84,30 @@ try {
   await section.getByText("主密碼已更新，下次請使用新密碼解鎖。").waitFor();
   assert(await next.isDisabled());
   assert.equal(await next.inputValue(), "");
+  // Regression: a new recovery key generated from the Security panel must be
+  // shown on top of the panel, not hidden behind it.
+  await page.getByRole("button", { name: "產生新的救援金鑰" }).click();
+  await page.getByLabel("輸入目前的主密碼").fill("5678");
+  await page.getByRole("button", { name: "確認", exact: true }).click();
+  const code = page.locator("[data-testid=recovery-code]");
+  await code.waitFor();
+  assert(
+    await code.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const top = document.elementFromPoint(
+        r.left + r.width / 2,
+        r.top + r.height / 2,
+      );
+      return !!top && el.contains(top);
+    }),
+    "recovery key is the topmost element",
+  );
+  await page.screenshot({
+    path: resolve(root, "../previews/40-recovery-key-over-security.png"),
+  });
+  await page.locator(".recoveryModal .ackRow input").check();
+  await page.getByRole("button", { name: "完成", exact: true }).click();
+  await page.locator(".recoveryModal").waitFor({ state: "detached" });
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "關閉", exact: true })
