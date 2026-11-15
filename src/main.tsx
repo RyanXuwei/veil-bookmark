@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
+import { PasswordChangeSection } from "./password-change";
 import { SetupPage } from "./setup";
 import { Disclaimer } from "./disclaimer";
 import { RecoverForm, RecoveryKeyModal, RecoverySection } from "./recovery";
@@ -17,7 +18,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.2 Beta",
+  version: "0.2.3 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -1083,6 +1084,8 @@ function App() {
                     <hr />
                   </>
                 )}
+                <PasswordChangeSection rpc={rpc} />
+                <hr />
                 <h3>Google Drive</h3>
                 <p className="muted">
                   {status?.configured
@@ -1177,7 +1180,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.2 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.3 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

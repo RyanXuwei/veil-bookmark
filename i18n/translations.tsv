@@ -341,3 +341,16 @@ AES-256 加密|AES-256 encrypted|AES-256 暗号化
 開啟筆記本 ↗|Open notebook ↗|ノートを開く ↗
 
 無法儲存記事。仍要上鎖並捨棄未儲存的變更？|The note could not be saved. Lock and discard unsaved changes anyway?|記事を保存できませんでした。未保存の変更を破棄してロックしますか？
+
+修改主密碼|Change master password|マスターパスワードを変更
+請先驗證原密碼，成功後才可輸入及確認新密碼。|Verify your current password to enable the new password fields.|現在のパスワードを確認すると、新しいパスワードを入力できます。
+主密碼已更新，下次請使用新密碼解鎖。|Password updated. Use the new password next time you unlock.|パスワードを更新しました。次回は新しいパスワードで解除してください。
+原密碼|Current password|現在のパスワード
+驗證原密碼|Verify current password|現在のパスワードを確認
+原密碼驗證成功|Current password verified|現在のパスワードを確認しました
+重新驗證|Verify again|再確認
+新密碼|New password|新しいパスワード
+再次確認新密碼|Confirm new password|新しいパスワードを確認
+儲存新密碼|Save new password|新しいパスワードを保存
+修改密碼不會清除收藏或記事，原救援金鑰仍可使用。|Bookmarks and notes are preserved. Your existing recovery key still works.|ブックマークと記事は保持され、既存の救援キーも引き続き使えます。
+原密碼驗證已失效，請重新驗證|Password verification expired or changed. Verify again.|パスワードの確認が無効になりました。再度確認してください。

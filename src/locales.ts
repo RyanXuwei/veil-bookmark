@@ -1709,5 +1709,65 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "无法保存记事。仍要上锁并舍弃未保存的变更？",
   "en": "The note could not be saved. Lock and discard unsaved changes anyway?",
   "ja": "記事を保存できませんでした。未保存の変更を破棄してロックしますか？"
+ },
+ "修改主密碼": {
+  "zh-CN": "修改主密码",
+  "en": "Change master password",
+  "ja": "マスターパスワードを変更"
+ },
+ "請先驗證原密碼，成功後才可輸入及確認新密碼。": {
+  "zh-CN": "请先验证原密码，成功后才可输入及确认新密码。",
+  "en": "Verify your current password to enable the new password fields.",
+  "ja": "現在のパスワードを確認すると、新しいパスワードを入力できます。"
+ },
+ "主密碼已更新，下次請使用新密碼解鎖。": {
+  "zh-CN": "主密码已更新，下次请使用新密码解锁。",
+  "en": "Password updated. Use the new password next time you unlock.",
+  "ja": "パスワードを更新しました。次回は新しいパスワードで解除してください。"
+ },
+ "原密碼": {
+  "zh-CN": "原密码",
+  "en": "Current password",
+  "ja": "現在のパスワード"
+ },
+ "驗證原密碼": {
+  "zh-CN": "验证原密码",
+  "en": "Verify current password",
+  "ja": "現在のパスワードを確認"
+ },
+ "原密碼驗證成功": {
+  "zh-CN": "原密码验证成功",
+  "en": "Current password verified",
+  "ja": "現在のパスワードを確認しました"
+ },
+ "重新驗證": {
+  "zh-CN": "重新验证",
+  "en": "Verify again",
+  "ja": "再確認"
+ },
+ "新密碼": {
+  "zh-CN": "新密码",
+  "en": "New password",
+  "ja": "新しいパスワード"
+ },
+ "再次確認新密碼": {
+  "zh-CN": "再次确认新密码",
+  "en": "Confirm new password",
+  "ja": "新しいパスワードを確認"
+ },
+ "儲存新密碼": {
+  "zh-CN": "保存新密码",
+  "en": "Save new password",
+  "ja": "新しいパスワードを保存"
+ },
+ "修改密碼不會清除收藏或記事，原救援金鑰仍可使用。": {
+  "zh-CN": "修改密码不会清除收藏或记事，原救援密钥仍可使用。",
+  "en": "Bookmarks and notes are preserved. Your existing recovery key still works.",
+  "ja": "ブックマークと記事は保持され、既存の救援キーも引き続き使えます。"
+ },
+ "原密碼驗證已失效，請重新驗證": {
+  "zh-CN": "原密码验证已失效，请重新验证",
+  "en": "Password verification expired or changed. Verify again.",
+  "ja": "パスワードの確認が無効になりました。再度確認してください。"
  }
 };

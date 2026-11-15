@@ -2,7 +2,7 @@
 
 加密的私人書籤與記事本 Chrome 擴充功能，一般視窗與無痕視窗都能使用。
 
-Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.2 Beta
+Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：0.2.3 Beta
 
 ## 功能
 
@@ -10,6 +10,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 - **加密筆記本**：類似 Word 的網頁筆記本，有功能區（標題樣式、粗體、色彩、清單、對齊、連結）、A4 頁面、字數與縮放；自動加密儲存，可列印。儲存失敗會保留草稿，切換文件前會先等候儲存完成。從浮框的「記事本」分頁開啟。
 - **一般與無痕都能用**：點書籤會在目前的瀏覽模式開啟，也可以另開無痕視窗。
 - **自動上鎖**：閒置 15 分鐘、電腦鎖定或關閉所有 Chrome 視窗後自動上鎖。
+- **修改主密碼**：在「同步與備份」先驗證原密碼，再輸入新密碼與確認；至少 4 個字元，書籤、記事與原救援金鑰都會保留。
 - **救援金鑰**：忘記主密碼時，可用建立保險庫時取得的救援金鑰重設密碼。
 - **加密備份**：可匯出加密備份檔，在新電腦還原。
 - **選用 Google Drive 同步**：只上傳加密後的資料到 Drive 的隱藏應用程式資料夾。
@@ -19,7 +20,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 目前尚未上架 Chrome 線上應用程式商店，請手動安裝：
 
-1. 下載並解壓縮 `VeilBookmark_v0.2.2_Chrome.zip`，放在固定的資料夾。
+1. 下載並解壓縮 `VeilBookmark_v0.2.3_Chrome.zip`，放在固定的資料夾。
 2. 在 Chrome 網址列輸入 `chrome://extensions`，開啟右上角的「開發人員模式」。
 3. 按「載入未封裝項目」，選擇剛才解壓縮的資料夾。
 4. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。
@@ -71,7 +72,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 ## Beta 版限制
 
 - 尚未以真實 Google 帳號完整驗證 Drive 同步。
-- 尚未提供修改主密碼、匯入 Chrome 書籤的功能。
+- 尚未提供匯入 Chrome 書籤的功能。
 - 筆記本是擴充功能的網頁，從無痕視窗開啟時會顯示在一般視窗（Chrome 對擴充功能頁面的限制）；內容仍加密保存。
 - 筆記本暫不支援插入圖片與表格。
 - 尚未經第三方安全稽核。

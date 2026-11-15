@@ -13,6 +13,7 @@ const event = (name: string) => ({
     listeners[name] = f;
   },
 });
+
 // chrome.storage stores values like base::Value dictionaries: object keys come
 // back sorted, not in insertion order. Mimic that so order bugs surface here.
 const sortKeys = (x: any): any =>
@@ -585,4 +586,90 @@ test("recovery key: create, forgot-password reset, rotation, fresh-install recov
     globalThis.fetch = originalFetch;
     await rpc("LOCK");
   }
+});
+
+test("password change requires fresh proof, preserves data and recovery, rejects old password", async () => {
+  const c = await import("../src/crypto");
+  delete local.vault;
+  delete session.session;
+  delete session.attempts;
+  delete session.nextAttempt;
+  const created = await rpc("CREATE", { password: "1234" });
+  await rpc("UPSERT", {
+    entry: { title: "retained bookmark", url: "https://example.com/keep" },
+  });
+  await rpc("MEMO_UPSERT", {
+    memo: { title: "retained note", body: "keep note" },
+  });
+  const before = await rpc("LIST");
+  const recoverySlot = structuredClone(local.vault.keys.recovery);
+  await assert.rejects(
+    rpc("CHANGE_PASSWORD", { newPassword: "5678", confirmPassword: "5678" }),
+    /重新驗證/,
+  );
+  await assert.rejects(
+    rpc("VERIFY_PASSWORD", { password: "wrong" }),
+    /密碼不正確/,
+  );
+  delete session.attempts;
+  delete session.nextAttempt;
+  const proof = await rpc("VERIFY_PASSWORD", { password: "1234" });
+  await assert.rejects(
+    rpc("CHANGE_PASSWORD", {
+      ...proof,
+      newPassword: "123",
+      confirmPassword: "123",
+    }),
+    /至少 4/,
+  );
+  await assert.rejects(
+    rpc("CHANGE_PASSWORD", {
+      ...proof,
+      newPassword: "5678",
+      confirmPassword: "9999",
+    }),
+    /不一致/,
+  );
+  await rpc("CHANGE_PASSWORD", {
+    ...proof,
+    newPassword: "5678",
+    confirmPassword: "5678",
+  });
+  assert(!session.passwordProof);
+  assert.deepEqual(await rpc("LIST"), before);
+  assert.deepEqual(local.vault.keys.recovery, recoverySlot);
+  const recovered = await c.openWithRecovery(
+    local.vault,
+    c.parseRecoveryCode(created.recoveryKey),
+  );
+  assert.deepEqual(await c.decrypt(local.vault, recovered), before);
+  await assert.rejects(
+    rpc("CHANGE_PASSWORD", {
+      ...proof,
+      newPassword: "abcd",
+      confirmPassword: "abcd",
+    }),
+    /重新驗證/,
+  );
+  await rpc("LOCK");
+  await assert.rejects(rpc("UNLOCK", { password: "1234" }), /密碼不正確/);
+  delete session.attempts;
+  delete session.nextAttempt;
+  await rpc("UNLOCK", { password: "5678" });
+  const pending = await rpc("VERIFY_PASSWORD", { password: "5678" });
+  await rpc("LOCK");
+  assert(!session.passwordProof);
+  await rpc("UNLOCK", { password: "5678" });
+  await assert.rejects(
+    rpc("CHANGE_PASSWORD", {
+      ...pending,
+      newPassword: "abcd",
+      confirmPassword: "abcd",
+    }),
+    /重新驗證/,
+  );
+  await rpc("LOCK");
+  delete local.vault;
+  delete session.attempts;
+  delete session.nextAttempt;
 });

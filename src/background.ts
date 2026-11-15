@@ -48,7 +48,7 @@ let queue = Promise.resolve();
 let lockGeneration = 0;
 async function lock() {
   lockGeneration++;
-  await chrome.storage.session.remove(["session", "capture"]);
+  await chrome.storage.session.remove(["session", "capture", "passwordProof"]);
   await chrome.alarms.clear("veilmark-lock");
 }
 async function session(): Promise<Session> {
@@ -379,6 +379,59 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
   if (!e) throw Error("尚無保險庫");
   let v = await decrypt(e, key);
   if (m.type === "LIST") return v;
+  if (m.type === "VERIFY_PASSWORD") {
+    if (e.version !== 3) throw Error("請先建立或還原保險庫");
+    const opened = await rateLimited(() => openWithPassword(e, m.password));
+    if ((await exportKey(opened.dek)) !== s.key) throw Error(OTHER_VAULT);
+    if ((await session()).nonce !== s.nonce) throw Error("已上鎖，請重新解鎖");
+    const proof = {
+      verificationToken: crypto.randomUUID(),
+      expires: Date.now() + 5 * 60 * 1000,
+      nonce: s.nonce,
+      id: e.id,
+      keysAuth: e.keys.auth,
+    };
+    await chrome.storage.session.set({ passwordProof: proof });
+    return {
+      verificationToken: proof.verificationToken,
+      expires: proof.expires,
+    };
+  }
+  if (m.type === "CHANGE_PASSWORD") {
+    if (typeof m.newPassword !== "string" || m.newPassword.length < 4)
+      throw Error("主密碼至少 4 個字元");
+    if (m.newPassword !== m.confirmPassword) throw Error("兩次密碼不一致");
+    const { passwordProof: p } = await chrome.storage.session.get<{
+      passwordProof?: {
+        verificationToken: string;
+        expires: number;
+        nonce: string;
+        id: string;
+        keysAuth: string;
+      };
+    }>("passwordProof");
+    if (
+      e.version !== 3 ||
+      !p ||
+      p.verificationToken !== m.verificationToken ||
+      p.expires <= Date.now() ||
+      p.nonce !== s.nonce ||
+      p.id !== e.id ||
+      p.keysAuth !== e.keys.auth
+    )
+      throw Error("原密碼驗證已失效，請重新驗證");
+    await chrome.storage.session.remove("passwordProof");
+    const generation = lockGeneration;
+    const keys = await setPassword(key, e.id, m.newPassword, e.keys);
+    if (generation !== lockGeneration || (await session()).nonce !== s.nonce)
+      throw Error("已上鎖，請重新解鎖");
+    await save(v, s, keys);
+    await touch(s);
+    const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
+    if (driveEnabled)
+      await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+    return;
+  }
   if (m.type === "RECOVERY_CREATE") {
     // Re-confirm the password: a recovery key is as powerful as the password.
     if (e.version !== 3) throw Error("請先建立或還原保險庫");
