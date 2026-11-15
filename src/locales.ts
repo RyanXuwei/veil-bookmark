@@ -1894,5 +1894,15 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "录音保存空间已满，请先删除部分录音",
   "en": "Recording storage is full. Delete some recordings first.",
   "ja": "録音の保存容量が不足しています。一部の録音を削除してください"
+ },
+ "安全性": {
+  "zh-CN": "安全性",
+  "en": "Security",
+  "ja": "セキュリティ"
+ },
+ "🔒 安全性": {
+  "zh-CN": "🔒 安全性",
+  "en": "🔒 Security",
+  "ja": "🔒 セキュリティ"
  }
 };

@@ -18,7 +18,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.5 Beta",
+  version: "0.2.6 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -86,6 +86,7 @@ function App() {
         deleting ||
         recoveryShown ||
         panel === "settings" ||
+        panel === "security" ||
         panel === "about"
           ? "570px"
           : "";
@@ -665,7 +666,7 @@ function App() {
           {!status?.hasRecovery && (
             <button
               className="recoveryBanner"
-              onClick={() => setPanel("settings")}
+              onClick={() => setPanel("security")}
             >
               ⚠ {t("尚未建立救援金鑰 · 立即建立")}
             </button>
@@ -755,9 +756,14 @@ function App() {
                   })
                 : t("{count} 個私人書籤", { count: entries.length })}
             </span>
-            <button onClick={() => setPanel("settings")}>
-              {t("同步與備份")}
-            </button>
+            <span className="quickBottomActions">
+              <button onClick={() => setPanel("security")}>
+                {t("安全性")}
+              </button>
+              <button onClick={() => setPanel("settings")}>
+                {t("同步與備份")}
+              </button>
+            </span>
           </div>
         </main>
       ) : (
@@ -788,6 +794,9 @@ function App() {
             )}
             <div className="sideBottom">
               <div className="syncDot">{t("● 本機加密保護")}</div>
+              <button className="nav" onClick={() => setPanel("security")}>
+                {t("🔒 安全性")}
+              </button>
               <button className="nav" onClick={() => setPanel("settings")}>
                 {t("⚙ 同步與備份")}
               </button>
@@ -1042,21 +1051,27 @@ function App() {
           </section>
         </div>
       )}
-      {(panel === "settings" || panel === "about") && (
+      {(panel === "settings" || panel === "security" || panel === "about") && (
         <div className="overlay">
           <section
             className="modal card"
             role="dialog"
             aria-modal="true"
             aria-label={
-              panel === "settings" ? t("同步與備份") : t("關於 Veil Bookmark")
+              panel === "settings"
+                ? t("同步與備份")
+                : panel === "security"
+                  ? t("安全性")
+                  : t("關於 Veil Bookmark")
             }
           >
             <div className="modalTitle">
               <h2>
                 {panel === "settings"
                   ? t("同步與備份")
-                  : t("關於 Veil Bookmark")}
+                  : panel === "security"
+                    ? t("安全性")
+                    : t("關於 Veil Bookmark")}
               </h2>
               <button onClick={() => setPanel("")} aria-label={t("關閉")}>
                 ×
@@ -1084,8 +1099,6 @@ function App() {
                     <hr />
                   </>
                 )}
-                <PasswordChangeSection rpc={rpc} />
-                <hr />
                 <h3>Google Drive</h3>
                 <p className="muted">
                   {status?.configured
@@ -1148,12 +1161,6 @@ function App() {
                   )}
                 </div>
                 <hr />
-                <RecoverySection
-                  hasRecovery={!!status?.hasRecovery}
-                  busy={busy}
-                  onCreate={createRecovery}
-                />
-                <hr />
                 <h3>{t("加密備份")}</h3>
                 <p className="muted">
                   {t(
@@ -1169,6 +1176,16 @@ function App() {
                     "書籤在目前視窗模式開啟；一般模式可能留下瀏覽紀錄。加密收藏會保留在本機。遺失主密碼無法復原。同步採逐筆最後更新優先，裝置時間需正確。",
                   )}
                 </p>
+              </>
+            ) : panel === "security" ? (
+              <>
+                <PasswordChangeSection rpc={rpc} />
+                <hr />
+                <RecoverySection
+                  hasRecovery={!!status?.hasRecovery}
+                  busy={busy}
+                  onCreate={createRecovery}
+                />
                 <hr />
                 <Disclaimer />
               </>
@@ -1180,7 +1197,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.5 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.6 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

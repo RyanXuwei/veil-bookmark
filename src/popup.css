@@ -574,3 +574,5 @@ html[data-surface="popup"] {
   opacity: 0.45;
   padding: 0 3px;
 }
+
+.quickBottomActions{display:inline-flex;gap:14px;align-items:center}

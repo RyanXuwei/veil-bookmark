@@ -31,7 +31,17 @@ try {
     });
   });
   await page.reload();
+  // Password change lives in Security, not in Sync & backup.
   await page.getByRole("button", { name: "同步與備份", exact: true }).click();
+  assert.equal(await page.locator(".passwordChange").count(), 0);
+  assert.equal(await page.locator(".recoverySection").count(), 0);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "關閉", exact: true })
+    .click();
+  await page.getByRole("button", { name: "安全性", exact: true }).click();
+  await page.getByRole("heading", { name: "安全性" }).waitFor();
+  await page.locator(".recoverySection").waitFor();
   const section = page.locator(".passwordChange"),
     old = section.getByLabel("原密碼", { exact: true }),
     next = section.getByLabel("新密碼", { exact: true }),
@@ -89,7 +99,7 @@ try {
   await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await page.locator(".quickLink", { hasText: "preserved" }).waitFor();
   console.log(
-    "PASS password change: fields gated by old password verification; wrong password/mismatch rejected; old password invalid; new password and data verified.",
+    "PASS password change (Security panel, not Sync & backup): fields gated by old password verification; wrong password/mismatch rejected; old password invalid; new password and data verified.",
   );
 } finally {
   await context.close();
