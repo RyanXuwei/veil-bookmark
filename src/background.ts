@@ -1,5 +1,7 @@
 import {
   derive,
+  cleanDrawing,
+  cleanRecordings,
   decrypt,
   merge,
   emptyVault,
@@ -497,6 +499,15 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
         .slice(0, 300),
       body,
       format: x.format === "html" ? "html" : "text",
+      paperColor: /^#[0-9a-f]{6}$/i.test(x.paperColor || "")
+        ? x.paperColor.toLowerCase()
+        : old?.paperColor || "#fff4be",
+      drawing:
+        x.drawing === undefined ? old?.drawing || [] : cleanDrawing(x.drawing),
+      recordings:
+        x.recordings === undefined
+          ? old?.recordings || []
+          : cleanRecordings(x.recordings),
       updated: Math.max(Date.now(), (old?.updated || 0) + 1),
       revision: crypto.randomUUID(),
       deleted: false,
@@ -505,9 +516,27 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       memo.format === "html"
         ? memo.body.replace(/<[^>]*>|&nbsp;/g, "").trim()
         : memo.body.trim();
-    if (!memo.title && !visible) throw Error("請輸入記事標題或內容");
+    if (
+      !memo.title &&
+      !visible &&
+      !memo.drawing?.length &&
+      !memo.recordings?.length
+    )
+      throw Error("請輸入記事標題或內容");
     if (!old && v.memos.filter((y) => !y.deleted).length >= 5000)
       throw Error("記事數量已達上限");
+    if (
+      v.memos
+        .filter((y) => y.id !== memo.id && !y.deleted)
+        .reduce(
+          (n, y) =>
+            n + (y.recordings || []).reduce((a, r) => a + r.data.length, 0),
+          0,
+        ) +
+        (memo.recordings || []).reduce((n, r) => n + r.data.length, 0) >
+      6000000
+    )
+      throw Error("錄音儲存空間已滿，請先刪除部分錄音");
     v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);
     await save(v, s);
     await touch(s);
@@ -521,6 +550,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       x.deleted = true;
       x.body = "";
       x.title = "";
+      x.drawing = [];
+      x.recordings = [];
       x.updated = Math.max(Date.now(), x.updated + 1);
       x.revision = crypto.randomUUID();
       await save(v, s);

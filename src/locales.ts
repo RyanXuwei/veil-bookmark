@@ -1769,5 +1769,130 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "原密码验证已失效，请重新验证",
   "en": "Password verification expired or changed. Verify again.",
   "ja": "パスワードの確認が無効になりました。再度確認してください。"
+ },
+ "紙張顏色": {
+  "zh-CN": "纸张颜色",
+  "en": "Paper color",
+  "ja": "用紙の色"
+ },
+ "自訂紙張顏色": {
+  "zh-CN": "自订纸张颜色",
+  "en": "Custom paper color",
+  "ja": "用紙の色をカスタマイズ"
+ },
+ "文字": {
+  "zh-CN": "文字",
+  "en": "Text",
+  "ja": "テキスト"
+ },
+ "鉛筆": {
+  "zh-CN": "铅笔",
+  "en": "Pencil",
+  "ja": "鉛筆"
+ },
+ "橡皮擦": {
+  "zh-CN": "橡皮擦",
+  "en": "Eraser",
+  "ja": "消しゴム"
+ },
+ "筆色": {
+  "zh-CN": "笔色",
+  "en": "Ink color",
+  "ja": "ペンの色"
+ },
+ "筆畫粗細": {
+  "zh-CN": "笔画粗细",
+  "en": "Stroke width",
+  "ja": "線の太さ"
+ },
+ "復原筆畫": {
+  "zh-CN": "复原笔画",
+  "en": "Undo stroke",
+  "ja": "線を元に戻す"
+ },
+ "便簽工具": {
+  "zh-CN": "便签工具",
+  "en": "Notepad tools",
+  "ja": "メモ帳ツール"
+ },
+ "開始錄音": {
+  "zh-CN": "开始录音",
+  "en": "Record",
+  "ja": "録音を開始"
+ },
+ "暫停錄音": {
+  "zh-CN": "暂停录音",
+  "en": "Pause recording",
+  "ja": "録音を一時停止"
+ },
+ "繼續錄音": {
+  "zh-CN": "继续录音",
+  "en": "Resume recording",
+  "ja": "録音を再開"
+ },
+ "停止錄音": {
+  "zh-CN": "停止录音",
+  "en": "Stop recording",
+  "ja": "録音を停止"
+ },
+ "錄音機": {
+  "zh-CN": "录音机",
+  "en": "Voice recorder",
+  "ja": "ボイスレコーダー"
+ },
+ "每段最長 3 分鐘": {
+  "zh-CN": "每段最长 3 分钟",
+  "en": "Up to 3 minutes per clip",
+  "ja": "1件につき最長3分"
+ },
+ "無法錄音，請確認麥克風權限與裝置": {
+  "zh-CN": "无法录音，请确认麦克风权限与设备",
+  "en": "Cannot record. Check microphone permission and device.",
+  "ja": "録音できません。マイクの権限と接続を確認してください"
+ },
+ "無法保存錄音，請重新錄製": {
+  "zh-CN": "无法保存录音，请重新录制",
+  "en": "Could not save the recording. Please record again.",
+  "ja": "録音を保存できませんでした。もう一度録音してください"
+ },
+ "錄音": {
+  "zh-CN": "录音",
+  "en": "Recording",
+  "ja": "録音"
+ },
+ "移動錄音": {
+  "zh-CN": "移动录音",
+  "en": "Move recording",
+  "ja": "録音を移動"
+ },
+ "播放錄音": {
+  "zh-CN": "播放录音",
+  "en": "Play recording",
+  "ja": "録音を再生"
+ },
+ "刪除錄音": {
+  "zh-CN": "删除录音",
+  "en": "Delete recording",
+  "ja": "録音を削除"
+ },
+ "請先停止錄音並放置播放貼紙": {
+  "zh-CN": "请先停止录音并放置播放贴纸",
+  "en": "Stop recording and place the audio sticker first.",
+  "ja": "録音を停止して再生ステッカーを配置してください"
+ },
+ "點紙張任意位置放置錄音，之後可拖曳移動": {
+  "zh-CN": "点纸张任意位置放置录音，之后可拖曳移动",
+  "en": "Click anywhere on the paper to place the recording, then drag to move.",
+  "ja": "用紙をクリックして録音を配置し、ドラッグで移動できます"
+ },
+ "上鎖或離開會捨棄尚未完成的錄音": {
+  "zh-CN": "上锁或离开会舍弃尚未完成的录音",
+  "en": "Locking or leaving discards unfinished recordings.",
+  "ja": "ロックや画面移動で未完了の録音は破棄されます"
+ },
+ "錄音儲存空間已滿，請先刪除部分錄音": {
+  "zh-CN": "录音保存空间已满，请先删除部分录音",
+  "en": "Recording storage is full. Delete some recordings first.",
+  "ja": "録音の保存容量が不足しています。一部の録音を削除してください"
  }
 };

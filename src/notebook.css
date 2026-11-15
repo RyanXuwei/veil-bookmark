@@ -316,23 +316,24 @@
   background: #e8e9e6;
 }
 .nbPage {
+  position: relative;
   width: 794px;
   min-height: 1123px;
   margin: 0 auto;
-  background: #fff;
+  background: var(--paper-color, #fff4be);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.18),
     0 4px 14px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
-  padding: 96px 96px;
+  padding: 72px 64px 120px 96px;
   /* Faint page-break guides every A4 page. */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 1121px,
-    #e3e5e1 1121px,
-    #e3e5e1 1123px
-  );
+  border-radius: 5px 14px 18px 5px;
+  border-left: 14px solid #9b4c3c;
+  box-shadow:
+    3px 4px 0 -1px #f5efdc,
+    5px 7px 0 -1px #c2b9a2,
+    0 14px 30px #3e33252b,
+    inset 16px 0 22px -20px #352b2080;
 }
 .nbEditor {
   min-height: 931px;
@@ -340,26 +341,30 @@
   font-family:
     Calibri, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 11pt;
-  line-height: 1.6;
-  color: #111;
+  line-height: 32px;
+  color: var(--paper-ink, #30372d);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='32'%3E%3Cpath d='M0 31.5H5' stroke='%238f937c' stroke-opacity='.48' stroke-width='1'/%3E%3C/svg%3E");
   word-wrap: break-word;
 }
 .nbEditor p {
-  margin: 0 0 8pt;
+  margin: 0;
 }
 .nbEditor h1 {
   font-size: 20pt;
-  color: var(--nb-green);
-  margin: 12pt 0 6pt;
+  color: inherit;
+  margin: 32px 0 0;
+  line-height: 32px;
 }
 .nbEditor h2 {
   font-size: 16pt;
-  color: var(--nb-green);
-  margin: 10pt 0 6pt;
+  color: inherit;
+  margin: 32px 0 0;
+  line-height: 32px;
 }
 .nbEditor h3 {
   font-size: 13pt;
-  margin: 8pt 0 4pt;
+  margin: 32px 0 0;
+  line-height: 32px;
 }
 .nbEditor blockquote {
   margin: 8pt 0 8pt 12pt;
@@ -383,6 +388,196 @@
   border: 0;
   border-top: 1px solid #bbb;
   margin: 12pt 0;
+}
+
+/* A quiet desk, layered paper edges and metal rings inspired by a real notepad. */
+.nbCanvas {
+  background: radial-gradient(ellipse at 50% 0, #eee8db, #dcd5c7);
+}
+.nbBinding {
+  position: absolute;
+  top: 28px;
+  bottom: 28px;
+  left: -28px;
+  width: 58px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='48'%3E%3Cellipse cx='47' cy='24' rx='6' ry='8' fill='%23564b3f' fill-opacity='.55'/%3E%3Cpath d='M45 20H15C3 20 3 32 15 32H45' fill='none' stroke='%233f4140' stroke-width='7'/%3E%3Cpath d='M45 19H15C3 19 3 29 15 29H45' fill='none' stroke='%23c8c9c4' stroke-width='3'/%3E%3C/svg%3E");
+}
+.nbPage::after {
+  content: "";
+  position: absolute;
+  top: 72px;
+  bottom: 80px;
+  left: 72px;
+  border-left: 1px solid #cb7c6760;
+  pointer-events: none;
+}
+.nbEditor ul,
+.nbEditor ol {
+  margin: 0;
+  padding-left: 28px;
+}
+.nbEditor li {
+  line-height: 32px;
+}
+.nbEditor blockquote {
+  margin: 32px 0 32px 12px;
+  color: inherit;
+}
+.nbEditor pre {
+  margin: 32px 0;
+  line-height: 32px;
+  background: #ffffff35;
+  color: inherit;
+}
+.nbPaperTools {
+  justify-content: center;
+  gap: 8px;
+  margin-left: auto;
+  border-right: 0;
+}
+.nbDrawingTools {
+  margin-bottom: 8px;
+}
+.nbDrawing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.nbDrawing.pen,
+.nbDrawing.eraser {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+.nbNoteTools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  background: #f4f1e7;
+  border-bottom: 1px solid #d5cfbd;
+  flex: none;
+}
+.nbNoteTools .nbPaperTools {
+  margin: 0;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+}
+.nbNoteTools .nbDrawingTools {
+  margin: 0;
+}
+.nbNoteTools .rgName {
+  padding: 0;
+}
+.nbRecorder {
+  border: 0;
+  padding: 0;
+  gap: 6px;
+}
+.nbRecordingHint {
+  font-size: 12px;
+  color: #735c3b;
+}
+.nbAudioLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.nbAudioSticker {
+  position: absolute;
+  width: 220px;
+  max-width: 90%;
+  padding: 8px;
+  border: 1px solid #c6b876;
+  border-radius: 6px;
+  background: #fff8da;
+  box-shadow: 2px 4px 10px #493a2426;
+  pointer-events: auto;
+  color: #384739;
+}
+.nbAudioHandle {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  font-size: 12px;
+  padding: 2px 24px 8px 3px;
+}
+.nbAudioHandle:active {
+  cursor: grabbing;
+}
+.nbAudioSticker audio {
+  display: block;
+  width: 100%;
+  height: 32px;
+}
+.nbAudioDelete {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #765e41;
+}
+.nbPlaceAudio {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  cursor: copy;
+  background: #f2c44b15;
+  touch-action: none;
+}
+@media print {
+  .nbNoteTools,
+  .nbPlaceAudio {
+    display: none;
+  }
+  .nbAudioSticker {
+    box-shadow: none;
+  }
+}
+.nbDrawing.pen {
+  cursor: crosshair;
+}
+.nbDrawing.eraser {
+  cursor: cell;
+}
+.nbEditor {
+  position: relative;
+}
+.nbSwatch {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: 1px solid #52604850;
+  cursor: pointer;
+  padding: 0;
+}
+.nbSwatch[aria-pressed="true"] {
+  outline: 2px solid #335a49;
+  outline-offset: 2px;
+}
+.nbSwatch:focus-visible {
+  outline: 2px solid #335a49;
+  outline-offset: 3px;
+}
+.nbPaperCustom {
+  width: 30px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid #b7c0ae;
+  cursor: pointer;
+  background: transparent;
 }
 
 /* Status bar */
@@ -479,6 +674,14 @@
     max-width: 794px;
     padding: 48px 32px;
   }
+  .nbBinding {
+    left: -24px;
+    width: 54px;
+  }
+  .nbPage::after {
+    left: 24px;
+    top: 48px;
+  }
   .nbApp {
     display: none;
   }
@@ -491,8 +694,15 @@
     padding: 12px 8px;
   }
   .nbPage {
-    padding: 24px 16px;
+    padding: 32px 16px 48px 32px;
     min-height: 0;
+  }
+  .nbBinding {
+    left: -26px;
+  }
+  .nbPage::after {
+    left: 24px;
+    top: 32px;
   }
   .nbEditor {
     min-height: 60vh;
@@ -528,6 +738,13 @@
     box-shadow: none;
     padding: 0;
     background-image: none;
+    border: 0;
+    border-radius: 0;
+    print-color-adjust: exact;
+  }
+  .nbBinding,
+  .nbPage::after {
+    display: none;
   }
 }
 

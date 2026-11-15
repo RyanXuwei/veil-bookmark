@@ -10,12 +10,101 @@ export type Entry = {
   deleted: boolean;
 };
 export const MEMO_MAX = 500_000;
+export type MemoRecording = {
+  id: string;
+  data: string;
+  mime: string;
+  duration: number;
+  created: number;
+  x: number;
+  y: number;
+};
+export function cleanRecordings(value: unknown): MemoRecording[] {
+  if (!Array.isArray(value)) return [];
+  let bytes = 0;
+  return value.slice(0, 5).flatMap((r) => {
+    if (
+      !r ||
+      typeof r.id !== "string" ||
+      r.id.length > 100 ||
+      typeof r.data !== "string" ||
+      r.data.length > 1400000 ||
+      !r.data.length ||
+      r.data.length % 4 !== 0 ||
+      !/^[A-Za-z0-9+/]+={0,2}$/.test(r.data) ||
+      ![
+        "audio/webm",
+        "audio/webm;codecs=opus",
+        "audio/ogg;codecs=opus",
+        "audio/mp4",
+      ].includes(r.mime) ||
+      !Number.isFinite(r.duration) ||
+      !Number.isFinite(r.created) ||
+      !Number.isFinite(r.x) ||
+      !Number.isFinite(r.y)
+    )
+      return [];
+    bytes += r.data.length;
+    return bytes <= 2000000
+      ? [
+          {
+            id: r.id,
+            data: r.data,
+            mime: r.mime,
+            duration: Math.max(0, Math.min(180, r.duration)),
+            created: r.created,
+            x: Math.max(0, Math.min(0.95, r.x)),
+            y: Math.max(0, Math.min(0.95, r.y)),
+          },
+        ]
+      : [];
+  });
+}
+export type DrawingStroke = {
+  color: string;
+  width: number;
+  points: [number, number][];
+};
+export function cleanDrawing(value: unknown): DrawingStroke[] {
+  if (!Array.isArray(value)) return [];
+  let remaining = 20000;
+  return value.slice(0, 200).flatMap((s) => {
+    if (
+      !s ||
+      !/^#[0-9a-f]{6}$/i.test(s.color) ||
+      !Number.isFinite(s.width) ||
+      !Array.isArray(s.points)
+    )
+      return [];
+    const points: [number, number][] = s.points
+      .slice(0, Math.min(2000, remaining))
+      .filter(
+        (p: unknown) =>
+          Array.isArray(p) &&
+          p.length === 2 &&
+          p.every(
+            (n) =>
+              typeof n === "number" &&
+              Number.isFinite(n) &&
+              n >= 0 &&
+              n <= 100000,
+          ),
+      );
+    remaining -= points.length;
+    return points.length
+      ? [{ color: s.color, width: Math.max(1, Math.min(12, s.width)), points }]
+      : [];
+  });
+}
 export type Memo = {
   id: string;
   title: string;
   body: string;
   // "html" for notebook documents (sanitized in the page); plain text otherwise.
   format?: "html" | "text";
+  paperColor?: string;
+  drawing?: DrawingStroke[];
+  recordings?: MemoRecording[];
   updated: number;
   revision: string;
   deleted: boolean;

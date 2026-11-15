@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./notebook.css";
-import type { Memo } from "./crypto";
+import { cleanDrawing, type Memo, type DrawingStroke } from "./crypto";
+import { DrawingLayer } from "./drawing";
+import { Recorder, AudioSticker } from "./recorder";
+import { cleanRecordings, type MemoRecording } from "./crypto";
 import { LANGS, lang, saveLang, t, tError, type Lang } from "./i18n";
 import {
   countWords,
@@ -13,6 +16,15 @@ import {
 type Rpc = (type: string, data?: Record<string, unknown>) => Promise<any>;
 type Tab = "home" | "insert" | "view";
 const PAGE_HEIGHT = 1123; // A4 at 96 dpi
+const DEFAULT_PAPER = "#fff4be";
+const PAPER_COLORS = [
+  "#fff4be",
+  "#fbe0dc",
+  "#e4eddb",
+  "#dfeef4",
+  "#eee3f3",
+  "#fffdf5",
+];
 const STYLES: [string, string][] = [
   ["P", "內文"],
   ["H1", "標題 1"],
@@ -35,6 +47,27 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [memos, setMemos] = useState<Memo[]>([]);
   const [current, setCurrent] = useState<string>("");
   const [title, setTitle] = useState("");
+  const [paperColor, setPaperColor] = useState(DEFAULT_PAPER);
+  const paper = useRef(DEFAULT_PAPER);
+  const [drawing, setDrawing] = useState<DrawingStroke[]>([]);
+  const ink = useRef<DrawingStroke[]>([]);
+  const [recordings, setRecordings] = useState<MemoRecording[]>([]);
+  const audio = useRef<MemoRecording[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [pendingAudio, setPendingAudio] = useState<MemoRecording | null>(null);
+  function audioChanged(next: MemoRecording[]) {
+    audio.current = next;
+    setRecordings(next);
+    changed();
+  }
+  const [drawMode, setDrawMode] = useState<"text" | "pen" | "eraser">("text");
+  const [penColor, setPenColor] = useState("#384739");
+  const [penWidth, setPenWidth] = useState(2);
+  function drawChanged(next: DrawingStroke[]) {
+    ink.current = next;
+    setDrawing(next);
+    changed();
+  }
   const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving">(
     "saved",
   );
@@ -81,6 +114,15 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     setStatus((s: any) => (s ? { ...s, unlocked: false } : s));
     setMemos([]);
     setTitle("");
+    paper.current = DEFAULT_PAPER;
+    setPaperColor(DEFAULT_PAPER);
+    ink.current = [];
+    audio.current = [];
+    setRecordings([]);
+    setPendingAudio(null);
+    setRecording(false);
+    setDrawing([]);
+    setDrawMode("text");
     setCurrent("");
     setQuery("");
     setPassword("");
@@ -130,6 +172,17 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     el.innerHTML = m ? memoHtml(m) : "<p><br></p>";
     setCurrent(m?.id || "");
     setTitle(m?.title || "");
+    paper.current = /^#[0-9a-f]{6}$/i.test(m?.paperColor || "")
+      ? m!.paperColor!
+      : DEFAULT_PAPER;
+    setPaperColor(paper.current);
+    ink.current = cleanDrawing(m?.drawing);
+    audio.current = cleanRecordings(m?.recordings);
+    setRecordings(audio.current);
+    setPendingAudio(null);
+    setRecording(false);
+    setDrawing(ink.current);
+    setDrawMode("text");
     setSavedAt(m?.updated || 0);
     setSaveState("saved");
     history.replaceState(null, "", `#${m?.id || "new"}`);
@@ -154,7 +207,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           const titleNow = state.current.title;
           const id = state.current.current;
           const revision = edits.current;
-          if (!titleNow.trim() && !htmlToText(body)) {
+          if (
+            !titleNow.trim() &&
+            !htmlToText(body) &&
+            !ink.current.length &&
+            !audio.current.length
+          ) {
             if (id) throw Error("請輸入記事標題或內容");
             state.current.dirty = false;
             setSaveState("saved");
@@ -162,7 +220,15 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           }
           setSaveState("saving");
           const memo: Memo = await rpc("MEMO_UPSERT", {
-            memo: { id, title: titleNow, body, format: "html" },
+            memo: {
+              id,
+              title: titleNow,
+              body,
+              format: "html",
+              paperColor: paper.current,
+              drawing: ink.current,
+              recordings: audio.current,
+            },
           });
           if (saveEpoch !== epoch.current) return false;
           if (!id) {
@@ -280,6 +346,10 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   }
 
   async function open(m: Memo | null) {
+    if (recording || pendingAudio) {
+      setError("請先停止錄音並放置播放貼紙");
+      return;
+    }
     if (transition.current || (m && m.id === state.current.current)) return;
     transition.current = true;
     setSwitching(true);
@@ -293,6 +363,10 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   }
 
   async function remove() {
+    if (recording || pendingAudio) {
+      setError("請先停止錄音並放置播放貼紙");
+      return;
+    }
     if (transition.current) return;
     if (!state.current.current && !state.current.dirty) {
       load(null);
@@ -670,6 +744,109 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           </>
         )}
       </div>
+      <div className="nbNoteTools" role="toolbar" aria-label={t("便簽工具")}>
+        <div className="rg nbPaperTools">
+          <div className="rgRow nbDrawingTools">
+            {(
+              [
+                ["text", "文字"],
+                ["pen", "鉛筆"],
+                ["eraser", "橡皮擦"],
+              ] as const
+            ).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                className={"rb" + (drawMode === mode ? " on" : "")}
+                aria-pressed={drawMode === mode}
+                disabled={switching}
+                onClick={() => setDrawMode(mode)}
+              >
+                {t(label)}
+              </button>
+            ))}
+            <input
+              type="color"
+              className="nbPaperCustom"
+              aria-label={t("筆色")}
+              value={penColor}
+              onChange={(e) => setPenColor(e.target.value)}
+            />
+            <select
+              className="rSelect"
+              aria-label={t("筆畫粗細")}
+              value={penWidth}
+              onChange={(e) => setPenWidth(Number(e.target.value))}
+            >
+              {[1, 2, 4, 8].map((n) => (
+                <option key={n} value={n}>
+                  {n} px
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="rb"
+              disabled={switching || !drawing.length}
+              onClick={() => drawChanged(ink.current.slice(0, -1))}
+            >
+              {t("復原筆畫")}
+            </button>
+          </div>
+          <div className="rgRow">
+            {PAPER_COLORS.map((color) => (
+              <button
+                type="button"
+                key={color}
+                className="nbSwatch"
+                style={{ backgroundColor: color }}
+                aria-label={`${t("紙張顏色")} ${color}`}
+                aria-pressed={paperColor === color}
+                disabled={switching}
+                onClick={() => {
+                  paper.current = color;
+                  setPaperColor(color);
+                  changed();
+                }}
+              />
+            ))}
+            <input
+              type="color"
+              className="nbPaperCustom"
+              aria-label={t("自訂紙張顏色")}
+              title={t("自訂紙張顏色")}
+              value={paperColor}
+              disabled={switching}
+              onChange={(e) => {
+                paper.current = e.target.value;
+                setPaperColor(e.target.value);
+                changed();
+              }}
+            />
+          </div>
+          <span className="rgName">{t("紙張顏色")}</span>
+        </div>
+        <Recorder
+          disabled={
+            switching ||
+            !!pendingAudio ||
+            recordings.length >= 5 ||
+            recordings.reduce((n, r) => n + r.data.length, 0) > 600000
+          }
+          onBusy={setRecording}
+          onRecorded={(r) => {
+            setPendingAudio(r);
+            setDrawMode("text");
+          }}
+        />
+        {(recording || pendingAudio) && (
+          <span className="nbRecordingHint" role="status">
+            {pendingAudio
+              ? t("點紙張任意位置放置錄音，之後可拖曳移動")
+              : t("上鎖或離開會捨棄尚未完成的錄音")}
+          </span>
+        )}
+      </div>
 
       {error && (
         <div className="nbAlert" role="alert">
@@ -717,12 +894,26 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           <div
             className="nbPage"
             ref={page}
-            style={{ zoom: zoom / 100 } as React.CSSProperties}
+            style={
+              {
+                zoom: zoom / 100,
+                "--paper-color": paperColor,
+                "--paper-ink":
+                  (parseInt(paperColor.slice(1, 3), 16) * 299 +
+                    parseInt(paperColor.slice(3, 5), 16) * 587 +
+                    parseInt(paperColor.slice(5, 7), 16) * 114) /
+                    1000 <
+                  128
+                    ? "#fff9e9"
+                    : "#30372d",
+              } as React.CSSProperties
+            }
           >
+            <div className="nbBinding" aria-hidden="true" />
             <div
               ref={editor}
               className="nbEditor"
-              contentEditable={!switching}
+              contentEditable={!switching && drawMode === "text"}
               suppressContentEditableWarning
               spellCheck
               role="textbox"
@@ -744,6 +935,53 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                 }
               }}
             />
+            <DrawingLayer
+              strokes={drawing}
+              mode={switching ? "text" : drawMode}
+              color={penColor}
+              width={penWidth}
+              onChange={drawChanged}
+            />
+            <div className="nbAudioLayer">
+              {recordings.map((r) => (
+                <AudioSticker
+                  key={r.id}
+                  recording={r}
+                  onMove={(x, y) =>
+                    audioChanged(
+                      audio.current.map((a) =>
+                        a.id === r.id ? { ...a, x, y } : a,
+                      ),
+                    )
+                  }
+                  onDelete={() =>
+                    audioChanged(audio.current.filter((a) => a.id !== r.id))
+                  }
+                />
+              ))}
+            </div>
+            {pendingAudio && (
+              <div
+                className="nbPlaceAudio"
+                onPointerDown={(e) => {
+                  const box = e.currentTarget.getBoundingClientRect();
+                  const x = Math.max(
+                      0,
+                      Math.min(
+                        Math.max(0, 1 - 230 / box.width),
+                        (e.clientX - box.left) / box.width,
+                      ),
+                    ),
+                    y = Math.max(
+                      0,
+                      Math.min(0.9, (e.clientY - box.top) / box.height),
+                    );
+                  audioChanged([...audio.current, { ...pendingAudio, x, y }]);
+                  setPendingAudio(null);
+                  setError("");
+                }}
+              />
+            )}
           </div>
         </main>
       </div>

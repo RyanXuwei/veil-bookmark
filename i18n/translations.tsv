@@ -354,3 +354,28 @@ AES-256 加密|AES-256 encrypted|AES-256 暗号化
 儲存新密碼|Save new password|新しいパスワードを保存
 修改密碼不會清除收藏或記事，原救援金鑰仍可使用。|Bookmarks and notes are preserved. Your existing recovery key still works.|ブックマークと記事は保持され、既存の救援キーも引き続き使えます。
 原密碼驗證已失效，請重新驗證|Password verification expired or changed. Verify again.|パスワードの確認が無効になりました。再度確認してください。
+紙張顏色|Paper color|用紙の色
+自訂紙張顏色|Custom paper color|用紙の色をカスタマイズ
+文字|Text|テキスト
+鉛筆|Pencil|鉛筆
+橡皮擦|Eraser|消しゴム
+筆色|Ink color|ペンの色
+筆畫粗細|Stroke width|線の太さ
+復原筆畫|Undo stroke|線を元に戻す
+便簽工具|Notepad tools|メモ帳ツール
+開始錄音|Record|録音を開始
+暫停錄音|Pause recording|録音を一時停止
+繼續錄音|Resume recording|録音を再開
+停止錄音|Stop recording|録音を停止
+錄音機|Voice recorder|ボイスレコーダー
+每段最長 3 分鐘|Up to 3 minutes per clip|1件につき最長3分
+無法錄音，請確認麥克風權限與裝置|Cannot record. Check microphone permission and device.|録音できません。マイクの権限と接続を確認してください
+無法保存錄音，請重新錄製|Could not save the recording. Please record again.|録音を保存できませんでした。もう一度録音してください
+錄音|Recording|録音
+移動錄音|Move recording|録音を移動
+播放錄音|Play recording|録音を再生
+刪除錄音|Delete recording|録音を削除
+請先停止錄音並放置播放貼紙|Stop recording and place the audio sticker first.|録音を停止して再生ステッカーを配置してください
+點紙張任意位置放置錄音，之後可拖曳移動|Click anywhere on the paper to place the recording, then drag to move.|用紙をクリックして録音を配置し、ドラッグで移動できます
+上鎖或離開會捨棄尚未完成的錄音|Locking or leaving discards unfinished recordings.|ロックや画面移動で未完了の録音は破棄されます
+錄音儲存空間已滿，請先刪除部分錄音|Recording storage is full. Delete some recordings first.|録音の保存容量が不足しています。一部の録音を削除してください
