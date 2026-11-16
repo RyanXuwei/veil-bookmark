@@ -2,6 +2,9 @@ import {
   derive,
   cleanDrawing,
   cleanRecordings,
+  cleanImages,
+  imageBytes,
+  VAULT_IMAGE_BYTES,
   decrypt,
   merge,
   emptyVault,
@@ -544,6 +547,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
         x.recordings === undefined
           ? old?.recordings || []
           : cleanRecordings(x.recordings),
+      images: x.images === undefined ? old?.images || [] : cleanImages(x.images),
       updated: Math.max(Date.now(), (old?.updated || 0) + 1),
       revision: crypto.randomUUID(),
       deleted: false,
@@ -556,7 +560,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       !memo.title &&
       !visible &&
       !memo.drawing?.length &&
-      !memo.recordings?.length
+      !memo.recordings?.length &&
+      !memo.images?.length
     )
       throw Error("請輸入記事標題或內容");
     if (!old && v.memos.filter((y) => !y.deleted).length >= 5000)
@@ -573,6 +578,16 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       6000000
     )
       throw Error("錄音儲存空間已滿，請先刪除部分錄音");
+    if (Array.isArray(x.images) && memo.images!.length !== x.images.length)
+      throw Error("圖片數量或大小超過上限");
+    if (
+      v.memos
+        .filter((y) => y.id !== memo.id && !y.deleted)
+        .reduce((n, y) => n + imageBytes(y.images), 0) +
+        imageBytes(memo.images) >
+      VAULT_IMAGE_BYTES
+    )
+      throw Error("圖片儲存空間已滿，請先刪除部分圖片");
     v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);
     await save(v, s);
     await touch(s);
@@ -586,6 +601,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       x.title = "";
       x.drawing = [];
       x.recordings = [];
+      x.images = [];
       x.updated = Math.max(Date.now(), x.updated + 1);
       x.revision = crypto.randomUUID();
       await save(v, s);

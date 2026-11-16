@@ -426,6 +426,7 @@
 }
 .nbEditor pre {
   margin: 32px 0;
+  padding: 0 10pt;
   line-height: 32px;
   background: #ffffff35;
   color: inherit;
@@ -798,3 +799,44 @@
   box-shadow: none;
   font-size: inherit;
 }
+
+/* Ruled paper: every line box is exactly one rule (32px) or a whole number of
+   rules, so text always sits on the lines. Inline formatting (larger text,
+   superscript, code) must not stretch a line: it gets no line height of its
+   own, and ruled.ts gives a block with large text a whole number of rules. */
+.nbEditor :is(p, div, li, h1, h2, h3, blockquote, pre) {
+  line-height: 32px;
+  letter-spacing: normal;
+}
+.nbEditor :is(span, b, strong, i, em, u, s, strike, sub, sup, a, code, font) {
+  line-height: 0;
+}
+.nbEditor hr {
+  /* Exactly one rule tall, with the line drawn through its middle. */
+  height: 32px;
+  margin: 0;
+  border: 0;
+  background: linear-gradient(
+    transparent 15px,
+    #00000033 15px,
+    #00000033 16px,
+    transparent 16px
+  );
+}
+.nbEditor img[data-veil-img] {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 0;
+  border-radius: 2px;
+}
+.nbEditor img[data-veil-img].missing {
+  width: 160px;
+  height: 32px;
+  background: #00000010;
+  outline: 1px dashed #00000040;
+}
+.nbEditor img[data-veil-img]::selection {
+  background: transparent;
+}
+

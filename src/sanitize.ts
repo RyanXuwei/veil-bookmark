@@ -43,7 +43,6 @@ const DROP = new Set([
   "SELECT",
   "SVG",
   "MATH",
-  "IMG",
   "VIDEO",
   "AUDIO",
   "SOURCE",
@@ -82,6 +81,16 @@ function clean(node: Node, doc: Document): Node | DocumentFragment | null {
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
   const el = node as HTMLElement;
   if (DROP.has(el.tagName)) return null;
+  // Only notebook images, referenced by ID; their data is stored encrypted
+  // beside the document and is never loaded from a URL.
+  if (el.tagName === "IMG") {
+    const id = el.getAttribute("data-veil-img") || "";
+    if (!/^[\w-]{1,64}$/.test(id)) return null;
+    const img = doc.createElement("img");
+    img.setAttribute("data-veil-img", id);
+    img.setAttribute("alt", "");
+    return img;
+  }
   const children = doc.createDocumentFragment();
   for (const c of Array.from(el.childNodes)) {
     const x = clean(c, doc);
@@ -138,6 +147,15 @@ export function textToHtml(text: string) {
     .split("\n")
     .map((line) => `<p>${line ? escape(line) : "<br>"}</p>`)
     .join("");
+}
+
+/** IDs of the notebook images a document refers to, in order, without repeats. */
+export function imageIds(html: string) {
+  return [
+    ...new Set(
+      [...html.matchAll(/data-veil-img="([\w-]{1,64})"/g)].map((m) => m[1]),
+    ),
+  ];
 }
 
 export function htmlToText(html: string) {

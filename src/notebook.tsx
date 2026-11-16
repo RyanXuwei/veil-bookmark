@@ -4,11 +4,21 @@ import { cleanDrawing, type Memo, type DrawingStroke } from "./crypto";
 import { ToolIcon } from "./tool-icon";
 import { DrawingLayer } from "./drawing";
 import { Recorder, AudioSticker } from "./recorder";
-import { cleanRecordings, type MemoRecording } from "./crypto";
+import {
+  cleanImages,
+  cleanRecordings,
+  imageBytes,
+  MEMO_IMAGE_BYTES,
+  MEMO_IMAGES_MAX,
+  type MemoImage,
+  type MemoRecording,
+} from "./crypto";
+import { importHtmlImages, importImage, layoutRuled, RULE } from "./ruled";
 import { LANGS, lang, saveLang, t, tError, type Lang } from "./i18n";
 import {
   countWords,
   htmlToText,
+  imageIds,
   memoHtml,
   memoText,
   sanitizeHtml,
@@ -86,6 +96,13 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [block, setBlock] = useState("P");
   const editor = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
+  // Pictures of the open document by ID; the HTML only holds references.
+  const images = useRef(new Map<string, MemoImage>());
+  // Image IDs last saved, so unchanged images are not resent on every save.
+  const savedImages = useRef("");
+  const [imageBusy, setImageBusy] = useState(false);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const pictureRange = useRef<Range | null>(null);
   const timer = useRef<number>(0);
   const state = useRef({ current: "", title: "", dirty: false });
   const lastTouch = useRef(0);
@@ -112,6 +129,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     saving.current = null;
     state.current = { current: "", title: "", dirty: false };
     if (editor.current) editor.current.innerHTML = "";
+    images.current = new Map();
+    savedImages.current = "";
     setStatus((s: any) => (s ? { ...s, unlocked: false } : s));
     setMemos([]);
     setTitle("");
@@ -171,6 +190,9 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       dirty: false,
     };
     el.innerHTML = m ? memoHtml(m) : "<p><br></p>";
+    images.current = new Map(cleanImages(m?.images).map((i) => [i.id, i]));
+    savedImages.current = usedImages(el.innerHTML).join(",");
+    layoutRuled(el, images.current);
     setCurrent(m?.id || "");
     setTitle(m?.title || "");
     paper.current = /^#[0-9a-f]{6}$/i.test(m?.paperColor || "")
@@ -205,6 +227,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           saveEpoch === epoch.current
         ) {
           const body = sanitizeHtml(editor.current.innerHTML);
+          const used = usedImages(body);
+          const imageKey = used.join(",");
           const titleNow = state.current.title;
           const id = state.current.current;
           const revision = edits.current;
@@ -212,7 +236,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             !titleNow.trim() &&
             !htmlToText(body) &&
             !ink.current.length &&
-            !audio.current.length
+            !audio.current.length &&
+            !used.length
           ) {
             if (id) throw Error("請輸入記事標題或內容");
             state.current.dirty = false;
@@ -229,9 +254,15 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               paperColor: paper.current,
               drawing: ink.current,
               recordings: audio.current,
+              // Only when the set of pictures changed; otherwise kept as is.
+              images:
+                imageKey === savedImages.current
+                  ? undefined
+                  : used.map((x) => images.current.get(x)!),
             },
           });
           if (saveEpoch !== epoch.current) return false;
+          savedImages.current = imageKey;
           if (!id) {
             state.current.current = memo.id;
             setCurrent(memo.id);
@@ -265,7 +296,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     }
   }, [rpc, refresh]);
 
+  function usedImages(html: string) {
+    return imageIds(html).filter((x) => images.current.has(x));
+  }
+
   function changed() {
+    if (editor.current) layoutRuled(editor.current, images.current);
     edits.current++;
     state.current.dirty = true;
     setSaveState("dirty");
@@ -413,6 +449,71 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     } finally {
       transition.current = false;
       setSwitching(false);
+    }
+  }
+
+  // Caret position to restore after pictures are processed asynchronously.
+  function caret() {
+    const sel = window.getSelection();
+    const r = sel?.rangeCount ? sel.getRangeAt(0) : null;
+    return r && editor.current?.contains(r.commonAncestorContainer)
+      ? r.cloneRange()
+      : null;
+  }
+  function restore(range: Range | null) {
+    editor.current?.focus({ preventScroll: true });
+    if (!range) return;
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }
+  function roomFor(added: MemoImage[]) {
+    const used = usedImages(editor.current?.innerHTML || "").map(
+      (x) => images.current.get(x)!,
+    );
+    if (used.length + added.length > MEMO_IMAGES_MAX)
+      throw Error("這份記事的圖片數量已達上限");
+    if (imageBytes(used) + imageBytes(added) > MEMO_IMAGE_BYTES)
+      throw Error("這份記事的圖片已達大小上限");
+  }
+  async function insertContent(
+    data: { files: File[]; html: string; text: string },
+    range: Range | null,
+  ) {
+    const pictures = data.files.filter((f) => f.type.startsWith("image/"));
+    if (!pictures.length && !/<img/i.test(data.html)) {
+      restore(range);
+      if (data.html) exec("insertHTML", sanitizeHtml(data.html));
+      else if (data.text) exec("insertText", data.text);
+      return;
+    }
+    if (drawMode !== "text" || switching) return;
+    const opened = epoch.current;
+    setImageBusy(true);
+    try {
+      let html = "";
+      let added: MemoImage[] = [];
+      if (pictures.length) {
+        // A copied picture also carries HTML pointing at its web address;
+        // the picture itself is what the user wants.
+        for (const f of pictures.slice(0, 20)) added.push(await importImage(f));
+        html = added
+          .map((i) => `<img data-veil-img="${i.id}" alt="">`)
+          .join("");
+      } else {
+        ({ html, added } = await importHtmlImages(data.html));
+        html = sanitizeHtml(html);
+      }
+      if (opened !== epoch.current) return;
+      roomFor(added);
+      for (const i of added) images.current.set(i.id, i);
+      restore(range);
+      if (html) exec("insertHTML", html);
+      setError("");
+    } catch (e) {
+      if (opened === epoch.current) setError((e as Error).message);
+    } finally {
+      setImageBusy(false);
     }
   }
 
@@ -679,6 +780,31 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             <div className="rg">
               <div className="rgRow">
                 <Btn
+                  label="圖片"
+                  icon={<>🖼 {imageBusy ? t("處理中…") : t("圖片")}</>}
+                  onClick={() => {
+                    pictureRange.current = caret();
+                    imageInput.current?.click();
+                  }}
+                />
+                <input
+                  ref={imageInput}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  aria-hidden="true"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    e.target.value = "";
+                    if (files.length)
+                      void insertContent(
+                        { files, html: "", text: "" },
+                        pictureRange.current,
+                      );
+                  }}
+                />
+                <Btn
                   label="連結"
                   icon={<>🔗 {t("連結")}</>}
                   onClick={insertLink}
@@ -931,10 +1057,63 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               onBlur={() => void save()}
               onPaste={(e) => {
                 e.preventDefault();
-                const html = e.clipboardData.getData("text/html");
-                const text = e.clipboardData.getData("text/plain");
-                if (html) exec("insertHTML", sanitizeHtml(html));
-                else exec("insertText", text);
+                void insertContent(
+                  {
+                    files: Array.from(e.clipboardData.files),
+                    html: e.clipboardData.getData("text/html"),
+                    text: e.clipboardData.getData("text/plain"),
+                  },
+                  caret(),
+                );
+              }}
+              onMouseDown={(e) => {
+                // Click on any empty ruled line below the text to type there:
+                // blank lines are added up to that line.
+                const el = editor.current;
+                if (!el || e.button !== 0 || drawMode !== "text" || switching)
+                  return;
+                const box = el.getBoundingClientRect();
+                const last = el.lastElementChild;
+                const bottom = last
+                  ? last.getBoundingClientRect().bottom
+                  : box.top;
+                if (e.clientY <= bottom + 1) return;
+                const rule =
+                  (RULE * box.height) /
+                  (parseFloat(getComputedStyle(el).height) || box.height);
+                const rows = Math.min(
+                  200,
+                  Math.floor((e.clientY - bottom) / rule) + 1,
+                );
+                e.preventDefault();
+                let p: HTMLParagraphElement | null = null;
+                for (let i = 0; i < rows; i++) {
+                  p = document.createElement("p");
+                  p.appendChild(document.createElement("br"));
+                  el.appendChild(p);
+                }
+                el.focus({ preventScroll: true });
+                const range = document.createRange();
+                range.setStart(p!, 0);
+                range.collapse(true);
+                const sel = window.getSelection();
+                sel?.removeAllRanges();
+                sel?.addRange(range);
+                changed();
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                // Never let the browser insert dropped content unsanitised.
+                e.preventDefault();
+                const r = document.caretRangeFromPoint(e.clientX, e.clientY);
+                void insertContent(
+                  {
+                    files: Array.from(e.dataTransfer.files),
+                    html: e.dataTransfer.getData("text/html"),
+                    text: e.dataTransfer.getData("text/plain"),
+                  },
+                  r && editor.current?.contains(r.startContainer) ? r : caret(),
+                );
               }}
               onKeyDown={(e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {

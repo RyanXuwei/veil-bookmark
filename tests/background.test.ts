@@ -820,3 +820,92 @@ test("quick sync: pulls right after unlock, pushes about a second after edits, s
     delete session.driveToken;
   }
 });
+
+test("notebook images: validated, kept when omitted, limited, wiped on delete", async () => {
+  const c = await import("../src/crypto");
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.driveEnabled;
+  quickTimers.clear();
+  await rpc("CREATE", { password: "abcd" });
+  const img = (id: string, chars = 400) => ({
+    id,
+    data: "A".repeat(chars),
+    mime: "image/webp",
+    w: 900,
+    h: 500,
+  });
+  assert.equal(c.cleanImages([img("a"), { ...img("b"), mime: "text/html" }, { ...img("c"), data: "%%%%" }, img("a")]).length, 1);
+  assert.equal(c.cleanImages([{ ...img("x"), w: 0 }, { ...img("y"), id: "../x" }]).length, 0);
+  const m = await rpc("MEMO_UPSERT", {
+    memo: { title: "", body: '<img data-veil-img="a" alt="">', format: "html", images: [img("a")] },
+  });
+  assert.equal(m.images.length, 1, "a picture alone is content");
+  const kept = await rpc("MEMO_UPSERT", {
+    memo: { id: m.id, title: "t", body: '<p>x</p><img data-veil-img="a" alt="">', format: "html" },
+  });
+  assert.equal(kept.images.length, 1, "images omitted = unchanged");
+  await assert.rejects(
+    rpc("MEMO_UPSERT", { memo: { id: m.id, title: "t", body: "x", format: "html", images: [img("a"), { ...img("b"), mime: "image/svg+xml" }] } }),
+    /圖片數量或大小/,
+  );
+  await assert.rejects(
+    rpc("MEMO_UPSERT", { memo: { id: m.id, title: "t", body: "x", format: "html", images: [img("big", c.IMAGE_MAX + 4)] } }),
+    /圖片數量或大小/,
+  );
+  // Vault-wide cap across notes.
+  const per = 1_400_000;
+  for (let n = 0; n < 2; n++)
+    await rpc("MEMO_UPSERT", {
+      memo: { title: "n" + n, body: "x", format: "html", images: Array.from({ length: 7 }, (_, i) => img(`v${n}-${i}`, per)) },
+    });
+  await assert.rejects(
+    rpc("MEMO_UPSERT", {
+      memo: { title: "n3", body: "x", format: "html", images: Array.from({ length: 7 }, (_, i) => img(`w${i}`, per)) },
+    }),
+    /圖片儲存空間已滿/,
+  );
+  assert(!JSON.stringify(local.vault).includes("A".repeat(64)), "images encrypted at rest");
+  await rpc("MEMO_DELETE", { id: m.id });
+  const gone = (await rpc("LIST")).memos.find((x: any) => x.id === m.id);
+  assert.deepEqual(gone.images, []);
+  await rpc("LOCK");
+  delete local.vault;
+});
+
+test("Drive upload: multipart for small vaults, resumable session for large ones", async () => {
+  const { upload } = await import("../src/drive");
+  const originalFetch = globalThis.fetch;
+  const calls: { url: string; method: string; size: number; type: string }[] = [];
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    const url = String(input);
+    calls.push({ url, method: init.method, size: String(init.body || "").length, type: init.headers["Content-Type"] });
+    if (url.includes("uploadType=resumable"))
+      return new Response(null, {
+        status: 200,
+        headers: { Location: "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=xyz" },
+      });
+    return Response.json({ id: "f" });
+  };
+  try {
+    const small = { version: 3, id: "v", iv: "i", ciphertext: "x".repeat(1000) } as any;
+    await upload("tok", small);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].url, /uploadType=multipart/);
+    calls.length = 0;
+    await upload("tok", { ...small, ciphertext: "x".repeat(5_000_000) });
+    assert.equal(calls.length, 2);
+    assert.match(calls[0].url, /uploadType=resumable$/);
+    assert.equal(calls[0].method, "POST");
+    assert(calls[0].size < 1000, "metadata only in the first request");
+    assert.match(calls[1].url, /upload_id=xyz/);
+    assert.equal(calls[1].method, "PUT");
+    assert(calls[1].size > 5_000_000);
+    // A session URL pointing elsewhere is refused.
+    globalThis.fetch = async () =>
+      new Response(null, { status: 200, headers: { Location: "https://evil.example/upload" } });
+    await assert.rejects(upload("tok", { ...small, ciphertext: "x".repeat(5_000_000) }), /回應無效/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

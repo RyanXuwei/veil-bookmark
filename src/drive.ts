@@ -103,11 +103,12 @@ async function request(
   url: string,
   init: RequestInit = {},
   allow404 = false,
+  timeout = 30000,
 ) {
   const r = await fetch(url, {
     ...init,
     headers: { ...init.headers, Authorization: `Bearer ${t}` },
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(timeout),
   });
   if (r.status === 401) {
     await chrome.storage.session.remove("driveToken");
@@ -149,7 +150,7 @@ export async function readRemote(interactive: boolean) {
     );
     if (!r) continue;
     const raw = await r.text();
-    if (raw.length > 12_000_000) throw Error("Drive 備份過大");
+    if (raw.length > 66_000_000) throw Error("Drive 備份過大");
     envelopes.push(validateEnvelope(JSON.parse(raw)));
     ids.push(f.id);
   }
@@ -164,7 +165,39 @@ export async function upload(t: string, e: Envelope) {
     appProperties: { veilmark: "1" },
     mimeType: "application/json",
   };
-  const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(e)}\r\n--${boundary}--`;
+  const json = JSON.stringify(e);
+  // Multipart uploads are meant for files up to 5 MB; larger vaults (notebook
+  // images) use a resumable session, sent in one request.
+  if (json.length > 4_000_000) {
+    const start = await request(
+      t,
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          "X-Upload-Content-Type": "application/json",
+        },
+        body: JSON.stringify(meta),
+      },
+    );
+    const session = start!.headers.get("Location");
+    if (!session?.startsWith("https://www.googleapis.com/upload/drive/"))
+      throw Error("Drive 回應無效，本機資料已保留");
+    await request(
+      t,
+      session,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: json,
+      },
+      false,
+      180000,
+    );
+    return;
+  }
+  const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`;
   await request(
     t,
     "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",

@@ -396,3 +396,11 @@ Chrome 會開啟 Google 授權視窗。若 Chrome 尚未登入 Google，會先�
 Google 帳戶權限|Google Account permissions|Google アカウントの権限
 一鍵連接：使用 Chrome 登入的 Google 帳號授權，加密快照存放在 Drive 的隱藏應用程式資料夾。|One-click connect: authorize with the Google account signed in to Chrome. Encrypted snapshots are stored in Drive's hidden app folder.|ワンクリック接続：Chrome にログインしている Google アカウントで認証し、暗号化スナップショットを Drive の非表示アプリフォルダーに保存します。
 連接說明|How to connect|接続方法
+這份記事的圖片數量已達上限|This note has reached the maximum number of pictures.|このメモの画像の数が上限に達しました。
+這份記事的圖片已達大小上限|This note has reached the size limit for pictures.|このメモの画像サイズが上限に達しました。
+圖片|Picture|画像
+圖片數量或大小超過上限|Too many pictures, or the pictures are too large.|画像の数またはサイズが上限を超えています。
+圖片儲存空間已滿，請先刪除部分圖片|Picture storage is full. Delete some pictures first.|画像の保存容量がいっぱいです。先に一部の画像を削除してください。
+Drive 回應無效，本機資料已保留|Invalid response from Drive. Your local data is kept.|Drive の応答が無効です。ローカルのデータは保持されています。
+無法讀取這張圖片|This picture can’t be read.|この画像を読み込めません。
+圖片太大，請先縮小後再貼上|The picture is too large. Make it smaller and paste again.|画像が大きすぎます。縮小してから貼り付けてください。

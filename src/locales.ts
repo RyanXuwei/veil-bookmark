@@ -1979,5 +1979,45 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "连接说明",
   "en": "How to connect",
   "ja": "接続方法"
+ },
+ "這份記事的圖片數量已達上限": {
+  "zh-CN": "这份记事的图片数量已达上限",
+  "en": "This note has reached the maximum number of pictures.",
+  "ja": "このメモの画像の数が上限に達しました。"
+ },
+ "這份記事的圖片已達大小上限": {
+  "zh-CN": "这份记事的图片已达大小上限",
+  "en": "This note has reached the size limit for pictures.",
+  "ja": "このメモの画像サイズが上限に達しました。"
+ },
+ "圖片": {
+  "zh-CN": "图片",
+  "en": "Picture",
+  "ja": "画像"
+ },
+ "圖片數量或大小超過上限": {
+  "zh-CN": "图片数量或大小超过上限",
+  "en": "Too many pictures, or the pictures are too large.",
+  "ja": "画像の数またはサイズが上限を超えています。"
+ },
+ "圖片儲存空間已滿，請先刪除部分圖片": {
+  "zh-CN": "图片保存空间已满，请先删除部分图片",
+  "en": "Picture storage is full. Delete some pictures first.",
+  "ja": "画像の保存容量がいっぱいです。先に一部の画像を削除してください。"
+ },
+ "Drive 回應無效，本機資料已保留": {
+  "zh-CN": "Drive 回应无效，本机数据已保留",
+  "en": "Invalid response from Drive. Your local data is kept.",
+  "ja": "Drive の応答が無効です。ローカルのデータは保持されています。"
+ },
+ "無法讀取這張圖片": {
+  "zh-CN": "无法读取这张图片",
+  "en": "This picture can’t be read.",
+  "ja": "この画像を読み込めません。"
+ },
+ "圖片太大，請先縮小後再貼上": {
+  "zh-CN": "图片太大，请先缩小后再粘贴",
+  "en": "The picture is too large. Make it smaller and paste again.",
+  "ja": "画像が大きすぎます。縮小してから貼り付けてください。"
  }
 };

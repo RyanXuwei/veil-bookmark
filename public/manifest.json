@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_appName__",
-  "version": "0.2.10",
+  "version": "1.0.0",
   "minimum_chrome_version": "120",
   "description": "__MSG_appDesc__",
   "permissions": [
@@ -9,7 +9,8 @@
     "alarms",
     "idle",
     "activeTab",
-    "identity"
+    "identity",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "https://www.googleapis.com/*"

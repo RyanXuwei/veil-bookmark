@@ -60,6 +60,53 @@ export function cleanRecordings(value: unknown): MemoRecording[] {
       : [];
   });
 }
+// Notebook images are kept beside the HTML (which only holds
+// <img data-veil-img="id">), so the document body stays small.
+export const IMAGE_MAX = 1_500_000; // base64 characters per image
+export const MEMO_IMAGES_MAX = 60;
+export const MEMO_IMAGE_BYTES = 10_000_000; // base64 characters per memo
+export const VAULT_IMAGE_BYTES = 24_000_000; // base64 characters, all memos
+export const IMAGE_TYPES = ["image/webp", "image/jpeg", "image/png"];
+export type MemoImage = {
+  id: string;
+  data: string;
+  mime: string;
+  w: number;
+  h: number;
+};
+export const imageBytes = (list: MemoImage[] | undefined) =>
+  (list || []).reduce((n, i) => n + i.data.length, 0);
+/** Valid images only, within the per-memo limits. */
+export function cleanImages(value: unknown): MemoImage[] {
+  if (!Array.isArray(value)) return [];
+  let bytes = 0;
+  const seen = new Set<string>();
+  return value.slice(0, MEMO_IMAGES_MAX).flatMap((i) => {
+    if (
+      !i ||
+      typeof i.id !== "string" ||
+      !/^[\w-]{1,64}$/.test(i.id) ||
+      seen.has(i.id) ||
+      typeof i.data !== "string" ||
+      !i.data.length ||
+      i.data.length > IMAGE_MAX ||
+      i.data.length % 4 !== 0 ||
+      !/^[A-Za-z0-9+/]+={0,2}$/.test(i.data) ||
+      !IMAGE_TYPES.includes(i.mime) ||
+      !Number.isInteger(i.w) ||
+      !Number.isInteger(i.h) ||
+      i.w < 1 ||
+      i.h < 1 ||
+      i.w > 10000 ||
+      i.h > 10000
+    )
+      return [];
+    bytes += i.data.length;
+    if (bytes > MEMO_IMAGE_BYTES) return [];
+    seen.add(i.id);
+    return [{ id: i.id, data: i.data, mime: i.mime, w: i.w, h: i.h }];
+  });
+}
 export type DrawingStroke = {
   color: string;
   width: number;
@@ -105,6 +152,7 @@ export type Memo = {
   paperColor?: string;
   drawing?: DrawingStroke[];
   recordings?: MemoRecording[];
+  images?: MemoImage[];
   updated: number;
   revision: string;
   deleted: boolean;
@@ -180,7 +228,7 @@ export function validateEnvelope(x: unknown): Envelope {
     e.id.length > 100 ||
     typeof e.iv !== "string" ||
     typeof e.ciphertext !== "string" ||
-    e.ciphertext.length > 12_000_000
+    e.ciphertext.length > 64_000_000
   )
     throw Error("不支援或損壞的加密備份");
   if (e.version === 1) {
