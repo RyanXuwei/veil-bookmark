@@ -19,7 +19,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "1.1.0",
+  version: "1.1.1",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -32,6 +32,8 @@ async function rpc(type: string, data: Record<string, unknown> = {}) {
   const r = await chrome.runtime.sendMessage({
     type,
     sourceWindowId: source.id,
+    // Only the notebook page needs note pictures, audio and drawings.
+    lite: !isNotes,
     ...data,
   });
   if (!r?.ok) throw Error(r?.error || t("背景服務沒有回應"));
@@ -329,34 +331,67 @@ function App() {
       </>
     );
   }
-  // Folder and drag-and-drop operations (bookmarks and notes).
+  // Folder and drag-and-drop operations (bookmarks and notes). The list
+  // updates at once; the encrypted save follows, and a failure reloads it.
+  function apply(type: string, data: Record<string, unknown>) {
+    const epoch = viewEpoch.current;
+    return run(async () => {
+      const v = await rpc(type, data);
+      if (epoch === viewEpoch.current && v && "entries" in v) setVault(v);
+    });
+  }
+  type Kind = "entry" | "memo";
   const organize = {
-    reorder: (kind: "entry" | "memo", folder: string, ids: string[]) =>
-      run(async () => {
-        await rpc("REORDER", { kind, folder, ids });
-        await refresh();
-      }),
-    folderOrder: (kind: "entry" | "memo", names: string[]) =>
-      run(async () => {
-        await rpc("FOLDER_ORDER", { kind, names });
-        await refresh();
-      }),
-    create: (kind: "entry" | "memo", name: string) =>
-      run(async () => {
-        await rpc("FOLDER_CREATE", { kind, name });
-        setCreatingFolder(false);
-        await refresh();
-      }),
-    rename: (kind: "entry" | "memo", from: string, to: string) =>
-      run(async () => {
-        await rpc("FOLDER_RENAME", { kind, from, to });
-        await refresh();
-      }),
-    remove: (kind: "entry" | "memo", name: string) =>
-      run(async () => {
-        await rpc("FOLDER_DELETE", { kind, name });
-        await refresh();
-      }),
+    reorder: (kind: Kind, folder: string, ids: string[]) => {
+      const pos = new Map(ids.map((id, i) => [id, i]));
+      const move = <T extends { id: string; folder?: string; order?: number }>(
+        list: T[],
+      ) =>
+        list.map((x) =>
+          pos.has(x.id) ? { ...x, folder, order: pos.get(x.id) } : x,
+        );
+      setVault(
+        (v: Vault | null) =>
+          v &&
+          (kind === "entry"
+            ? { ...v, entries: move(v.entries) }
+            : { ...v, memos: move(v.memos) }),
+      );
+      return apply("REORDER", { kind, folder, ids });
+    },
+    folderOrder: (kind: Kind, names: string[]) => {
+      setVault((v: Vault | null) => {
+        if (!v) return v;
+        const rest = (v.folders || []).filter(
+          (f) => f.kind !== kind || !names.includes(f.name),
+        );
+        const now = Date.now();
+        return {
+          ...v,
+          folders: [
+            ...rest,
+            ...names.map((name, order) => ({
+              id: `${kind}:${name}`,
+              kind,
+              name,
+              order,
+              updated: now,
+              revision: "",
+              deleted: false,
+            })),
+          ],
+        };
+      });
+      return apply("FOLDER_ORDER", { kind, names });
+    },
+    create: async (kind: Kind, name: string) => {
+      await apply("FOLDER_CREATE", { kind, name });
+      setCreatingFolder(false);
+    },
+    rename: (kind: Kind, from: string, to: string) =>
+      apply("FOLDER_RENAME", { kind, from, to }),
+    remove: (kind: Kind, name: string) =>
+      apply("FOLDER_DELETE", { kind, name }),
   };
   async function backup() {
     await run(async () => {
@@ -710,18 +745,8 @@ function App() {
               folderRecords={vault.folders}
               busy={busy}
               onOpen={(m) => void openNotebook(m.id)}
-              onMeta={(id, meta) =>
-                void run(async () => {
-                  await rpc("MEMO_META", { id, ...meta });
-                  await refresh();
-                })
-              }
-              onDelete={(id) =>
-                void run(async () => {
-                  await rpc("MEMO_DELETE", { id });
-                  await refresh();
-                })
-              }
+              onMeta={(id, meta) => void apply("MEMO_META", { id, ...meta })}
+              onDelete={(id) => void apply("MEMO_DELETE", { id })}
               organize={organize}
             />
           ) : (
@@ -1265,7 +1290,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 1.1.0 · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 1.1.1 · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

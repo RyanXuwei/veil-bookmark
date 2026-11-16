@@ -231,13 +231,29 @@ export type SealedEnvelope = {
 };
 export type Envelope = LegacyEnvelope | SealedEnvelope;
 export const ITERATIONS = 600000;
+// Chunked conversions: vaults with notebook pictures are several MB, and a
+// byte-by-byte loop made every save take seconds.
 export const b64 = (bytes: Uint8Array) => {
+  const native = (bytes as Uint8Array & { toBase64?: () => string }).toBase64;
+  if (native) return native.call(bytes);
   let s = "";
-  for (const x of bytes) s += String.fromCharCode(x);
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    s += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, i + 0x8000) as unknown as number[],
+    );
   return btoa(s);
 };
-export const unb64 = (s: string) =>
-  Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+export const unb64 = (s: string): Uint8Array<ArrayBuffer> => {
+  const from = (
+    Uint8Array as unknown as { fromBase64?: (s: string) => Uint8Array }
+  ).fromBase64;
+  if (from) return from(s) as Uint8Array<ArrayBuffer>;
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+};
 export const random = (n: number) => crypto.getRandomValues(new Uint8Array(n));
 const text = (s: string) => new TextEncoder().encode(s);
 const isB64 = (s: unknown, len?: number) => {

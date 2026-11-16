@@ -987,3 +987,35 @@ test("ordering and folders: reorder, move between folders, folder order/create/r
   await rpc("LOCK");
   delete local.vault;
 });
+
+test("lite responses leave out note media; fast base64 round-trips large data", async () => {
+  const c = await import("../src/crypto");
+  const big = new Uint8Array(3_000_001).map((_, i) => (i * 31) & 255);
+  assert.deepEqual(c.unb64(c.b64(big)), big);
+  assert.equal(c.b64(new Uint8Array([0, 255, 128])), "AP+A");
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.driveEnabled;
+  quickTimers.clear();
+  await rpc("CREATE", { password: "abcd" });
+  await rpc("MEMO_UPSERT", {
+    memo: {
+      title: "m",
+      body: "<p>body</p>",
+      format: "html",
+      images: [{ id: "i1", data: "AAAA", mime: "image/webp", w: 1, h: 1 }],
+      drawing: [{ color: "#000000", width: 2, points: [[1, 1], [2, 2]] }],
+    },
+  });
+  const full = await rpc("LIST");
+  const lite = await rpc("LIST", { lite: true });
+  assert.equal(full.memos[0].images.length, 1);
+  assert.equal(lite.memos[0].images, undefined);
+  assert.equal(lite.memos[0].drawing, undefined);
+  assert.equal(lite.memos[0].body, "<p>body</p>");
+  // A lite quick edit keeps the stored pictures.
+  await rpc("MEMO_META", { id: full.memos[0].id, title: "renamed", lite: true });
+  assert.equal((await rpc("LIST")).memos[0].images.length, 1);
+  await rpc("LOCK");
+  delete local.vault;
+});

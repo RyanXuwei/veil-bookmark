@@ -793,6 +793,14 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
   await requestSync();
   return v;
 }
+function lite(v: Vault): Vault {
+  return {
+    ...v,
+    memos: v.memos.map(
+      ({ images: _i, recordings: _r, drawing: _d, ...rest }) => rest,
+    ),
+  };
+}
 function serialized<T>(fn: () => Promise<T>): Promise<T> {
   const task = queue.then(fn, fn);
   queue = task.then(
@@ -811,7 +819,12 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
     ? lock()
     : serialized(async () => {
         const data = await handle(m, sender);
-        if (data && "entries" in data) await session();
+        if (data && "entries" in data) {
+          await session();
+          // The popup lists notes but never shows their pictures, audio or
+          // drawings: leave those out so large vaults stay quick.
+          if (m.lite) return lite(data as Vault);
+        }
         return data;
       })
   ).then(
