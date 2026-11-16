@@ -62,6 +62,39 @@ export function ToolIcon({ name }: { name: string }) {
         <path d="m8 12.5 3 3 5-6" />
       </>
     ),
+    sidebar: (
+      <>
+        <rect x="3" y="4.5" width="18" height="15" rx="2" />
+        <path d="M9 4.5v15M5.5 8.5h1.5M5.5 11.5h1.5" />
+      </>
+    ),
+    zoom: (
+      <>
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 5 5M8 9l1.5-1v5.5M12.5 9l1.5-1v5.5" />
+      </>
+    ),
+    pageWidth: (
+      <>
+        <rect x="5" y="3" width="14" height="18" rx="1.5" />
+        <path d="M8 12h8M10 10l-2 2 2 2M14 10l2 2-2 2" />
+      </>
+    ),
+    pdf: (
+      <>
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" />
+      </>
+    ),
+    print: (
+      <>
+        <path d="M7 9V3.5h10V9M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+        <rect x="7" y="14" width="10" height="7" rx="1" />
+      </>
+    ),
+    trash: (
+      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+    ),
     undo: (
       <>
         <path d="m8 4-5 5 5 5M3 9h10a7 7 0 0 1 0 14" />

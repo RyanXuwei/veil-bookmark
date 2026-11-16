@@ -558,6 +558,36 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     `${m.title} ${memoText(m)}`.toLowerCase().includes(query.toLowerCase()),
   );
 
+  // Large ribbon button: icon above a short label (Insert and View tabs).
+  const BigBtn = ({
+    label,
+    icon,
+    onClick,
+    on,
+    disabled,
+    text,
+  }: {
+    label: string;
+    icon: string;
+    onClick: () => void;
+    on?: boolean;
+    disabled?: boolean;
+    text?: string;
+  }) => (
+    <button
+      type="button"
+      className={"rbBig" + (on ? " on" : "")}
+      title={t(label)}
+      aria-pressed={on}
+      disabled={disabled}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+    >
+      <ToolIcon name={icon} />
+      <span>{text || t(label)}</span>
+    </button>
+  );
+
   const Btn = ({
     cmd,
     label,
@@ -789,42 +819,34 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           <>
             <div className="rg">
               <div className="rgRow big">
-                {(
-                  [
-                    [
-                      "圖片",
-                      "image",
-                      () => {
-                        pictureRange.current = caret();
-                        imageInput.current?.click();
-                      },
-                    ],
-                    ["連結", "link", insertLink],
-                    ["水平線", "rule", () => exec("insertHorizontalRule")],
-                    [
-                      "日期和時間",
-                      "calendar",
-                      () =>
-                        exec("insertText", new Date().toLocaleString(lang())),
-                    ],
-                    ["核取方塊", "checkbox", () => exec("insertText", "☐ ")],
-                  ] as [string, string, () => void][]
-                ).map(([label, icon, run]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="rbBig"
-                    title={t(label)}
-                    disabled={icon === "image" && imageBusy}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={run}
-                  >
-                    <ToolIcon name={icon} />
-                    <span>
-                      {icon === "image" && imageBusy ? t("處理中…") : t(label)}
-                    </span>
-                  </button>
-                ))}
+                <BigBtn
+                  label="圖片"
+                  icon="image"
+                  disabled={imageBusy}
+                  text={imageBusy ? t("處理中…") : undefined}
+                  onClick={() => {
+                    pictureRange.current = caret();
+                    imageInput.current?.click();
+                  }}
+                />
+                <BigBtn label="連結" icon="link" onClick={insertLink} />
+                <BigBtn
+                  label="水平線"
+                  icon="rule"
+                  onClick={() => exec("insertHorizontalRule")}
+                />
+                <BigBtn
+                  label="日期和時間"
+                  icon="calendar"
+                  onClick={() =>
+                    exec("insertText", new Date().toLocaleString(lang()))
+                  }
+                />
+                <BigBtn
+                  label="核取方塊"
+                  icon="checkbox"
+                  onClick={() => exec("insertText", "☐ ")}
+                />
                 <input
                   ref={imageInput}
                   className="nbFileInput"
@@ -851,40 +873,37 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
         {tab === "view" && (
           <>
             <div className="rg">
-              <div className="rgRow">
-                <Btn
+              <div className="rgRow big">
+                <BigBtn
                   label="導覽窗格"
-                  icon={
-                    <>
-                      {navOpen ? "☑" : "☐"} {t("導覽窗格")}
-                    </>
-                  }
+                  icon="sidebar"
+                  on={navOpen}
                   onClick={() => setNavOpen(!navOpen)}
                 />
-                <Btn label="100%" icon="100%" onClick={() => setZoom(100)} />
-                <Btn
+                <BigBtn label="100%" icon="zoom" onClick={() => setZoom(100)} />
+                <BigBtn
                   label="頁寬"
-                  icon={t("頁寬")}
+                  icon="pageWidth"
                   onClick={() => setZoom(125)}
                 />
               </div>
               <span className="rgName">{t("顯示")}</span>
             </div>
             <div className="rg">
-              <div className="rgRow">
-                <Btn
+              <div className="rgRow big">
+                <BigBtn
                   label="另存 PDF"
-                  icon={<>📄 {t("另存 PDF")}</>}
+                  icon="pdf"
                   onClick={() => void saveAsPdf()}
                 />
-                <Btn
+                <BigBtn
                   label="列印"
-                  icon={<>🖨 {t("列印")}</>}
+                  icon="print"
                   onClick={() => window.print()}
                 />
-                <Btn
+                <BigBtn
                   label="刪除記事"
-                  icon={<>🗑 {t("刪除記事")}</>}
+                  icon="trash"
                   onClick={() => void remove()}
                 />
               </div>

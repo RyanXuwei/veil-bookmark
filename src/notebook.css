@@ -898,3 +898,8 @@
   size: A4;
   margin: 0;
 }
+.nb .rbBig.on {
+  background: #d6e4dc;
+  border-color: #9fbcad;
+}
+
