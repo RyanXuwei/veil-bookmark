@@ -18,7 +18,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "0.2.9 Beta",
+  version: "0.2.10 Beta",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -127,7 +127,8 @@ function App() {
         setMenuId(null);
         setPassword("");
         void refresh();
-      }
+      } else if (area === "local" && (changes.lastSync || changes.syncError))
+        void refresh().catch(() => {});
     };
     chrome?.storage?.onChanged?.addListener(listener);
     return () => {
@@ -1113,7 +1114,7 @@ function App() {
                 </p>
                 <p className="small">
                   {status?.driveEnabled
-                    ? t("自動同步已啟用：解鎖期間每 5 分鐘同步。")
+                    ? t("自動同步已啟用：解鎖時立即同步，修改後隨即上傳，並每 5 分鐘檢查一次。")
                     : t("目前僅儲存在這台電腦。")}
                   <br />
                   {status?.lastSync &&
@@ -1203,7 +1204,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 0.2.9 Beta · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 0.2.10 Beta · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

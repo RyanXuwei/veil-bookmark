@@ -81,6 +81,23 @@ const store = (data: Record<string, any>) => ({
   },
   tabs: { create: async () => {} },
 };
+// Background quick-sync timers are captured instead of run, so tests decide
+// when they fire and no stray sync runs between tests.
+const quickTimers = new Map<number, { fn: Function; ms: number }>();
+let timerId = 0;
+const realSetTimeout = globalThis.setTimeout,
+  realClearTimeout = globalThis.clearTimeout;
+(globalThis as any).setTimeout = (fn: Function, ms = 0, ...a: any[]) => {
+  if (/src[\\/]background\.ts/.test(new Error().stack || "")) {
+    quickTimers.set(++timerId, { fn, ms });
+    return timerId;
+  }
+  return realSetTimeout(fn as any, ms, ...a);
+};
+(globalThis as any).clearTimeout = (id: any) => {
+  if (quickTimers.delete(id)) return;
+  realClearTimeout(id);
+};
 await import("../src/background");
 const rpc = (type: string, data: any = {}, incognito = true) =>
   new Promise<any>((resolve, reject) =>
@@ -672,4 +689,134 @@ test("password change requires fresh proof, preserves data and recovery, rejects
   delete local.vault;
   delete session.attempts;
   delete session.nextAttempt;
+});
+
+test("quick sync: pulls right after unlock, pushes about a second after edits, silent while locked", async () => {
+  const { decrypt, importKey, seal } = await import("../src/crypto");
+  const originalFetch = globalThis.fetch;
+  const remote = new Map<string, any>();
+  let nextId = 0,
+    calls = 0,
+    fail = false;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async () => ({ token: "synthetic-token" }),
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    calls++;
+    if (fail) return new Response("", { status: 503 });
+    const u = String(input);
+    if (init.method === "POST") {
+      const json = String(init.body)
+        .split("Content-Type: application/json\r\n\r\n")[1]
+        .split("\r\n--")[0];
+      const id = "q" + nextId++;
+      remote.set(id, JSON.parse(json));
+      return Response.json({ id });
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE")
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
+    if (u.includes("alt=media"))
+      return remote.has(id)
+        ? Response.json(remote.get(id))
+        : new Response("", { status: 404 });
+    return Response.json({ files: [...remote.keys()].map((id) => ({ id })) });
+  };
+  const fire = async () => {
+    const due = [...quickTimers.values()];
+    quickTimers.clear();
+    for (const t of due) t.fn();
+    await rpc("STATUS"); // queued behind the sync it started
+  };
+  try {
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.lastSync;
+    local.syncError = "";
+    delete session.attempts;
+    delete session.nextAttempt;
+    quickTimers.clear();
+    await rpc("CREATE", { password: "abcd" });
+    assert.equal(quickTimers.size, 0, "no Drive: no sync is scheduled");
+    local.driveEnabled = true;
+
+    // Another device added a bookmark; this device sees it right after unlock.
+    const key = await importKey(session.session.key);
+    const other = await decrypt(local.vault, key);
+    other.entries.push({
+      id: "from-other-device",
+      title: "other device",
+      url: "https://example.org",
+      folder: "",
+      tags: [],
+      notes: "",
+      updated: Date.now(),
+      revision: "r1",
+      deleted: false,
+    });
+    remote.set("seed", await seal(other, key, local.vault.keys));
+    await rpc("LOCK");
+    await rpc("UNLOCK", { password: "abcd" });
+    assert.deepEqual(
+      [...quickTimers.values()].map((t) => t.ms),
+      [0],
+      "unlock syncs immediately",
+    );
+    await fire();
+    assert(local.lastSync, "sync ran right after unlock");
+    assert(
+      (await rpc("LIST")).entries.some((e: any) => e.id === "from-other-device"),
+    );
+
+    // An edit is pushed within about a second, not at the next 5-minute tick.
+    await rpc("UPSERT", { entry: { title: "quick", url: "https://a.example" } });
+    assert.deepEqual(
+      [...quickTimers.values()].map((t) => t.ms),
+      [1000],
+    );
+    assert.equal(alarms["veilmark-sync-soon"]?.delayInMinutes, 0.5);
+    // Rapid edits restart the short timer instead of piling up syncs.
+    await rpc("UPSERT", { entry: { title: "quick 2", url: "https://b.example" } });
+    assert.equal(quickTimers.size, 1);
+    await fire();
+    assert.equal(alarms["veilmark-sync-soon"], undefined, "fallback cleared");
+    const [onlyId] = [...remote.keys()];
+    assert.equal(remote.size, 1, "Drive keeps one consolidated snapshot");
+    const pushed = await decrypt(remote.get(onlyId), key);
+    assert(pushed.entries.some((e: any) => e.title === "quick 2"));
+
+    // Locked: periodic ticks do nothing and record no error.
+    await rpc("LOCK");
+    const before = calls;
+    listeners.alarm({ name: "veilmark-sync" });
+    listeners.alarm({ name: "veilmark-sync-soon" });
+    await rpc("STATUS");
+    assert.equal(calls, before, "no Drive traffic while locked");
+    assert.equal(local.syncError, "");
+    // A stale "locked" error saved by an older version is not shown.
+    local.syncError = "已上鎖，請重新解鎖";
+    assert.equal((await rpc("STATUS")).syncError, "");
+
+    // Real failures while unlocked are still reported.
+    await rpc("UNLOCK", { password: "abcd" });
+    fail = true;
+    await fire();
+    assert.match(local.syncError, /503/);
+    fail = false;
+    await rpc("UPSERT", { entry: { title: "after", url: "https://c.example" } });
+    await fire();
+    assert.equal(local.syncError, "", "a later success clears the error");
+  } finally {
+    globalThis.fetch = originalFetch;
+    quickTimers.clear();
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.driveEnabled;
+    delete session.driveToken;
+  }
 });

@@ -57,10 +57,10 @@ async function session(): Promise<Session> {
   const { session: s } = await chrome.storage.session.get<{
     session?: Session;
   }>("session");
-  if (!s) throw Error("已上鎖，請重新解鎖");
+  if (!s) throw Error(LOCKED);
   if (s.expires <= Date.now()) {
     await lock();
-    throw Error("已上鎖，請重新解鎖");
+    throw Error(LOCKED);
   }
   const windows = await chrome.windows.getAll({
     windowTypes: ["normal", "popup"],
@@ -222,6 +222,41 @@ async function sync(interactive = false) {
   await chrome.storage.local.set({ lastSync: Date.now(), syncError: "" });
   return v;
 }
+const LOCKED = "已上鎖，請重新解鎖";
+// The popup is often open for only a few seconds, so background sync must not
+// wait for the 5-minute tick: pull right after unlocking and push about a
+// second after each change. The alarm is a fallback in case Chrome stops the
+// service worker before the timer fires. Changes made while sync could not run
+// (locked, offline) stay in the local vault and are merged on the next sync.
+const QUICK_SYNC_MS = 1000;
+let quickTimer: ReturnType<typeof setTimeout> | undefined;
+async function requestSync(delay = QUICK_SYNC_MS) {
+  const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
+  if (!driveEnabled) return;
+  await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+  clearTimeout(quickTimer);
+  quickTimer = setTimeout(() => void serialized(backgroundSync), delay);
+}
+async function backgroundSync() {
+  const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
+  if (!driveEnabled) return;
+  try {
+    await session();
+  } catch {
+    return; // Locked: nothing to sync until the next unlock; not an error.
+  }
+  try {
+    await sync();
+    await chrome.alarms.clear("veilmark-sync-soon");
+  } catch (e) {
+    try {
+      await session();
+    } catch {
+      return; // Locked while syncing.
+    }
+    await chrome.storage.local.set({ syncError: (e as Error).message });
+  }
+}
 async function handle(m: any, sender: chrome.runtime.MessageSender) {
   if (m.type === "OPEN_PRIVATE") {
     await chrome.windows.create({ incognito: true });
@@ -260,6 +295,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       oauthClientId: (await userClientId()) || "",
       redirectUrl: chrome.identity?.getRedirectURL?.() || "",
       ...settings,
+      // Older versions recorded "locked" as a sync error on every tick.
+      syncError: settings.syncError === LOCKED ? "" : settings.syncError || "",
     };
   }
   if (m.type === "LOCK") {
@@ -289,6 +326,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const o = await rateLimited(() => openPassword(e, m.password));
     if (o.sealed !== e) await chrome.storage.local.set({ vault: o.sealed });
     await startSession(o, generation);
+    await requestSync(0);
     return o.v;
   }
   if (m.type === "RESTORE") {
@@ -319,6 +357,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const sealed = await seal(v, dek, keys);
     await chrome.storage.local.set({ vault: sealed });
     await startSession({ v, dek, sealed }, generation);
+    await requestSync(0);
     return { recoveryKey: code.code };
   }
   if (m.type === "RESTORE_DRIVE") {
@@ -350,6 +389,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const sealed = await seal(v, o.dek, o.sealed.keys);
     await chrome.storage.local.set({ vault: sealed, driveEnabled: true });
     await startSession({ ...o, v, sealed }, generation);
+    await requestSync(0);
     return v;
   }
   if (m.type === "DISCONNECT") {
@@ -429,9 +469,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       throw Error("已上鎖，請重新解鎖");
     await save(v, s, keys);
     await touch(s);
-    const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
-    if (driveEnabled)
-      await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+    await requestSync();
     return;
   }
   if (m.type === "RECOVERY_CREATE") {
@@ -443,9 +481,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const keys = await setRecovery(key, e.id, code.bytes, e.keys);
     await save(v, s, keys);
     await touch(s);
-    const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
-    if (driveEnabled)
-      await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+    await requestSync();
     return { recoveryKey: code.code };
   }
   if (m.type === "TOUCH") {
@@ -540,9 +576,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     v.memos = v.memos.filter((y) => y.id !== memo.id).concat(memo);
     await save(v, s);
     await touch(s);
-    const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
-    if (driveEnabled)
-      await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+    await requestSync();
     return memo;
   } else if (m.type === "MEMO_DELETE") {
     const x = v.memos.find((y) => y.id === m.id);
@@ -575,9 +609,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     await touch(s);
     return;
   } else throw Error("未知操作");
-  const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
-  if (driveEnabled)
-    await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
+  await requestSync();
   return v;
 }
 function serialized<T>(fn: () => Promise<T>): Promise<T> {
@@ -646,13 +678,7 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
           await session();
         } catch {}
       } else if (a.name.startsWith("veilmark-sync")) {
-        const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
-        if (driveEnabled)
-          try {
-            await sync();
-          } catch (e) {
-            await chrome.storage.local.set({ syncError: (e as Error).message });
-          }
+        await backgroundSync();
       }
     });
   });

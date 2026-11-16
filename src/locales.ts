@@ -490,10 +490,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "en": "Sync encrypted snapshots in Google Drive's hidden app data folder.",
   "ja": "Google Drive の非表示アプリデータフォルダーで暗号化スナップショットを同期します。"
  },
- "自動同步已啟用：解鎖期間每 5 分鐘同步。": {
-  "zh-CN": "自动同步已激活：解锁期间每 5 分钟同步。",
-  "en": "Auto-sync is on: every 5 minutes while unlocked.",
-  "ja": "自動同期は有効です。ロック解除中は 5 分ごとに同期します。"
+ "自動同步已啟用：解鎖時立即同步，修改後隨即上傳，並每 5 分鐘檢查一次。": {
+  "zh-CN": "自动同步已激活：解锁时立即同步，修改后随即上传，并每 5 分钟检查一次。",
+  "en": "Auto-sync is on: syncs when you unlock, uploads right after each change, and checks every 5 minutes.",
+  "ja": "自動同期は有効です。ロック解除時にすぐ同期し、変更後すぐにアップロードし、5 分ごとにも確認します。"
  },
  "目前僅儲存在這台電腦。": {
   "zh-CN": "目前仅保存在这台电脑。",
@@ -1955,10 +1955,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "en": "Choose the Google account to sync with and click Allow. The consent screen explains that Veil Bookmark can only access its own app data in Drive.",
   "ja": "同期に使う Google アカウントを選び、「許可」を押します。同意画面には、Veil Bookmark が Drive 内の自分のアプリデータにしかアクセスできないことが表示されます。"
  },
- "解鎖期間每 5 分鐘自動同步。其他電腦安裝後，在歡迎畫面輸入同一個主密碼，按「從 Google Drive 還原」。": {
-  "zh-CN": "解锁期间每 5 分钟自动同步。其他电脑安装后，在欢迎画面输入同一个主密码，按「从 Google Drive 还原」。",
-  "en": "While unlocked it syncs every 5 minutes. On another computer, install it, enter the same master password on the welcome screen and choose Restore from Google Drive.",
-  "ja": "ロック解除中は 5 分ごとに自動同期します。別のパソコンではインストール後、ようこそ画面で同じマスターパスワードを入力し「Google Drive から復元」を選んでください。"
+ "解鎖時會立即同步，修改後隨即上傳，解鎖期間每 5 分鐘再檢查一次。其他電腦安裝後，在歡迎畫面輸入同一個主密碼，按「從 Google Drive 還原」。": {
+  "zh-CN": "解锁时会立即同步，修改后随即上传，解锁期间每 5 分钟再检查一次。其他电脑安装后，在欢迎画面输入同一个主密码，按「从 Google Drive 还原」。",
+  "en": "It syncs as soon as you unlock, uploads right after each change, and checks again every 5 minutes while unlocked. On another computer, install it, enter the same master password on the welcome screen and choose Restore from Google Drive.",
+  "ja": "ロック解除時にすぐ同期し、変更後すぐにアップロードし、ロック解除中は 5 分ごとにも確認します。別のパソコンではインストール後、ようこそ画面で同じマスターパスワードを入力し「Google Drive から復元」を選んでください。"
  },
  "授權由 Chrome 管理。可隨時在 Google 帳戶的「第三方存取權」移除 Veil Bookmark，或在「同步與備份」中斷連線。": {
   "zh-CN": "授权由 Chrome 管理。可随时在 Google 帐户的「第三方访问权」移除 Veil Bookmark，或在「同步与备份」中断连接。",
