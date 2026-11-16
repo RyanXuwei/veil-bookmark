@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { memoText } from "./sanitize";
-import type { Memo } from "./crypto";
+import type { Folder, Memo } from "./crypto";
 import { lang, t } from "./i18n";
+import {
+  FolderPlusIcon,
+  FolderTree,
+  NameForm,
+  folderNames,
+  ordered,
+} from "./sortable";
 
 export type MemoDraft = { id: string; title: string; body: string };
 export const emptyMemo: MemoDraft = { id: "", title: "", body: "" };
@@ -16,21 +23,149 @@ export function memoTitle(m: { title: string; body: string; format?: string }) {
   return m.title || firstLine(memoText(m)).slice(0, 60) || t("未命名記事");
 }
 
+type Organize = {
+  reorder: (kind: "memo", folder: string, ids: string[]) => unknown;
+  folderOrder: (kind: "memo", names: string[]) => unknown;
+  create: (kind: "memo", name: string) => unknown;
+  rename: (kind: "memo", from: string, to: string) => unknown;
+  remove: (kind: "memo", name: string) => unknown;
+};
+
 export function MemoList({
   memos,
+  folderRecords,
+  busy,
   onOpen,
+  onMeta,
+  onDelete,
+  organize,
 }: {
   memos: Memo[];
+  folderRecords?: Folder[];
+  busy: boolean;
   onOpen: (m: MemoDraft) => void;
+  onMeta: (id: string, meta: { title?: string; folder?: string }) => void;
+  onDelete: (id: string) => void;
+  organize: Organize;
 }) {
   const [query, setQuery] = useState("");
-  const live = memos
-    .filter((m) => !m.deleted)
-    .sort((a, b) => b.updated - a.updated);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [moving, setMoving] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const live = ordered(
+    memos.filter((m) => !m.deleted),
+    (a, b) => b.updated - a.updated,
+  );
+  const folders = folderNames("memo", folderRecords, live);
   const q = query.toLowerCase();
   const shown = live.filter((m) =>
-    `${m.title} ${m.body}`.toLowerCase().includes(q),
+    `${m.title} ${memoText(m)}`.toLowerCase().includes(q),
   );
+  const open = (m: Memo) => onOpen({ id: m.id, title: m.title, body: m.body });
+  function closeMenu() {
+    setMenuId(null);
+    setRenaming(null);
+    setMoving(null);
+    setDeleting(null);
+  }
+
+  const row = (m: Memo) => {
+    const text = memoText(m);
+    const preview = m.title && firstLine(text) ? firstLine(text) : "";
+    return (
+      <>
+        <div className="quickRow">
+          {renaming === m.id ? (
+            <NameForm
+              inline
+              initial={m.title}
+              placeholder={t("記事標題")}
+              submit={t("儲存")}
+              onSubmit={(title) => {
+                closeMenu();
+                onMeta(m.id, { title });
+              }}
+              onCancel={closeMenu}
+            />
+          ) : (
+            <>
+              <button
+                className="quickLink memoLink"
+                title={t("在筆記本中開啟")}
+                onClick={() => open(m)}
+              >
+                <span className="quickIcon">✎</span>
+                <span className="quickText">
+                  <strong>{memoTitle(m)}</strong>
+                  <small>
+                    {new Date(m.updated).toLocaleDateString(lang())}
+                    {preview && ` · ${preview.slice(0, 80)}`}
+                  </small>
+                </span>
+              </button>
+              <button
+                className="quickMore"
+                aria-label={t("更多操作：{title}", { title: memoTitle(m) })}
+                aria-expanded={menuId === m.id}
+                onClick={() => {
+                  const next = menuId === m.id ? null : m.id;
+                  closeMenu();
+                  setMenuId(next);
+                }}
+              >
+                ⋯
+              </button>
+            </>
+          )}
+        </div>
+        {menuId === m.id && renaming !== m.id && (
+          <div className="quickActions">
+            <button disabled={busy} onClick={() => open(m)}>
+              {t("在筆記本中開啟")}
+            </button>
+            <button onClick={() => setRenaming(m.id)}>{t("重新命名")}</button>
+            {moving === m.id ? (
+              <select
+                autoFocus
+                aria-label={t("移到資料夾")}
+                value={m.folder || ""}
+                onChange={(e) => {
+                  closeMenu();
+                  onMeta(m.id, { folder: e.target.value });
+                }}
+              >
+                <option value="">{t("未分類")}</option>
+                {folders.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <button onClick={() => setMoving(m.id)}>{t("移到資料夾")}</button>
+            )}
+            {deleting === m.id ? (
+              <button
+                className="danger"
+                disabled={busy}
+                onClick={() => {
+                  closeMenu();
+                  onDelete(m.id);
+                }}
+              >
+                {t("確定刪除？內容將無法復原")}
+              </button>
+            ) : (
+              <button onClick={() => setDeleting(m.id)}>{t("刪除")}</button>
+            )}
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <div className="quickSearch">
@@ -52,37 +187,44 @@ export function MemoList({
         <button onClick={() => onOpen({ ...emptyMemo })}>
           {t("開啟筆記本 ↗")}
         </button>
+        <button
+          className="quickNewFolder"
+          title={t("新增資料夾")}
+          aria-label={t("新增資料夾")}
+          onClick={() => setCreating(true)}
+        >
+          <FolderPlusIcon />
+        </button>
       </div>
       <div className="quickList" aria-label={t("加密記事清單")}>
-        <ul>
-          {shown.map((m) => {
-            const text = memoText(m);
-            const preview = m.title && firstLine(text) ? firstLine(text) : "";
-            return (
+        {query ? (
+          <ul>
+            {shown.map((m) => (
               <li className="quickItem" key={m.id}>
-                <div className="quickRow">
-                  <button
-                    className="quickLink memoLink"
-                    title={t("在筆記本中開啟")}
-                    onClick={() =>
-                      onOpen({ id: m.id, title: m.title, body: m.body })
-                    }
-                  >
-                    <span className="quickIcon">✎</span>
-                    <span className="quickText">
-                      <strong>{memoTitle(m)}</strong>
-                      <small>
-                        {new Date(m.updated).toLocaleDateString(lang())}
-                        {preview && ` · ${preview.slice(0, 80)}`}
-                      </small>
-                    </span>
-                  </button>
-                </div>
+                {row(m)}
               </li>
-            );
-          })}
-        </ul>
-        {!shown.length && (
+            ))}
+          </ul>
+        ) : (
+          <FolderTree
+            kind="memo"
+            folders={folders}
+            items={live}
+            busy={busy}
+            renderItem={row}
+            onReorder={(f, ids) => void organize.reorder("memo", f, ids)}
+            onFolderOrder={(n) => void organize.folderOrder("memo", n)}
+            onRenameFolder={(a, b) => void organize.rename("memo", a, b)}
+            onDeleteFolder={(f) => void organize.remove("memo", f)}
+            creating={creating}
+            onCreate={(n) => {
+              setCreating(false);
+              void organize.create("memo", n);
+            }}
+            onCancelCreate={() => setCreating(false)}
+          />
+        )}
+        {!shown.length && (query || (!folders.length && !creating)) && (
           <div className="quickEmpty">
             <span>✎</span>
             <p>{query ? t("沒有符合的記事") : t("還沒有加密記事")}</p>

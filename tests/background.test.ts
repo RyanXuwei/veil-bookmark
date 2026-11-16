@@ -909,3 +909,81 @@ test("Drive upload: multipart for small vaults, resumable session for large ones
     globalThis.fetch = originalFetch;
   }
 });
+
+test("ordering and folders: reorder, move between folders, folder order/create/rename/delete, note quick edit, sync merge", async () => {
+  const c = await import("../src/crypto");
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.driveEnabled;
+  quickTimers.clear();
+  await rpc("CREATE", { password: "abcd" });
+  const add = async (title: string, folder = "") =>
+    (await rpc("UPSERT", { entry: { title, url: `https://${title}.example`, folder } })).entries.find(
+      (x: any) => x.title === title,
+    ).id;
+  const a = await add("a", "Work"),
+    b = await add("b", "Work"),
+    cc = await add("c", "Work"),
+    d = await add("d");
+  let v = await rpc("REORDER", { kind: "entry", folder: "Work", ids: [cc, a, b] });
+  const order = (f: string) =>
+    v.entries.filter((x: any) => x.folder === f && !x.deleted).sort((x: any, y: any) => x.order - y.order).map((x: any) => x.title);
+  assert.deepEqual(order("Work"), ["c", "a", "b"]);
+  // Drag "d" from Unfiled into Work between c and a.
+  v = await rpc("REORDER", { kind: "entry", folder: "Work", ids: [cc, d, a, b] });
+  assert.deepEqual(order("Work"), ["c", "d", "a", "b"]);
+  // Editing keeps the position; changing folder drops it.
+  v = await rpc("UPSERT", { entry: { id: a, title: "a2", url: "https://a.example", folder: "Work" } });
+  assert.equal(v.entries.find((x: any) => x.id === a).order, 2);
+  v = await rpc("UPSERT", { entry: { id: b, title: "b", url: "https://b.example", folder: "Home" } });
+  assert.equal(v.entries.find((x: any) => x.id === b).order, undefined);
+  // Folders: create empty, order, rename (items follow), delete (items to Unfiled).
+  await rpc("FOLDER_CREATE", { kind: "entry", name: "Empty" });
+  await assert.rejects(rpc("FOLDER_CREATE", { kind: "entry", name: "Work" }), /同名/);
+  await assert.rejects(rpc("FOLDER_CREATE", { kind: "entry", name: "  " }), /資料夾名稱/);
+  v = await rpc("FOLDER_ORDER", { kind: "entry", names: ["Home", "Empty", "Work"] });
+  const { folderNames } = await import("../src/sortable");
+  assert.deepEqual(folderNames("entry", v.folders, v.entries.filter((x: any) => !x.deleted)), ["Home", "Empty", "Work"]);
+  v = await rpc("FOLDER_RENAME", { kind: "entry", from: "Work", to: "Job" });
+  assert.deepEqual(folderNames("entry", v.folders, v.entries.filter((x: any) => !x.deleted)), ["Home", "Empty", "Job"]);
+  assert.equal(v.entries.filter((x: any) => x.folder === "Job").length, 3);
+  await assert.rejects(rpc("FOLDER_RENAME", { kind: "entry", from: "Job", to: "Home" }), /同名/);
+  v = await rpc("FOLDER_DELETE", { kind: "entry", name: "Job" });
+  assert.equal(v.entries.filter((x: any) => !x.deleted && x.folder === "").length, 3);
+  assert.deepEqual(folderNames("entry", v.folders, v.entries.filter((x: any) => !x.deleted)), ["Home", "Empty"]);
+  await assert.rejects(rpc("REORDER", { kind: "other", folder: "", ids: [] }), /未知操作/);
+
+  // Notes: folders, quick rename and move keep the body.
+  const n1 = await rpc("MEMO_UPSERT", { memo: { title: "n1", body: "<p>secret body</p>", format: "html" } });
+  const n2 = await rpc("MEMO_UPSERT", { memo: { title: "n2", body: "x", format: "html" } });
+  await rpc("FOLDER_CREATE", { kind: "memo", name: "日記" });
+  v = await rpc("MEMO_META", { id: n1.id, title: "改名", folder: "日記" });
+  let m1 = v.memos.find((x: any) => x.id === n1.id);
+  assert.equal(m1.title, "改名");
+  assert.equal(m1.folder, "日記");
+  assert.equal(m1.body, "<p>secret body</p>");
+  v = await rpc("REORDER", { kind: "memo", folder: "日記", ids: [n2.id, n1.id] });
+  assert.deepEqual(v.memos.filter((x: any) => x.folder === "日記").sort((x: any, y: any) => x.order - y.order).map((x: any) => x.title), ["n2", "改名"]);
+  // Saving from the notebook keeps folder and position.
+  v = { memos: [await rpc("MEMO_UPSERT", { memo: { id: n1.id, title: "改名", body: "<p>edited</p>", format: "html" } })] };
+  assert.equal(v.memos[0].folder, "日記");
+  assert.equal(v.memos[0].order, 1);
+  await assert.rejects(rpc("MEMO_META", { id: "missing", title: "x" }), /不存在/);
+
+  // Folder records merge last-writer-wins like items; bad records are dropped.
+  const key = await c.importKey(session.session.key);
+  const mine = await c.decrypt(local.vault, key);
+  const other = structuredClone(mine);
+  const rec = other.folders!.find((f) => f.name === "Empty")!;
+  rec.order = 99;
+  rec.updated += 10;
+  rec.revision = "z";
+  other.folders!.push({ id: "bad", kind: "entry", name: "x", order: 1, updated: 1, revision: "r", deleted: false });
+  const merged = c.merge(mine, other);
+  assert.equal(merged.folders!.find((f) => f.name === "Empty")!.order, 99);
+  const sealed = await c.seal(other, key, local.vault.keys);
+  const back = await c.decrypt(sealed, key);
+  assert(!back.folders!.some((f) => f.id === "bad"), "invalid folder records dropped");
+  await rpc("LOCK");
+  delete local.vault;
+});

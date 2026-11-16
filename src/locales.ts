@@ -2029,5 +2029,100 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "打印／另存 PDF",
   "en": "Print / Save as PDF",
   "ja": "印刷／PDF として保存"
+ },
+ "新增資料夾": {
+  "zh-CN": "添加文件夹",
+  "en": "New folder",
+  "ja": "新しいフォルダ"
+ },
+ "記事標題": {
+  "zh-CN": "记事标题",
+  "en": "Note title",
+  "ja": "メモのタイトル"
+ },
+ "儲存": {
+  "zh-CN": "保存",
+  "en": "Save",
+  "ja": "保存"
+ },
+ "重新命名": {
+  "zh-CN": "重命名",
+  "en": "Rename",
+  "ja": "名前を変更"
+ },
+ "移到資料夾": {
+  "zh-CN": "移到文件夹",
+  "en": "Move to folder",
+  "ja": "フォルダへ移動"
+ },
+ "確定刪除？內容將無法復原": {
+  "zh-CN": "确定删除？内容将无法复原",
+  "en": "Delete? This can’t be undone.",
+  "ja": "削除しますか？元に戻せません。"
+ },
+ "記事不存在": {
+  "zh-CN": "记事不存在",
+  "en": "The note doesn’t exist.",
+  "ja": "メモが見つかりません。"
+ },
+ "請輸入資料夾名稱": {
+  "zh-CN": "请输入文件夹名称",
+  "en": "Enter a folder name.",
+  "ja": "フォルダ名を入力してください。"
+ },
+ "已有同名資料夾": {
+  "zh-CN": "已有同名文件夹",
+  "en": "A folder with this name already exists.",
+  "ja": "同じ名前のフォルダがあります。"
+ },
+ "資料夾名稱": {
+  "zh-CN": "文件夹名称",
+  "en": "Folder name",
+  "ja": "フォルダ名"
+ },
+ "建立": {
+  "zh-CN": "创建",
+  "en": "Create",
+  "ja": "作成"
+ },
+ "資料夾操作：{title}": {
+  "zh-CN": "文件夹操作：{title}",
+  "en": "Folder actions: {title}",
+  "ja": "フォルダの操作：{title}"
+ },
+ "上移": {
+  "zh-CN": "上移",
+  "en": "Move up",
+  "ja": "上へ移動"
+ },
+ "下移": {
+  "zh-CN": "下移",
+  "en": "Move down",
+  "ja": "下へ移動"
+ },
+ "確定刪除？{count} 個項目會移到未分類": {
+  "zh-CN": "确定删除？{count} 个项目会移到未分类",
+  "en": "Delete? {count} item(s) will move to Unfiled.",
+  "ja": "削除しますか？{count} 件の項目は未分類に移動します。"
+ },
+ "確定刪除？": {
+  "zh-CN": "确定删除？",
+  "en": "Delete?",
+  "ja": "削除しますか？"
+ },
+ "刪除資料夾": {
+  "zh-CN": "删除文件夹",
+  "en": "Delete folder",
+  "ja": "フォルダを削除"
+ },
+ "拖曳項目到這裡": {
+  "zh-CN": "拖曳项目到这里",
+  "en": "Drag items here",
+  "ja": "ここに項目をドラッグ"
+ },
+ "拖到這裡移出資料夾": {
+  "zh-CN": "拖到这里移出文件夹",
+  "en": "Drop here to remove from folder",
+  "ja": "ここにドロップしてフォルダから出す"
  }
 };

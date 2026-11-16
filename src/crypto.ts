@@ -5,6 +5,8 @@ export type Entry = {
   folder: string;
   tags: string[];
   notes: string;
+  // Position inside its folder (drag-and-drop); unset = after ordered items.
+  order?: number;
   updated: number;
   revision: string;
   deleted: boolean;
@@ -153,18 +155,47 @@ export type Memo = {
   drawing?: DrawingStroke[];
   recordings?: MemoRecording[];
   images?: MemoImage[];
+  folder?: string;
+  order?: number;
   updated: number;
   revision: string;
   deleted: boolean;
 };
+// Folder records: their order, and folders that are still empty. Items refer
+// to folders by name; the record ID is "<kind>:<name>".
+export type FolderKind = "entry" | "memo";
+export type Folder = {
+  id: string;
+  kind: FolderKind;
+  name: string;
+  order: number;
+  updated: number;
+  revision: string;
+  deleted: boolean;
+};
+export const FOLDER_MAX = 100; // characters in a folder name
+export const folderId = (kind: FolderKind, name: string) => `${kind}:${name}`;
+export function cleanFolderName(value: unknown) {
+  return String(value ?? "")
+    .replace(/[\u0000-\u001f]/g, " ")
+    .trim()
+    .slice(0, FOLDER_MAX);
+}
 // Vault v2 adds encrypted memos. Older releases reject v2 instead of silently
 // dropping memos during a sync merge.
-export type Vault = { version: 2; id: string; entries: Entry[]; memos: Memo[] };
+export type Vault = {
+  version: 2;
+  id: string;
+  entries: Entry[];
+  memos: Memo[];
+  folders?: Folder[];
+};
 export const emptyVault = (id: string): Vault => ({
   version: 2,
   id,
   entries: [],
   memos: [],
+  folders: [],
 });
 // Envelope v1 (legacy): the vault is encrypted directly with a password key.
 export type LegacyEnvelope = {
@@ -591,6 +622,25 @@ export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
       throw Error("書籤資料格式錯誤");
     safeUrl(x.url);
   }
+  for (const x of [...v.entries, ...v.memos] as { order?: unknown }[])
+    if (x.order !== undefined && !Number.isFinite(x.order)) delete x.order;
+  for (const x of v.memos)
+    if (x.folder !== undefined && typeof x.folder !== "string") delete x.folder;
+  const folders = (v as Vault).folders;
+  (v as Vault).folders = (Array.isArray(folders) ? folders : [])
+    .slice(0, 5000)
+    .filter(
+      (f) =>
+        f &&
+        (f.kind === "entry" || f.kind === "memo") &&
+        typeof f.name === "string" &&
+        f.name.length <= FOLDER_MAX &&
+        f.id === folderId(f.kind, f.name) &&
+        Number.isFinite(f.order) &&
+        Number.isSafeInteger(f.updated) &&
+        typeof f.revision === "string" &&
+        typeof f.deleted === "boolean",
+    );
   return v as Vault;
 }
 export function safeUrl(value: string) {
@@ -629,5 +679,6 @@ export function merge(a: Vault, b: Vault): Vault {
     id: a.id,
     entries: lww(a.entries, b.entries),
     memos: lww(a.memos || [], b.memos || []),
+    folders: lww(a.folders || [], b.folders || []),
   };
 }

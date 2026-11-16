@@ -902,4 +902,15 @@
   background: #d6e4dc;
   border-color: #9fbcad;
 }
+.nbNav li.nbNavFolder {
+  padding: 10px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b766f;
+  letter-spacing: 0.02em;
+}
+.nbNav li.nbNavFolder::before {
+  content: "▰ ";
+  color: #94a67a;
+}
 

@@ -43,9 +43,9 @@ test("key slots: password and recovery open the same data key; forgery and wrong
   const e = await c.seal(vault, dek, keys);
   assert(!JSON.stringify(e).includes("secret note"));
   const byPw = await c.openWithPassword(e, "1234");
-  assert.deepEqual(await c.decrypt(e, byPw.dek), vault);
+  assert.deepEqual(await c.decrypt(e, byPw.dek), { ...vault, folders: [] });
   const byRk = await c.openWithRecovery(e, code.bytes);
-  assert.deepEqual(await c.decrypt(e, byRk), vault);
+  assert.deepEqual(await c.decrypt(e, byRk), { ...vault, folders: [] });
   await assert.rejects(c.openWithPassword(e, "wrong"), /密碼不正確/);
   await assert.rejects(
     c.openWithRecovery(e, c.newRecoveryCode().bytes),

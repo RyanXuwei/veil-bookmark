@@ -28,6 +28,10 @@ import {
   type KeySlots,
   type Vault,
   type Entry,
+  type Folder,
+  type FolderKind,
+  cleanFolderName,
+  folderId,
 } from "./crypto";
 import {
   clearClientId,
@@ -259,6 +263,76 @@ async function backgroundSync() {
     }
     await chrome.storage.local.set({ syncError: (e as Error).message });
   }
+}
+function folderKind(k: unknown): FolderKind {
+  if (k !== "entry" && k !== "memo") throw Error("未知操作");
+  return k;
+}
+/** Folder names in use (records and items), unordered. */
+function liveFolders(v: Vault, kind: FolderKind) {
+  const items: { folder?: string; deleted: boolean }[] =
+    kind === "entry" ? v.entries : v.memos;
+  return [
+    ...new Set([
+      ...(v.folders || [])
+        .filter((f) => f.kind === kind && !f.deleted)
+        .map((f) => f.name),
+      ...items.filter((x) => !x.deleted && x.folder).map((x) => x.folder!),
+    ]),
+  ];
+}
+function upsertFolder(
+  v: Vault,
+  kind: FolderKind,
+  name: string,
+  order?: number,
+) {
+  const folders = (v.folders ||= []);
+  const id = folderId(kind, name);
+  const old = folders.find((f) => f.id === id);
+  const next =
+    order ??
+    (old && !old.deleted ? old.order : undefined) ??
+    Math.max(
+      -1,
+      ...folders
+        .filter((f) => f.kind === kind && !f.deleted)
+        .map((f) => f.order),
+    ) + 1;
+  if (old && !old.deleted && old.order === next) return;
+  const f: Folder = {
+    id,
+    kind,
+    name,
+    order: next,
+    updated: Math.max(Date.now(), (old?.updated || 0) + 1),
+    revision: crypto.randomUUID(),
+    deleted: false,
+  };
+  v.folders = folders.filter((x) => x.id !== id).concat(f);
+}
+function removeFolder(v: Vault, kind: FolderKind, name: string) {
+  const f = (v.folders || []).find((x) => x.id === folderId(kind, name));
+  if (!f || f.deleted) return;
+  f.deleted = true;
+  f.updated = Math.max(Date.now(), f.updated + 1);
+  f.revision = crypto.randomUUID();
+}
+function moveItems(v: Vault, kind: FolderKind, from: string, to: string) {
+  const items: {
+    folder?: string;
+    order?: number;
+    updated: number;
+    revision: string;
+    deleted: boolean;
+  }[] = kind === "entry" ? v.entries : v.memos;
+  for (const x of items)
+    if (!x.deleted && (x.folder || "") === from && from) {
+      x.folder = to;
+      if (!to) delete x.order;
+      x.updated = Math.max(Date.now(), x.updated + 1);
+      x.revision = crypto.randomUUID();
+    }
 }
 async function handle(m: any, sender: chrome.runtime.MessageSender) {
   if (m.type === "OPEN_PRIVATE") {
@@ -509,6 +583,9 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
         .filter(Boolean)
         .slice(0, 30),
       notes: String(x.notes || "").slice(0, 5000),
+      ...(old?.order !== undefined && old.folder === cleanFolderName(x.folder)
+        ? { order: old.order }
+        : {}),
       updated: Math.max(Date.now(), (old?.updated || 0) + 1),
       revision: crypto.randomUUID(),
       deleted: false,
@@ -547,7 +624,11 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
         x.recordings === undefined
           ? old?.recordings || []
           : cleanRecordings(x.recordings),
-      images: x.images === undefined ? old?.images || [] : cleanImages(x.images),
+      images:
+        x.images === undefined ? old?.images || [] : cleanImages(x.images),
+      folder:
+        x.folder === undefined ? old?.folder || "" : cleanFolderName(x.folder),
+      ...(old?.order !== undefined ? { order: old.order } : {}),
       updated: Math.max(Date.now(), (old?.updated || 0) + 1),
       revision: crypto.randomUUID(),
       deleted: false,
@@ -606,6 +687,90 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       x.revision = crypto.randomUUID();
       await save(v, s);
     }
+    await touch(s);
+  } else if (m.type === "MEMO_META") {
+    // Title / folder only, from the popup's quick menu (body untouched).
+    const x = v.memos.find((y) => y.id === m.id && !y.deleted);
+    if (!x) throw Error("記事不存在");
+    if (m.title !== undefined)
+      x.title = String(m.title || "")
+        .trim()
+        .slice(0, 300);
+    if (m.folder !== undefined) {
+      const folder = cleanFolderName(m.folder);
+      if (folder !== (x.folder || "")) delete x.order;
+      x.folder = folder;
+    }
+    x.updated = Math.max(Date.now(), x.updated + 1);
+    x.revision = crypto.randomUUID();
+    await save(v, s);
+    await touch(s);
+  } else if (m.type === "REORDER") {
+    // Drag and drop: the full new order of one folder, which may now also
+    // contain an item dragged in from another folder.
+    const kind = folderKind(m.kind);
+    const folder = cleanFolderName(m.folder);
+    const ids: string[] = Array.isArray(m.ids) ? m.ids.slice(0, 20000) : [];
+    const list: {
+      id: string;
+      folder?: string;
+      order?: number;
+      updated: number;
+      revision: string;
+      deleted: boolean;
+    }[] = kind === "entry" ? v.entries : v.memos;
+    const byId = new Map(list.filter((x) => !x.deleted).map((x) => [x.id, x]));
+    ids.forEach((id, i) => {
+      const x = byId.get(String(id));
+      if (!x || (x.order === i && (x.folder || "") === folder)) return;
+      x.order = i;
+      x.folder = folder;
+      x.updated = Math.max(Date.now(), x.updated + 1);
+      x.revision = crypto.randomUUID();
+    });
+    if (folder) upsertFolder(v, kind, folder);
+    await save(v, s);
+    await touch(s);
+  } else if (m.type === "FOLDER_ORDER") {
+    const kind = folderKind(m.kind);
+    const names: string[] = (Array.isArray(m.names) ? m.names : [])
+      .slice(0, 5000)
+      .map(cleanFolderName)
+      .filter(Boolean);
+    names.forEach((name, i) => upsertFolder(v, kind, name, i));
+    await save(v, s);
+    await touch(s);
+  } else if (m.type === "FOLDER_CREATE") {
+    const kind = folderKind(m.kind);
+    const name = cleanFolderName(m.name);
+    if (!name) throw Error("請輸入資料夾名稱");
+    if (liveFolders(v, kind).includes(name)) throw Error("已有同名資料夾");
+    upsertFolder(v, kind, name);
+    await save(v, s);
+    await touch(s);
+  } else if (m.type === "FOLDER_RENAME") {
+    const kind = folderKind(m.kind);
+    const from = cleanFolderName(m.from);
+    const to = cleanFolderName(m.to);
+    if (!to) throw Error("請輸入資料夾名稱");
+    if (from !== to) {
+      if (liveFolders(v, kind).includes(to)) throw Error("已有同名資料夾");
+      const old = (v.folders || []).find(
+        (f) => f.id === folderId(kind, from) && !f.deleted,
+      );
+      upsertFolder(v, kind, to, old?.order);
+      removeFolder(v, kind, from);
+      moveItems(v, kind, from, to);
+    }
+    await save(v, s);
+    await touch(s);
+  } else if (m.type === "FOLDER_DELETE") {
+    // The folder goes away; its bookmarks or notes move to "Unfiled".
+    const kind = folderKind(m.kind);
+    const name = cleanFolderName(m.name);
+    removeFolder(v, kind, name);
+    moveItems(v, kind, name, "");
+    await save(v, s);
     await touch(s);
   } else if (m.type === "OPEN") {
     const x = v.entries.find((x) => x.id === m.id && !x.deleted);

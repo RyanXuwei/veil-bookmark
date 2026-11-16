@@ -406,3 +406,22 @@ Drive 回應無效，本機資料已保留|Invalid response from Drive. Your loc
 圖片太大，請先縮小後再貼上|The picture is too large. Make it smaller and paste again.|画像が大きすぎます。縮小してから貼り付けてください。
 另存 PDF|Save as PDF|PDF として保存
 列印／另存 PDF|Print / Save as PDF|印刷／PDF として保存
+新增資料夾|New folder|新しいフォルダ
+記事標題|Note title|メモのタイトル
+儲存|Save|保存
+重新命名|Rename|名前を変更
+移到資料夾|Move to folder|フォルダへ移動
+確定刪除？內容將無法復原|Delete? This can’t be undone.|削除しますか？元に戻せません。
+記事不存在|The note doesn’t exist.|メモが見つかりません。
+請輸入資料夾名稱|Enter a folder name.|フォルダ名を入力してください。
+已有同名資料夾|A folder with this name already exists.|同じ名前のフォルダがあります。
+資料夾名稱|Folder name|フォルダ名
+建立|Create|作成
+資料夾操作：{title}|Folder actions: {title}|フォルダの操作：{title}
+上移|Move up|上へ移動
+下移|Move down|下へ移動
+確定刪除？{count} 個項目會移到未分類|Delete? {count} item(s) will move to Unfiled.|削除しますか？{count} 件の項目は未分類に移動します。
+確定刪除？|Delete?|削除しますか？
+刪除資料夾|Delete folder|フォルダを削除
+拖曳項目到這裡|Drag items here|ここに項目をドラッグ
+拖到這裡移出資料夾|Drop here to remove from folder|ここにドロップしてフォルダから出す

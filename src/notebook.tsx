@@ -13,6 +13,8 @@ import {
   type MemoImage,
   type MemoRecording,
 } from "./crypto";
+import { folderNames, ordered } from "./sortable";
+import { type Folder } from "./crypto";
 import { importHtmlImages, importImage, layoutRuled, RULE } from "./ruled";
 import { LANGS, lang, saveLang, t, tError, type Lang } from "./i18n";
 import {
@@ -57,6 +59,7 @@ function titleOf(m: Memo) {
 export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [status, setStatus] = useState<any>(null);
   const [memos, setMemos] = useState<Memo[]>([]);
+  const [folderRecords, setFolderRecords] = useState<Folder[]>([]);
   const [current, setCurrent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [paperColor, setPaperColor] = useState(DEFAULT_PAPER);
@@ -166,6 +169,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     if (requestEpoch !== epoch.current) return null;
     setStatus(s);
     setMemos(v.memos || []);
+    setFolderRecords(v.folders || []);
     return v.memos as Memo[];
   }, [rpc, clearView]);
 
@@ -557,6 +561,18 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const shown = live.filter((m) =>
     `${m.title} ${memoText(m)}`.toLowerCase().includes(query.toLowerCase()),
   );
+  // Without a search: notes grouped by the popup's folders, in their order.
+  const navFolders = folderNames("memo", folderRecords, live);
+  const navList: (Memo | string)[] = query
+    ? shown
+    : [...navFolders, ""].flatMap((f) => {
+        const notes = ordered(
+          live.filter((x) => (x.folder || "") === f),
+          (a, b) => b.updated - a.updated,
+        );
+        if (!notes.length) return [];
+        return navFolders.length ? [f, ...notes] : notes;
+      });
 
   // Large ribbon button: icon above a short label (Insert and View tabs).
   const BigBtn = ({
@@ -1038,20 +1054,26 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               onChange={(e) => setQuery(e.target.value)}
             />
             <ul>
-              {shown.map((m) => (
-                <li key={m.id}>
-                  <button
-                    className={m.id === current ? "on" : ""}
-                    disabled={switching}
-                    onClick={() => void open(m)}
-                  >
-                    <strong>{titleOf(m)}</strong>
-                    <small>
-                      {new Date(m.updated).toLocaleDateString(lang())}
-                    </small>
-                  </button>
-                </li>
-              ))}
+              {navList.map((m) =>
+                typeof m === "string" ? (
+                  <li key={"folder:" + m} className="nbNavFolder">
+                    {m || t("未分類")}
+                  </li>
+                ) : (
+                  <li key={m.id}>
+                    <button
+                      className={m.id === current ? "on" : ""}
+                      disabled={switching}
+                      onClick={() => void open(m)}
+                    >
+                      <strong>{titleOf(m)}</strong>
+                      <small>
+                        {new Date(m.updated).toLocaleDateString(lang())}
+                      </small>
+                    </button>
+                  </li>
+                ),
+              )}
             </ul>
             {!shown.length && (
               <p className="nbEmpty">

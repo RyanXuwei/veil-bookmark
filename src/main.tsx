@@ -1,3 +1,4 @@
+import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { PasswordChangeSection } from "./password-change";
@@ -18,7 +19,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "1.0.3",
+  version: "1.1.0",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -75,6 +76,7 @@ function App() {
   const viewEpoch = useRef(0);
   const [uiLang, setUiLang] = useState<Lang>(lang());
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
   const [ack, setAck] = useState(false);
   const [recoveryShown, setRecoveryShown] = useState<string | null>(null);
@@ -266,7 +268,7 @@ function App() {
   }
   function popupRow(x: Entry) {
     return (
-      <li className="quickItem" key={x.id}>
+      <>
         <div className="quickRow">
           <button
             className="quickLink"
@@ -324,9 +326,38 @@ function App() {
             </button>
           </div>
         )}
-      </li>
+      </>
     );
   }
+  // Folder and drag-and-drop operations (bookmarks and notes).
+  const organize = {
+    reorder: (kind: "entry" | "memo", folder: string, ids: string[]) =>
+      run(async () => {
+        await rpc("REORDER", { kind, folder, ids });
+        await refresh();
+      }),
+    folderOrder: (kind: "entry" | "memo", names: string[]) =>
+      run(async () => {
+        await rpc("FOLDER_ORDER", { kind, names });
+        await refresh();
+      }),
+    create: (kind: "entry" | "memo", name: string) =>
+      run(async () => {
+        await rpc("FOLDER_CREATE", { kind, name });
+        setCreatingFolder(false);
+        await refresh();
+      }),
+    rename: (kind: "entry" | "memo", from: string, to: string) =>
+      run(async () => {
+        await rpc("FOLDER_RENAME", { kind, from, to });
+        await refresh();
+      }),
+    remove: (kind: "entry" | "memo", name: string) =>
+      run(async () => {
+        await rpc("FOLDER_DELETE", { kind, name });
+        await refresh();
+      }),
+  };
   async function backup() {
     await run(async () => {
       const data = await rpc("EXPORT");
@@ -342,9 +373,8 @@ function App() {
     });
   }
   const entries = vault?.entries.filter((x) => !x.deleted) || [];
-  const folders = [
-    ...new Set(entries.map((x) => x.folder).filter(Boolean)),
-  ].sort();
+  const folders = folderNames("entry", vault?.folders, entries);
+  const byPosition = ordered(entries, (a, b) => a.title.localeCompare(b.title));
   const visible = entries
     .filter(
       (x) =>
@@ -658,7 +688,10 @@ function App() {
             <button
               role="tab"
               aria-selected={view === "memos"}
-              onClick={() => setView("memos")}
+              onClick={() => {
+                setView("memos");
+                setCreatingFolder(false);
+              }}
             >
               {t("記事本")}
             </button>
@@ -674,7 +707,22 @@ function App() {
           {view === "memos" ? (
             <MemoList
               memos={vault.memos || []}
+              folderRecords={vault.folders}
+              busy={busy}
               onOpen={(m) => void openNotebook(m.id)}
+              onMeta={(id, meta) =>
+                void run(async () => {
+                  await rpc("MEMO_META", { id, ...meta });
+                  await refresh();
+                })
+              }
+              onDelete={(id) =>
+                void run(async () => {
+                  await rpc("MEMO_DELETE", { id });
+                  await refresh();
+                })
+              }
+              organize={organize}
             />
           ) : (
             <>
@@ -698,6 +746,14 @@ function App() {
                 >
                   {t("手動新增")}
                 </button>
+                <button
+                  className="quickNewFolder"
+                  title={t("新增資料夾")}
+                  aria-label={t("新增資料夾")}
+                  onClick={() => setCreatingFolder(true)}
+                >
+                  <FolderPlusIcon />
+                </button>
               </div>
               <div className="quickList" aria-label={t("私人書籤清單")}>
                 {query ? (
@@ -705,36 +761,40 @@ function App() {
                     <div className="quickCaption">
                       {t("搜尋結果 ·")} {visible.length}
                     </div>
-                    <ul>{visible.map(popupRow)}</ul>
+                    <ul>
+                      {visible.map((x) => (
+                        <li className="quickItem" key={x.id}>
+                          {popupRow(x)}
+                        </li>
+                      ))}
+                    </ul>
                   </>
                 ) : (
                   <>
-                    {folders.map((f) => (
-                      <details className="quickFolder" key={f}>
-                        <summary>
-                          <span>▰</span>
-                          <strong>{f}</strong>
-                          <small>
-                            {entries.filter((x) => x.folder === f).length}
-                          </small>
-                        </summary>
-                        <ul>
-                          {entries
-                            .filter((x) => x.folder === f)
-                            .sort((a, b) => a.title.localeCompare(b.title))
-                            .map(popupRow)}
-                        </ul>
-                      </details>
-                    ))}
-                    <ul>
-                      {entries
-                        .filter((x) => !x.folder)
-                        .sort((a, b) => a.title.localeCompare(b.title))
-                        .map(popupRow)}
-                    </ul>
+                    <FolderTree
+                      kind="entry"
+                      folders={folders}
+                      items={byPosition}
+                      busy={busy}
+                      renderItem={popupRow}
+                      onReorder={(f, ids) =>
+                        void organize.reorder("entry", f, ids)
+                      }
+                      onFolderOrder={(n) =>
+                        void organize.folderOrder("entry", n)
+                      }
+                      onRenameFolder={(a, b) =>
+                        void organize.rename("entry", a, b)
+                      }
+                      onDeleteFolder={(f) => void organize.remove("entry", f)}
+                      creating={creatingFolder}
+                      onCreate={(n) => void organize.create("entry", n)}
+                      onCancelCreate={() => setCreatingFolder(false)}
+                    />
                   </>
                 )}
-                {(!entries.length || (query && !visible.length)) && (
+                {((!entries.length && !folders.length && !creatingFolder) ||
+                  (query && !visible.length)) && (
                   <div className="quickEmpty">
                     <span>▱</span>
                     <p>{query ? t("沒有符合的書籤") : t("還沒有私人書籤")}</p>
@@ -1113,7 +1173,9 @@ function App() {
                 </p>
                 <p className="small">
                   {status?.driveEnabled
-                    ? t("自動同步已啟用：解鎖時立即同步，修改後隨即上傳，並每 5 分鐘檢查一次。")
+                    ? t(
+                        "自動同步已啟用：解鎖時立即同步，修改後隨即上傳，並每 5 分鐘檢查一次。",
+                      )
                     : t("目前僅儲存在這台電腦。")}
                   <br />
                   {status?.lastSync &&
@@ -1203,7 +1265,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 1.0.3 · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 1.1.0 · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

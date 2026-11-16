@@ -42,7 +42,7 @@ test("AES-GCM roundtrip, random IV, no plaintext, wrong password and tampering r
   assert.notEqual(a.iv, b.iv);
   assert.notEqual(a.ciphertext, b.ciphertext);
   assert(!JSON.stringify(a).includes("secret note"));
-  assert.deepEqual(await decrypt(a, key), vault);
+  assert.deepEqual(await decrypt(a, key), { ...vault, folders: [] });
   await assert.rejects(decrypt(a, await derive("wrong-password", salt)));
   await assert.rejects(decrypt({ ...a, id: "tampered" }, key));
   await assert.rejects(

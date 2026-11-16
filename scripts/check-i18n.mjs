@@ -15,6 +15,7 @@ for (const f of [
   "src/crypto.ts",
   "src/drive.ts",
   "src/ruled.ts",
+  "src/sortable.tsx",
 ]) {
   const s = readFileSync(f, "utf8");
   const re =
