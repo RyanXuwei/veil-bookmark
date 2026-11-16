@@ -18,7 +18,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "1.0.2",
+  version: "1.0.3",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -1203,7 +1203,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 1.0.2 · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 1.0.3 · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

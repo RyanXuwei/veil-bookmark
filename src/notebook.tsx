@@ -892,14 +892,9 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             <div className="rg">
               <div className="rgRow big">
                 <BigBtn
-                  label="另存 PDF"
-                  icon="pdf"
-                  onClick={() => void saveAsPdf()}
-                />
-                <BigBtn
-                  label="列印"
+                  label="列印／另存 PDF"
                   icon="print"
-                  onClick={() => window.print()}
+                  onClick={() => void saveAsPdf()}
                 />
                 <BigBtn
                   label="刪除記事"

@@ -2024,5 +2024,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "另存 PDF",
   "en": "Save as PDF",
   "ja": "PDF として保存"
+ },
+ "列印／另存 PDF": {
+  "zh-CN": "打印／另存 PDF",
+  "en": "Print / Save as PDF",
+  "ja": "印刷／PDF として保存"
  }
 };

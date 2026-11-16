@@ -237,7 +237,7 @@ try {
     window.print = () => window.__printed.push(document.title);
   });
   await page.getByRole("tab", { name: "檢視" }).click();
-  await page.getByRole("button", { name: "另存 PDF" }).click();
+  await page.getByRole("button", { name: "列印／另存 PDF" }).click();
   await page.waitForFunction(() => window.__printed.length === 1);
   assert.equal(await page.evaluate(() => window.__printed[0]), "旅行 計畫 2026x");
   await page.evaluate(() => dispatchEvent(new Event("afterprint")));
