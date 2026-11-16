@@ -36,6 +36,7 @@ import {
 import {
   clearClientId,
   clearTokens,
+  listSnapshots,
   oauthSource,
   readRemote,
   removeSnapshots,
@@ -175,6 +176,40 @@ async function rateLimited<T>(fn: () => Promise<T>) {
 }
 const OTHER_VAULT =
   "Drive 含有另一個保險庫。請保留本機備份，於新安裝中從 Drive 還原，避免覆蓋。";
+// Drive holds a vault with a different key: sync stops and the user chooses
+// which copy to keep in Sync & backup (DRIVE_USE_REMOTE / DRIVE_REPLACE).
+const DRIVE_CONFLICT =
+  "Google Drive 已有另一個保險庫，請在「同步與備份」選擇要保留哪一份。";
+async function conflict() {
+  await chrome.storage.local.set({ driveConflict: true });
+  return Error(DRIVE_CONFLICT);
+}
+/** Opens and merges the Drive snapshots with the Drive vault's password. */
+async function openDrive(envelopes: Envelope[], password: string) {
+  if (!envelopes.length) throw Error("Drive 尚無 Veil Bookmark 備份");
+  // Open with the newest key slots so a password reset elsewhere is honoured.
+  const sealedOnes = envelopes
+    .filter((x): x is SealedEnvelope => x.version === 3)
+    .sort((a, b) => b.keys.updated - a.keys.updated);
+  const first = sealedOnes[0] || envelopes[0];
+  const o = await rateLimited(() => openPassword(first, password));
+  let v = o.v;
+  for (const e of envelopes) {
+    if (e.id !== o.sealed.id)
+      throw Error("Drive 含有不同保險庫，請改用加密檔案還原");
+    try {
+      v = merge(
+        v,
+        e.version === 1
+          ? await decrypt(e, await derive(password, e.salt))
+          : await decrypt(e, o.dek),
+      );
+    } catch {
+      throw Error("Drive 含有不同保險庫，請改用加密檔案還原");
+    }
+  }
+  return { ...o, v, sealed: await seal(v, o.dek, o.sealed.keys) };
+}
 async function sync(interactive = false) {
   const s = await session();
   const dek = await keyOf(s);
@@ -186,11 +221,11 @@ async function sync(interactive = false) {
   const remoteVaults: Vault[] = [];
   let stale = false;
   for (const remote of envelopes) {
-    if (remote.id !== s.id) throw Error(OTHER_VAULT);
+    if (remote.id !== s.id) throw await conflict();
     let rv: Vault;
     if (remote.version === 1) {
       // Legacy snapshot from before key slots: readable with the old password key.
-      if (!s.legacy || remote.salt !== s.legacy.salt) throw Error(OTHER_VAULT);
+      if (!s.legacy || remote.salt !== s.legacy.salt) throw await conflict();
       rv = await decrypt(remote, await importKey(s.legacy.kek));
       stale = true;
     } else {
@@ -198,7 +233,7 @@ async function sync(interactive = false) {
         await verifySlots(dek, s.id, remote.keys);
         rv = await decrypt(remote, dek);
       } catch {
-        throw Error(OTHER_VAULT);
+        throw await conflict();
       }
       // The newest key slots win, e.g. after a password reset on another device.
       if (remote.keys.updated > keys.updated) keys = remote.keys;
@@ -226,7 +261,11 @@ async function sync(interactive = false) {
     await upload(t, snapshot);
     await removeSnapshots(t, ids);
   }
-  await chrome.storage.local.set({ lastSync: Date.now(), syncError: "" });
+  await chrome.storage.local.set({
+    lastSync: Date.now(),
+    syncError: "",
+    driveConflict: false,
+  });
   return v;
 }
 const LOCKED = "已上鎖，請重新解鎖";
@@ -358,6 +397,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const e = await local();
     const settings = await chrome.storage.local.get([
       "driveEnabled",
+      "driveConflict",
       "lastSync",
       "syncError",
     ]);
@@ -441,36 +481,23 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     if (await local()) throw Error("只可在空白安裝從 Drive 還原");
     const generation = lockGeneration;
     const { envelopes } = await readRemote(true);
-    if (!envelopes.length) throw Error("Drive 尚無 Veil Bookmark 備份");
-    // Open with the newest key slots so a password reset elsewhere is honoured.
-    const sealedOnes = envelopes
-      .filter((x): x is SealedEnvelope => x.version === 3)
-      .sort((a, b) => b.keys.updated - a.keys.updated);
-    const first = sealedOnes[0] || envelopes[0];
-    const o = await rateLimited(() => openPassword(first, m.password));
-    let v = o.v;
-    for (const e of envelopes) {
-      if (e.id !== o.sealed.id)
-        throw Error("Drive 含有不同保險庫，請改用加密檔案還原");
-      try {
-        v = merge(
-          v,
-          e.version === 1
-            ? await decrypt(e, await derive(m.password, e.salt))
-            : await decrypt(e, o.dek),
-        );
-      } catch {
-        throw Error("Drive 含有不同保險庫，請改用加密檔案還原");
-      }
-    }
-    const sealed = await seal(v, o.dek, o.sealed.keys);
-    await chrome.storage.local.set({ vault: sealed, driveEnabled: true });
-    await startSession({ ...o, v, sealed }, generation);
+    const o = await openDrive(envelopes, m.password);
+    await chrome.storage.local.set({
+      vault: o.sealed,
+      driveEnabled: true,
+      driveConflict: false,
+      syncError: "",
+    });
+    await startSession(o, generation);
     await requestSync(0);
-    return v;
+    return o.v;
   }
   if (m.type === "DISCONNECT") {
-    await chrome.storage.local.set({ driveEnabled: false });
+    await chrome.storage.local.set({
+      driveEnabled: false,
+      driveConflict: false,
+      syncError: "",
+    });
     await clearTokens();
     return;
   }
@@ -479,7 +506,11 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     return;
   }
   if (m.type === "CLEAR_CLIENT_ID") {
-    await chrome.storage.local.set({ driveEnabled: false });
+    await chrome.storage.local.set({
+      driveEnabled: false,
+      driveConflict: false,
+      syncError: "",
+    });
     await clearClientId();
     return;
   }
@@ -560,6 +591,47 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     await touch(s);
     await requestSync();
     return { recoveryKey: code.code };
+  }
+  if (m.type === "DRIVE_USE_REMOTE") {
+    // Conflict choice 1: replace this computer's vault with the one in Drive.
+    // The page downloads a backup of this vault first.
+    const generation = lockGeneration;
+    const { envelopes } = await readRemote(true);
+    if (envelopes.length && envelopes.every((x) => x.id === e.id))
+      return sync(true); // Already the same vault (resolved elsewhere).
+    const o = await openDrive(envelopes, m.password);
+    if (generation !== lockGeneration || (await session()).nonce !== s.nonce)
+      throw Error("已上鎖，請重新解鎖");
+    await chrome.storage.local.set({
+      vault: o.sealed,
+      driveEnabled: true,
+      driveConflict: false,
+      syncError: "",
+      lastSync: Date.now(),
+    });
+    await startSession(o, generation);
+    return o.v;
+  }
+  if (m.type === "DRIVE_REPLACE") {
+    // Conflict choice 2: keep this computer's vault and delete the Drive one.
+    // Re-confirm this vault's password: Drive's copy cannot be recovered.
+    if (e.version !== 3) throw Error("請先建立或還原保險庫");
+    if (m.confirm !== true) throw Error("請先確認 Drive 上的舊資料將被刪除");
+    const opened = await rateLimited(() => openWithPassword(e, m.password));
+    if ((await exportKey(opened.dek)) !== s.key) throw Error(OTHER_VAULT);
+    const { t, ids } = await listSnapshots(true);
+    await session();
+    // Upload first: if a delete fails, Drive still has this vault and the
+    // choice can be repeated.
+    await upload(t, e);
+    await removeSnapshots(t, ids);
+    await chrome.storage.local.set({
+      driveEnabled: true,
+      driveConflict: false,
+      syncError: "",
+      lastSync: Date.now(),
+    });
+    return v;
   }
   if (m.type === "TOUCH") {
     await touch(s);

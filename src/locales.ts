@@ -2124,5 +2124,85 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "拖到这里移出文件夹",
   "en": "Drop here to remove from folder",
   "ja": "ここにドロップしてフォルダから出す"
+ },
+ "Google Drive 已有另一個保險庫，請在「同步與備份」選擇要保留哪一份。": {
+  "zh-CN": "Google Drive 已有另一个保险库，请在「同步与备份」选择要保留哪一份。",
+  "en": "Google Drive already holds a different vault. Choose which one to keep in Sync & backup.",
+  "ja": "Google Drive に別の保管庫があります。「同期とバックアップ」で残す方を選んでください。"
+ },
+ "請先確認 Drive 上的舊資料將被刪除": {
+  "zh-CN": "请先确认 Drive 上的旧数据将被删除",
+  "en": "First confirm that the old data in Drive will be deleted.",
+  "ja": "Drive 上の古いデータが削除されることを先に確認してください。"
+ },
+ "Google Drive 上有另一個保險庫": {
+  "zh-CN": "Google Drive 上有另一个保险库",
+  "en": "Google Drive has a different vault",
+  "ja": "Google Drive に別の保管庫があります"
+ },
+ "這台電腦和 Drive 上的資料用不同的金鑰加密，無法自動合併。請選擇要保留哪一份，同步才會繼續。": {
+  "zh-CN": "这台电脑和 Drive 上的数据用不同的密钥加密，无法自动合并。请选择要保留哪一份，同步才会继续。",
+  "en": "This computer and Drive use different encryption keys, so they can't be merged automatically. Choose which one to keep and sync will continue.",
+  "ja": "このコンピューターと Drive のデータは異なる鍵で暗号化されているため、自動で統合できません。残す方を選ぶと同期が再開します。"
+ },
+ "改用 Drive 上的保險庫": {
+  "zh-CN": "改用 Drive 上的保险库",
+  "en": "Use the vault in Drive",
+  "ja": "Drive の保管庫を使う"
+ },
+ "需要 Drive 保險庫的主密碼。這台電腦的資料會先下載為備份。": {
+  "zh-CN": "需要 Drive 保险库的主密码。这台电脑的数据会先下载为备份。",
+  "en": "Needs the Drive vault's master password. This computer's data is downloaded as a backup first.",
+  "ja": "Drive 保管庫のマスターパスワードが必要です。このコンピューターのデータは先にバックアップとしてダウンロードされます。"
+ },
+ "以這台電腦取代 Drive": {
+  "zh-CN": "以这台电脑取代 Drive",
+  "en": "Replace Drive with this computer",
+  "ja": "このコンピューターで Drive を置き換える"
+ },
+ "Drive 上的舊保險庫會被刪除，無法復原。": {
+  "zh-CN": "Drive 上的旧保险库会被删除，无法复原。",
+  "en": "The old vault in Drive will be deleted and cannot be recovered.",
+  "ja": "Drive 上の古い保管庫は削除され、元に戻せません。"
+ },
+ "這台電腦的書籤與記事會被 Drive 上的保險庫取代。開始前會自動下載這台電腦的加密備份。": {
+  "zh-CN": "这台电脑的书签与记事会被 Drive 上的保险库取代。开始前会自动下载这台电脑的加密备份。",
+  "en": "This computer's bookmarks and notes will be replaced by the vault in Drive. An encrypted backup of this computer is downloaded first.",
+  "ja": "このコンピューターのブックマークとメモは Drive の保管庫に置き換えられます。開始前にこのコンピューターの暗号化バックアップが自動でダウンロードされます。"
+ },
+ "Drive 上的舊保險庫會被刪除，改存這台電腦的資料。其他仍使用舊保險庫的裝置，之後需要改用新的保險庫。": {
+  "zh-CN": "Drive 上的旧保险库会被删除，改存这台电脑的数据。其他仍使用旧保险库的设备，之后需要改用新的保险库。",
+  "en": "The old vault in Drive will be deleted and replaced with this computer's data. Other devices still using the old vault will need to switch to the new one.",
+  "ja": "Drive 上の古い保管庫は削除され、このコンピューターのデータに置き換えられます。古い保管庫を使っている他のデバイスは、新しい保管庫に切り替える必要があります。"
+ },
+ "Drive 保險庫的主密碼": {
+  "zh-CN": "Drive 保险库的主密码",
+  "en": "Master password of the Drive vault",
+  "ja": "Drive 保管庫のマスターパスワード"
+ },
+ "這台電腦的主密碼": {
+  "zh-CN": "这台电脑的主密码",
+  "en": "This computer's master password",
+  "ja": "このコンピューターのマスターパスワード"
+ },
+ "我了解 Drive 上的舊資料將被刪除，無法復原": {
+  "zh-CN": "我了解 Drive 上的旧数据将被删除，无法复原",
+  "en": "I understand the old data in Drive will be deleted and cannot be recovered",
+  "ja": "Drive 上の古いデータが削除され、元に戻せないことを理解しました"
+ },
+ "刪除 Drive 舊資料並上傳": {
+  "zh-CN": "删除 Drive 旧数据并上传",
+  "en": "Delete Drive data and upload",
+  "ja": "Drive のデータを削除してアップロード"
+ },
+ "已改用 Google Drive 上的保險庫。這台電腦原本的資料已下載為加密備份。": {
+  "zh-CN": "已改用 Google Drive 上的保险库。这台电脑原本的数据已下载为加密备份。",
+  "en": "Now using the vault from Google Drive. This computer's previous data was downloaded as an encrypted backup.",
+  "ja": "Google Drive の保管庫に切り替えました。このコンピューターの以前のデータは暗号化バックアップとしてダウンロードしました。"
+ },
+ "已用這台電腦的保險庫取代 Google Drive 上的資料。": {
+  "zh-CN": "已用这台电脑的保险库取代 Google Drive 上的数据。",
+  "en": "Google Drive now holds this computer's vault.",
+  "ja": "Google Drive をこのコンピューターの保管庫に置き換えました。"
  }
 };

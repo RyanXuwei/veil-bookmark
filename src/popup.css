@@ -655,3 +655,46 @@ html[data-surface="popup"] {
   transform: none;
 }
 
+/* Sync & backup: Drive holds a different vault. */
+.driveConflict {
+  border: 1px solid #ecc9bd;
+  background: #fdf6f2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0;
+}
+.driveConflict h4 {
+  margin: 0 0 4px;
+  color: #8a3b1f;
+  font-size: 14px;
+}
+.driveConflict p {
+  margin: 6px 0;
+}
+.driveConflict label {
+  display: block;
+  margin: 8px 0;
+}
+.driveConflict input[type="password"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+.conflictChoices {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.conflictChoices button {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+.conflictChoices strong {
+  font-size: 14px;
+  color: #2f4a43;
+}
+.conflictChoices small {
+  color: #6b7a72;
+  font-size: 12px;
+  line-height: 1.5;
+}

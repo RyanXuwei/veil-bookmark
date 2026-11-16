@@ -16,6 +16,7 @@ for (const f of [
   "src/drive.ts",
   "src/ruled.ts",
   "src/sortable.tsx",
+  "src/drive-conflict.tsx",
 ]) {
   const s = readFileSync(f, "utf8");
   const re =
@@ -27,13 +28,19 @@ for (const f of [
       missing.add(`${f}: ${k}`);
   }
 }
-// The notebook passes labels as props (label="…") and constants; check every
-// CJK string literal there.
-for (const m of readFileSync("src/notebook.tsx", "utf8").matchAll(
-  /"([^"\n]*[\u3400-\u9fff][^"\n]*)"/g,
+// The notebook passes labels as props (label="…") and constants, and the Drive
+// conflict panel returns notices; check every CJK string literal there.
+for (const f of ["src/notebook.tsx", "src/drive-conflict.tsx"])
+  for (const m of readFileSync(f, "utf8").matchAll(
+    /"([^"\n]*[\u3400-\u9fff][^"\n]*)"/g,
+  ))
+    if (!L.includes(JSON.stringify(m[1]) + ":")) missing.add(`${f}: ${m[1]}`);
+// Error messages kept in constants.
+for (const m of readFileSync("src/background.ts", "utf8").matchAll(
+  /^const [A-Z_]+ =\s*"([^"]+)";/gm,
 ))
-  if (!L.includes(JSON.stringify(m[1]) + ":"))
-    missing.add(`src/notebook.tsx: ${m[1]}`);
+  if (/[\u3400-\u9fff]/.test(m[1]) && !L.includes(JSON.stringify(m[1]) + ":"))
+    missing.add(`src/background.ts: ${m[1]}`);
 // Disclaimer items are listed as plain strings and translated with t(x).
 for (const m of readFileSync("src/disclaimer.tsx", "utf8").matchAll(
   /^\s+"([^"]+)",$/gm,

@@ -1019,3 +1019,134 @@ test("lite responses leave out note media; fast base64 round-trips large data", 
   await rpc("LOCK");
   delete local.vault;
 });
+
+test("Drive conflict: flagged instead of syncing, use the Drive vault, or replace Drive with this one", async () => {
+  const originalFetch = globalThis.fetch;
+  const remote = new Map<string, any>();
+  let nextId = 0,
+    posts = 0;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async () => ({ token: "synthetic-token" }),
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    const u = String(input);
+    if (init.method === "POST") {
+      const json = String(init.body)
+        .split("Content-Type: application/json\r\n\r\n")[1]
+        .split("\r\n--")[0];
+      const id = "c" + nextId++;
+      remote.set(id, JSON.parse(json));
+      posts++;
+      return Response.json({ id });
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE")
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
+    if (u.includes("alt=media"))
+      return remote.has(id)
+        ? Response.json(remote.get(id))
+        : new Response("", { status: 404 });
+    return Response.json({ files: [...remote.keys()].map((id) => ({ id })) });
+  };
+  const fresh = async (password: string, title: string) => {
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.driveEnabled;
+    delete local.driveConflict;
+    local.syncError = "";
+    delete session.attempts;
+    delete session.nextAttempt;
+    quickTimers.clear();
+    await rpc("CREATE", { password });
+    await rpc("UPSERT", { entry: { title, url: "https://example.com" } });
+    return local.vault.id as string;
+  };
+  const titles = (v: any) =>
+    v.entries.filter((x: any) => !x.deleted).map((x: any) => x.title);
+  try {
+    // Drive holds vault A from another installation.
+    const a = await fresh("drive-pw", "drive item");
+    await rpc("SYNC");
+    assert.equal(remote.size, 1);
+    // A new installation creates vault B, then tries to connect Drive.
+    const b = await fresh("local-pw", "local item");
+    const drive = structuredClone([...remote.entries()]);
+    await assert.rejects(rpc("SYNC"), /另一個保險庫/);
+    let s = await rpc("STATUS");
+    assert.equal(s.driveConflict, true);
+    assert.equal(s.driveEnabled, undefined, "a failed first connect stays off");
+    assert.deepEqual([...remote.entries()], drive, "Drive is untouched");
+    assert.equal(local.vault.id, b);
+
+    // Choice 1: use the Drive vault. A wrong password changes nothing.
+    await assert.rejects(rpc("DRIVE_USE_REMOTE", { password: "local-pw" }));
+    assert.equal(local.vault.id, b);
+    delete session.attempts;
+    delete session.nextAttempt;
+    const used = await rpc("DRIVE_USE_REMOTE", { password: "drive-pw" });
+    assert.equal(local.vault.id, a);
+    assert.deepEqual(titles(used), ["drive item"]);
+    s = await rpc("STATUS");
+    assert.equal(s.driveConflict, false);
+    assert.equal(s.driveEnabled, true);
+    assert.equal(s.unlocked, true);
+    assert.deepEqual(titles(await rpc("LIST")), ["drive item"]);
+    await rpc("LOCK");
+    await assert.rejects(rpc("UNLOCK", { password: "local-pw" }));
+    delete session.attempts;
+    delete session.nextAttempt;
+    await rpc("UNLOCK", { password: "drive-pw" });
+    const postsBefore = posts;
+    await rpc("SYNC");
+    assert.equal(posts, postsBefore, "now the same vault: nothing to upload");
+
+    // Choice 2: keep this computer's vault C and replace Drive.
+    const c = await fresh("c-pw", "c item");
+    await assert.rejects(rpc("SYNC"), /另一個保險庫/);
+    assert.equal((await rpc("STATUS")).driveConflict, true);
+    await assert.rejects(
+      rpc("DRIVE_REPLACE", { password: "c-pw" }),
+      /確認/,
+      "needs the explicit confirmation",
+    );
+    await assert.rejects(
+      rpc("DRIVE_REPLACE", { password: "drive-pw", confirm: true }),
+    );
+    assert(
+      [...remote.values()].every((x) => x.id === a),
+      "Drive still has A",
+    );
+    delete session.attempts;
+    delete session.nextAttempt;
+    const kept = await rpc("DRIVE_REPLACE", {
+      password: "c-pw",
+      confirm: true,
+    });
+    assert.deepEqual(titles(kept), ["c item"]);
+    assert.equal(remote.size, 1);
+    assert.equal([...remote.values()][0].id, c);
+    s = await rpc("STATUS");
+    assert.equal(s.driveConflict, false);
+    assert.equal(s.driveEnabled, true);
+    const p = posts;
+    assert.deepEqual(titles(await rpc("SYNC")), ["c item"]);
+    assert.equal(posts, p);
+
+    // Disconnecting also clears a pending conflict.
+    await fresh("d-pw", "d item");
+    await assert.rejects(rpc("SYNC"), /另一個保險庫/);
+    await rpc("DISCONNECT");
+    assert.equal((await rpc("STATUS")).driveConflict, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.driveEnabled;
+    delete local.driveConflict;
+  }
+});

@@ -2,7 +2,7 @@
 
 加密的私人書籤與記事本 Chrome 擴充功能，一般視窗與無痕視窗都能使用。
 
-Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.1.1
+Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.2.0
 
 ## 功能
 
@@ -25,7 +25,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 目前尚未上架 Chrome 線上應用程式商店，請手動安裝：
 
-1. 下載並解壓縮 `VeilBookmark_v1.1.1_Chrome.zip`，放在固定的資料夾。
+1. 下載並解壓縮 `VeilBookmark_v1.2.0_Chrome.zip`，放在固定的資料夾。
 2. 在 Chrome 網址列輸入 `chrome://extensions`，開啟右上角的「開發人員模式」。
 3. 按「載入未封裝項目」，選擇剛才解壓縮的資料夾。
 4. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。
@@ -61,6 +61,13 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 3. 完成。解鎖時會立即同步，新增或修改後約 1 秒內上傳，解鎖期間每 5 分鐘再檢查一次。
 
 換新電腦時，安裝後在歡迎畫面輸入原本的主密碼，按「從 Google Drive 還原」。
+
+如果連接時 Drive 上已經有另一個保險庫（例如重新安裝後不小心建立了新的保險庫），「同步與備份」會請你選擇要保留哪一份：
+
+- **改用 Drive 上的保險庫**：輸入 Drive 那份的主密碼。這台電腦原本的資料會先自動下載為加密備份。
+- **以這台電腦取代 Drive**：輸入這台電腦的主密碼並勾選確認。Drive 上的舊資料會被刪除，無法復原。
+
+同一台電腦有多人使用時，每個 Chrome 設定檔各有自己的保險庫，並同步到該設定檔登入的 Google 帳號，彼此不會衝突。
 
 - 只請求 `drive.appdata` 權限，資料放在 Drive 的隱藏應用程式資料夾，不會讀取你的其他檔案。
 - 上傳前已用主密碼加密，Google 看不到書籤與記事內容。

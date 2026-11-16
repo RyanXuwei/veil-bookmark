@@ -1,6 +1,7 @@
 import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
+import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
 import { SetupPage } from "./setup";
 import { Disclaimer } from "./disclaimer";
@@ -19,7 +20,7 @@ const CREDITS = {
   studio: "BitingBox Studio",
   github: "https://github.com/RyanXuwei",
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
-  version: "1.1.1",
+  version: "1.2.0",
   productionDate: "2026-11-15",
   lastUpdatedDate: "2026-11-16",
   copyrightYear: "2026",
@@ -131,7 +132,10 @@ function App() {
         setMenuId(null);
         setPassword("");
         void refresh();
-      } else if (area === "local" && (changes.lastSync || changes.syncError))
+      } else if (
+        area === "local" &&
+        (changes.lastSync || changes.syncError || changes.driveConflict)
+      )
         void refresh().catch(() => {});
     };
     chrome?.storage?.onChanged?.addListener(listener);
@@ -1208,8 +1212,18 @@ function App() {
                       time: new Date(status.lastSync).toLocaleString(lang()),
                     })}
                 </p>
-                {status?.syncError && (
-                  <p className="inlineError">{tError(status.syncError)}</p>
+                {status?.driveConflict ? (
+                  <DriveConflict
+                    rpc={rpc}
+                    onDone={async (message) => {
+                      await refresh();
+                      setNotice(message);
+                    }}
+                  />
+                ) : (
+                  status?.syncError && (
+                    <p className="inlineError">{tError(status.syncError)}</p>
+                  )
                 )}
                 <div className="row">
                   {!status?.configured ? (
@@ -1223,23 +1237,33 @@ function App() {
                         : t("Drive 設定")}
                     </button>
                   )}
-                  <button
-                    disabled={busy || !status?.configured}
-                    onClick={() =>
-                      run(async () => {
-                        await rpc("SYNC");
-                        await refresh();
-                        setNotice("已合併並同步加密收藏。");
-                      })
-                    }
-                  >
-                    {busy
-                      ? t("處理中…")
-                      : status?.driveEnabled
-                        ? t("立即同步")
-                        : t("連接 Google Drive")}
-                  </button>
-                  {status?.driveEnabled && (
+                  {!status?.driveConflict && (
+                    <button
+                      disabled={busy || !status?.configured}
+                      onClick={() =>
+                        run(async () => {
+                          let synced = true;
+                          try {
+                            await rpc("SYNC");
+                          } catch (e) {
+                            // A different vault in Drive: the choices appear
+                            // in this panel instead of an error banner.
+                            if (!(await rpc("STATUS")).driveConflict) throw e;
+                            synced = false;
+                          }
+                          await refresh();
+                          if (synced) setNotice("已合併並同步加密收藏。");
+                        })
+                      }
+                    >
+                      {busy
+                        ? t("處理中…")
+                        : status?.driveEnabled
+                          ? t("立即同步")
+                          : t("連接 Google Drive")}
+                    </button>
+                  )}
+                  {(status?.driveEnabled || status?.driveConflict) && (
                     <button
                       disabled={busy}
                       onClick={() =>
@@ -1290,7 +1314,7 @@ function App() {
                 />
                 <h3>{t("你的收藏，由你保管。")}</h3>
                 <p>
-                  Veil Bookmark 1.1.1 · {t("一般與無痕皆適用")} ·{" "}
+                  Veil Bookmark 1.2.0 · {t("一般與無痕皆適用")} ·{" "}
                   {t("Chrome 私密書籤")}
                 </p>
                 <dl className="credits">

@@ -120,7 +120,8 @@ async function request(
   if (!r.ok) throw Error(`Drive 請求失敗 (${r.status})，本機資料已保留`);
   return r;
 }
-export async function readRemote(interactive: boolean) {
+/** Lists Veil Bookmark snapshots in the app-data folder without reading them. */
+export async function listSnapshots(interactive: boolean) {
   const t = await token(interactive);
   const files: { id: string }[] = [];
   let page = "";
@@ -138,13 +139,17 @@ export async function readRemote(interactive: boolean) {
     if (files.length > 2000)
       throw Error("Drive 快照超過 2000 份，請先匯出備份並整理");
   } while (page);
+  return { t, ids: files.map((f) => f.id) };
+}
+export async function readRemote(interactive: boolean) {
+  const { t, ids: listed } = await listSnapshots(interactive);
   const envelopes: Envelope[] = [];
   const ids: string[] = [];
-  for (const f of files) {
+  for (const id of listed) {
     // Another device may have consolidated (deleted) this snapshot meanwhile.
     const r = await request(
       t,
-      `${API}/${encodeURIComponent(f.id)}?alt=media`,
+      `${API}/${encodeURIComponent(id)}?alt=media`,
       {},
       true,
     );
@@ -152,7 +157,7 @@ export async function readRemote(interactive: boolean) {
     const raw = await r.text();
     if (raw.length > 66_000_000) throw Error("Drive 備份過大");
     envelopes.push(validateEnvelope(JSON.parse(raw)));
-    ids.push(f.id);
+    ids.push(id);
   }
   return { t, envelopes, ids };
 }
