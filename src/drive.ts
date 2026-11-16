@@ -1,6 +1,10 @@
 import { validateEnvelope, type Envelope } from "./crypto";
 const API = "https://www.googleapis.com/drive/v3/files";
 export const SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+// The user's Google storage (Drive, Gmail and Photos together) is full.
+export const DRIVE_FULL =
+  "Google Drive 空間已滿。資料仍安全保存在這台電腦，清出空間後會自動繼續同步。";
+export const STORAGE_URL = "https://one.google.com/storage";
 export const CLIENT_ID_RE = /^[\w-]+\.apps\.googleusercontent\.com$/;
 type CachedToken = { clientId: string; token: string; expires: number };
 function manifestClientId() {
@@ -117,7 +121,11 @@ async function request(
     throw Error("Google 授權已失效，請重新連線");
   }
   if (allow404 && r.status === 404) return null;
-  if (!r.ok) throw Error(`Drive 請求失敗 (${r.status})，本機資料已保留`);
+  if (!r.ok) {
+    if (r.status === 403 && (await r.text()).includes("storageQuotaExceeded"))
+      throw Error(DRIVE_FULL);
+    throw Error(`Drive 請求失敗 (${r.status})，本機資料已保留`);
+  }
   return r;
 }
 /** Lists Veil Bookmark snapshots in the app-data folder without reading them. */

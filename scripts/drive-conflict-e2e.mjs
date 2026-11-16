@@ -38,7 +38,11 @@ try {
     });
   });
   await page.reload();
-  await page.getByRole("button", { name: "同步與備份", exact: true }).click();
+  // The main screen points to the choice.
+  const hint = page.locator(".syncHint");
+  await hint.waitFor();
+  assert.match(await hint.innerText(), /另一個保險庫/);
+  await hint.click();
   const box = page.locator(".driveConflict");
   await box.waitFor();
   assert.equal(await page.locator(".inlineError").count(), 0, "no raw error");
@@ -74,7 +78,42 @@ try {
   await page.getByRole("button", { name: "中斷連線" }).click();
   await box.waitFor({ state: "detached" });
   await page.getByRole("button", { name: "連接 Google Drive" }).waitFor();
-  console.log("drive conflict e2e passed");
+
+  // Drive full: a hint on the main screen and a storage link in settings.
+  await page.evaluate(async () => {
+    await chrome.storage.local.set({
+      driveEnabled: true,
+      lastSync: Date.now(),
+      syncError:
+        "Google Drive 空間已滿。資料仍安全保存在這台電腦，清出空間後會自動繼續同步。",
+    });
+  });
+  await page.reload();
+  await hint.waitFor();
+  assert.match(await hint.innerText(), /空間已滿/);
+  if (shot) await page.screenshot({ path: resolve(shot, "full-1.png") });
+  await hint.click();
+  const link = page.getByRole("link", { name: /管理 Google 儲存空間/ });
+  await link.waitFor();
+  assert.equal(await link.getAttribute("href"), "https://one.google.com/storage");
+  if (shot) await page.screenshot({ path: resolve(shot, "full-2.png") });
+  // An ordinary error shows no hint until sync has failed for over an hour.
+  await page.evaluate(async () => {
+    await chrome.storage.local.set({
+      syncError: "Drive 請求失敗 (503)，本機資料已保留",
+      lastSync: Date.now() - 10 * 60 * 1000,
+    });
+  });
+  await page.reload();
+  await page.locator(".quickBottom").waitFor();
+  assert.equal(await hint.count(), 0);
+  await page.evaluate(async () => {
+    await chrome.storage.local.set({ lastSync: Date.now() - 2 * 3600 * 1000 });
+  });
+  await page.reload();
+  await hint.waitFor();
+  assert.match(await hint.innerText(), /1 小時/);
+  console.log("drive conflict and storage-full e2e passed");
 } finally {
   await context.close();
 }

@@ -36,7 +36,8 @@ try {
     "https://www.googleapis.com/auth/drive.appdata",
   ]);
 
-  // Fresh install: restore-from-Drive needs the master password, not setup.
+  // Fresh install: "restore from Drive" first checks Drive (no password
+  // needed yet), and the welcome screen offers that check up front.
   const popup = await context.newPage();
   await popup.setViewportSize({ width: 380, height: 600 });
   await popup.goto(`chrome-extension://${id}/index.html?popup`);
@@ -44,8 +45,9 @@ try {
   assert(
     await popup
       .getByRole("button", { name: "從 Google Drive 還原" })
-      .isDisabled(),
+      .isEnabled(),
   );
+  await popup.locator(".driveCheck").waitFor();
 
   // Guide while no vault exists.
   const guide = await context.newPage();

@@ -36,11 +36,18 @@ for (const f of ["src/notebook.tsx", "src/drive-conflict.tsx"])
   ))
     if (!L.includes(JSON.stringify(m[1]) + ":")) missing.add(`${f}: ${m[1]}`);
 // Error messages kept in constants.
-for (const m of readFileSync("src/background.ts", "utf8").matchAll(
-  /^const [A-Z_]+ =\s*"([^"]+)";/gm,
+for (const f of ["src/background.ts", "src/drive.ts"])
+  for (const m of readFileSync(f, "utf8").matchAll(
+    /^(?:export )?const [A-Z_]+ =\s*"([^"]+)";/gm,
+  ))
+    if (/[\u3400-\u9fff]/.test(m[1]) && !L.includes(JSON.stringify(m[1]) + ":"))
+      missing.add(`${f}: ${m[1]}`);
+// Sync hints are chosen in a ternary and translated with t(syncHint).
+for (const m of readFileSync("src/main.tsx", "utf8").matchAll(
+  /^\s+(?:\? |: )"([^"]*[\u3400-\u9fff][^"]*)"$/gm,
 ))
-  if (/[\u3400-\u9fff]/.test(m[1]) && !L.includes(JSON.stringify(m[1]) + ":"))
-    missing.add(`src/background.ts: ${m[1]}`);
+  if (!L.includes(JSON.stringify(m[1]) + ":"))
+    missing.add(`src/main.tsx: ${m[1]}`);
 // Disclaimer items are listed as plain strings and translated with t(x).
 for (const m of readFileSync("src/disclaimer.tsx", "utf8").matchAll(
   /^\s+"([^"]+)",$/gm,

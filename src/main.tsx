@@ -1,6 +1,7 @@
 import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
+import { DRIVE_FULL, STORAGE_URL } from "./drive";
 import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
 import { SetupPage } from "./setup";
@@ -160,6 +161,37 @@ function App() {
       setBusy(false);
     }
   }
+  // New installation: look for a vault in Google Drive so another computer's
+  // data is restored instead of starting an unrelated local vault.
+  const [driveProbe, setDriveProbe] = useState("");
+  const probed = useRef(false);
+  useEffect(() => {
+    if (!status || status.exists || !status.configured || probed.current)
+      return;
+    probed.current = true;
+    rpc("DRIVE_PROBE")
+      .then((r) => {
+        setDriveProbe(r.state);
+        if (r.state === "found")
+          setPanel((p: string) => (p === "" ? "drive" : p));
+      })
+      .catch(() => setDriveProbe("unknown"));
+  }, [status]);
+  async function checkDrive() {
+    if (!status?.configured) return run(openSetup);
+    await run(async () => {
+      const r = await rpc("DRIVE_PROBE", { interactive: true });
+      setDriveProbe(r.state);
+      if (r.state === "found") {
+        setPanel("drive");
+        setError("");
+      } else if (r.state === "empty")
+        setNotice(
+          "Google Drive 中沒有 Veil Bookmark 的備份，可以直接建立新的保險庫。",
+        );
+    });
+  }
+  const restoring = panel === "restore" || panel === "drive";
   async function auth(mode: string) {
     await run(async () => {
       const operationEpoch = viewEpoch.current;
@@ -411,6 +443,29 @@ function App() {
       setNotice("已匯出加密備份，請妥善保留主密碼。");
     });
   }
+  // Sync problems are listed in Sync & backup; the main screens show a short
+  // hint when the user must act (conflict, Drive full) or sync has been
+  // failing for over an hour, so it is not missed.
+  const syncHint = !status?.unlocked
+    ? ""
+    : status.driveConflict
+      ? "Google Drive 有另一個保險庫，請選擇要保留哪一份"
+      : !status.driveEnabled || !status.syncError
+        ? ""
+        : status.syncError === DRIVE_FULL
+          ? "Google Drive 空間已滿，同步已暫停"
+          : !status.lastSync || Date.now() - status.lastSync > 3_600_000
+            ? "已超過 1 小時未能同步到 Google Drive"
+            : "";
+  const syncHintButton = syncHint && (
+    <button
+      className="syncHint"
+      role="status"
+      onClick={() => setPanel("settings")}
+    >
+      ⚠ {t(syncHint)}
+    </button>
+  );
   const entries = vault?.entries.filter((x) => !x.deleted) || [];
   const folders = folderNames("entry", vault?.folders, entries);
   const byPosition = ordered(entries, (a, b) => a.title.localeCompare(b.title));
@@ -545,9 +600,11 @@ function App() {
                 ? t("用救援金鑰重設主密碼")
                 : status?.exists
                   ? t("歡迎回來")
-                  : panel === "restore"
-                    ? t("找回你的收藏")
-                    : t("建立你的私密空間")}
+                  : panel === "drive"
+                    ? t("在 Google Drive 找到你的保險庫")
+                    : panel === "restore"
+                      ? t("找回你的收藏")
+                      : t("建立你的私密空間")}
             </h2>
             <p className="muted">
               {panel === "recover"
@@ -556,9 +613,13 @@ function App() {
                   : t("選擇加密備份檔，輸入救援金鑰，並設定新的主密碼。")
                 : status?.exists
                   ? t("輸入主密碼，打開你的收藏。")
-                  : t(
-                      "主密碼不會上傳。建立後會提供一組救援金鑰，請另外妥善保存。",
-                    )}
+                  : panel === "drive"
+                    ? t(
+                        "看起來你在其他電腦用過 Veil Bookmark。輸入原本的主密碼，就能取回書籤與記事並繼續同步。",
+                      )
+                    : t(
+                        "主密碼不會上傳。建立後會提供一組救援金鑰，請另外妥善保存。",
+                      )}
             </p>
             {panel === "recover" ? (
               <RecoverForm
@@ -573,12 +634,28 @@ function App() {
                   void auth(
                     status?.exists
                       ? "UNLOCK"
-                      : panel === "restore"
-                        ? "RESTORE"
-                        : "CREATE",
+                      : panel === "drive"
+                        ? "RESTORE_DRIVE"
+                        : panel === "restore"
+                          ? "RESTORE"
+                          : "CREATE",
                   );
                 }}
               >
+                {!status?.exists && !restoring && driveProbe === "unknown" && (
+                  <div className="driveCheck" role="note">
+                    <span>
+                      {t("已在其他電腦使用並開啟 Google Drive 同步？")}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void checkDrive()}
+                    >
+                      {t("檢查 Google Drive")}
+                    </button>
+                  </div>
+                )}
                 <label>
                   {t("主密碼")}
                   <input
@@ -586,18 +663,22 @@ function App() {
                     autoFocus
                     type="password"
                     autoComplete={
-                      status?.exists ? "current-password" : "new-password"
+                      status?.exists || restoring
+                        ? "current-password"
+                        : "new-password"
                     }
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    minLength={status?.exists || panel === "restore" ? 1 : 4}
+                    minLength={status?.exists || restoring ? 1 : 4}
                     required
                     placeholder={
-                      status?.exists ? t("輸入主密碼") : t("至少 4 個字元")
+                      status?.exists || restoring
+                        ? t("輸入主密碼")
+                        : t("至少 4 個字元")
                     }
                   />
                 </label>
-                {!status?.exists && panel !== "restore" && (
+                {!status?.exists && !restoring && (
                   <label>
                     {t("再次輸入密碼")}
                     <input
@@ -609,7 +690,7 @@ function App() {
                     />
                   </label>
                 )}
-                {!status?.exists && panel !== "restore" && (
+                {!status?.exists && !restoring && (
                   <div className="pwWarning" role="note">
                     <strong>⚠ {t("請務必記住主密碼")}</strong>
                     <p>
@@ -644,18 +725,18 @@ function App() {
                 <button
                   className="primary full"
                   disabled={
-                    busy ||
-                    !status ||
-                    (!status.exists && panel !== "restore" && !ack)
+                    busy || !status || (!status.exists && !restoring && !ack)
                   }
                 >
                   {busy
                     ? t("處理中…")
                     : status?.exists
                       ? t("解鎖保險庫 →")
-                      : panel === "restore"
-                        ? t("從檔案還原 →")
-                        : t("建立保險庫 →")}
+                      : panel === "drive"
+                        ? t("從 Google Drive 還原 →")
+                        : panel === "restore"
+                          ? t("從檔案還原 →")
+                          : t("建立保險庫 →")}
                 </button>
               </form>
             )}
@@ -676,17 +757,36 @@ function App() {
             )}
             {!status?.exists && panel !== "recover" && (
               <div className="restore">
-                <button
-                  className="text"
-                  onClick={() => {
-                    setPanel(panel === "restore" ? "" : "restore");
-                    setError("");
-                  }}
-                >
-                  {panel === "restore"
-                    ? t("建立新的保險庫")
-                    : t("已有備份？從加密檔案還原")}
-                </button>
+                {panel === "drive" ? (
+                  <>
+                    <button
+                      className="text"
+                      onClick={() => {
+                        setPanel("");
+                        setError("");
+                      }}
+                    >
+                      {t("改為建立新的保險庫")}
+                    </button>
+                    <small className="muted">
+                      {t(
+                        "新的保險庫不會和 Drive 上的資料合併；之後連接 Drive 時需要選擇保留哪一份。",
+                      )}
+                    </small>
+                  </>
+                ) : (
+                  <button
+                    className="text"
+                    onClick={() => {
+                      setPanel(panel === "restore" ? "" : "restore");
+                      setError("");
+                    }}
+                  >
+                    {panel === "restore"
+                      ? t("建立新的保險庫")
+                      : t("已有備份？從加密檔案還原")}
+                  </button>
+                )}
                 {panel === "restore" && (
                   <button
                     className="text"
@@ -698,15 +798,25 @@ function App() {
                     {t("忘記密碼？用救援金鑰從備份還原")}
                   </button>
                 )}
-                <button
-                  className="text"
-                  disabled={busy || (status?.configured && !password)}
-                  onClick={() =>
-                    status?.configured ? auth("RESTORE_DRIVE") : openSetup()
-                  }
-                >
-                  {t("從 Google Drive 還原")}
-                </button>
+                {panel === "drive" ? (
+                  <button
+                    className="text"
+                    onClick={() => {
+                      setPanel("restore");
+                      setError("");
+                    }}
+                  >
+                    {t("已有備份？從加密檔案還原")}
+                  </button>
+                ) : (
+                  <button
+                    className="text"
+                    disabled={busy}
+                    onClick={() => void checkDrive()}
+                  >
+                    {t("從 Google Drive 還原")}
+                  </button>
+                )}
               </div>
             )}
             <div className="lockNote">
@@ -837,6 +947,7 @@ function App() {
               </div>
             </>
           )}
+          {syncHintButton}
           <div className="quickBottom">
             <span>
               {view === "memos"
@@ -883,6 +994,7 @@ function App() {
             )}
             <div className="sideBottom">
               <div className="syncDot">{t("● 本機加密保護")}</div>
+              {syncHintButton}
               <button className="nav" onClick={() => setPanel("security")}>
                 {t("🔒 安全性")}
               </button>
@@ -1222,7 +1334,21 @@ function App() {
                   />
                 ) : (
                   status?.syncError && (
-                    <p className="inlineError">{tError(status.syncError)}</p>
+                    <p className="inlineError">
+                      {tError(status.syncError)}
+                      {status.syncError === DRIVE_FULL && (
+                        <>
+                          {" "}
+                          <a
+                            href={STORAGE_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t("管理 Google 儲存空間 ↗")}
+                          </a>
+                        </>
+                      )}
+                    </p>
                   )
                 )}
                 <div className="row">

@@ -477,6 +477,21 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     await requestSync(0);
     return { recoveryKey: code.code };
   }
+  if (m.type === "DRIVE_PROBE") {
+    // New installation: is there a vault in Drive to restore? Only lists the
+    // app-data folder (nothing is downloaded). Without `interactive` it never
+    // shows a Google prompt, so it only answers when this Google account has
+    // already authorised Veil Bookmark.
+    if (await local()) return { state: "exists" };
+    if (!(await oauthSource())) return { state: "unavailable" };
+    try {
+      const { ids } = await listSnapshots(m.interactive === true);
+      return { state: ids.length ? "found" : "empty" };
+    } catch (e) {
+      if (m.interactive === true) throw e;
+      return { state: "unknown" };
+    }
+  }
   if (m.type === "RESTORE_DRIVE") {
     if (await local()) throw Error("只可在空白安裝從 Drive 還原");
     const generation = lockGeneration;

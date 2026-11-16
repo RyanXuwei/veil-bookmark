@@ -2204,5 +2204,70 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "已用这台电脑的保险库取代 Google Drive 上的数据。",
   "en": "Google Drive now holds this computer's vault.",
   "ja": "Google Drive をこのコンピューターの保管庫に置き換えました。"
+ },
+ "Google Drive 空間已滿。資料仍安全保存在這台電腦，清出空間後會自動繼續同步。": {
+  "zh-CN": "Google Drive 空间已满。数据仍安全保存在这台电脑，清出空间后会自动继续同步。",
+  "en": "Your Google Drive storage is full. Your data is still safe on this computer, and sync resumes automatically once you free up space.",
+  "ja": "Google Drive の容量がいっぱいです。データはこのコンピューターに安全に保存されています。空き容量ができると自動で同期を再開します。"
+ },
+ "管理 Google 儲存空間 ↗": {
+  "zh-CN": "管理 Google 保存空间 ↗",
+  "en": "Manage Google storage ↗",
+  "ja": "Google ストレージを管理 ↗"
+ },
+ "Google Drive 有另一個保險庫，請選擇要保留哪一份": {
+  "zh-CN": "Google Drive 有另一个保险库，请选择要保留哪一份",
+  "en": "Google Drive has a different vault. Choose which one to keep.",
+  "ja": "Google Drive に別の保管庫があります。残す方を選んでください。"
+ },
+ "Google Drive 空間已滿，同步已暫停": {
+  "zh-CN": "Google Drive 空间已满，同步已暂停",
+  "en": "Google Drive is full. Sync is paused.",
+  "ja": "Google Drive の容量がいっぱいのため、同期を一時停止しています。"
+ },
+ "已超過 1 小時未能同步到 Google Drive": {
+  "zh-CN": "已超过 1 小时未能同步到 Google Drive",
+  "en": "Couldn't sync to Google Drive for over an hour",
+  "ja": "1 時間以上 Google Drive と同期できていません"
+ },
+ "Google Drive 中沒有 Veil Bookmark 的備份，可以直接建立新的保險庫。": {
+  "zh-CN": "Google Drive 中没有 Veil Bookmark 的备份，可以直接创建新的保险库。",
+  "en": "There is no Veil Bookmark backup in Google Drive. You can create a new vault.",
+  "ja": "Google Drive に Veil Bookmark のバックアップはありません。新しい保管庫を作成できます。"
+ },
+ "在 Google Drive 找到你的保險庫": {
+  "zh-CN": "在 Google Drive 找到你的保险库",
+  "en": "Your vault was found in Google Drive",
+  "ja": "Google Drive に保管庫が見つかりました"
+ },
+ "看起來你在其他電腦用過 Veil Bookmark。輸入原本的主密碼，就能取回書籤與記事並繼續同步。": {
+  "zh-CN": "看起来你在其他电脑用过 Veil Bookmark。输入原本的主密码，就能取回书签与记事并继续同步。",
+  "en": "It looks like you've used Veil Bookmark on another computer. Enter your existing master password to get your bookmarks and notes back and keep syncing.",
+  "ja": "ほかのコンピューターで Veil Bookmark を使っていたようです。元のマスターパスワードを入力すると、ブックマークとメモを取り戻して同期を続けられます。"
+ },
+ "已在其他電腦使用並開啟 Google Drive 同步？": {
+  "zh-CN": "已在其他电脑使用并打开 Google Drive 同步？",
+  "en": "Already using Google Drive sync on another computer?",
+  "ja": "ほかのコンピューターで Google Drive 同期を使っていますか？"
+ },
+ "檢查 Google Drive": {
+  "zh-CN": "检查 Google Drive",
+  "en": "Check Google Drive",
+  "ja": "Google Drive を確認"
+ },
+ "從 Google Drive 還原 →": {
+  "zh-CN": "从 Google Drive 还原 →",
+  "en": "Restore from Google Drive →",
+  "ja": "Google Drive から復元 →"
+ },
+ "改為建立新的保險庫": {
+  "zh-CN": "改为创建新的保险库",
+  "en": "Create a new vault instead",
+  "ja": "代わりに新しい保管庫を作成"
+ },
+ "新的保險庫不會和 Drive 上的資料合併；之後連接 Drive 時需要選擇保留哪一份。": {
+  "zh-CN": "新的保险库不会和 Drive 上的数据合并；之后连接 Drive 时需要选择保留哪一份。",
+  "en": "A new vault isn't merged with the one in Drive; when you connect Drive later you'll choose which one to keep.",
+  "ja": "新しい保管庫は Drive のデータと統合されません。後で Drive に接続するときに、残す方を選ぶ必要があります。"
  }
 };

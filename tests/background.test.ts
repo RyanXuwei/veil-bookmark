@@ -1150,3 +1150,160 @@ test("Drive conflict: flagged instead of syncing, use the Drive vault, or replac
     delete local.driveConflict;
   }
 });
+
+test("Drive storage full: clear message, nothing deleted, local data kept, sync resumes after space is freed", async () => {
+  const originalFetch = globalThis.fetch;
+  const remote = new Map<string, any>();
+  let nextId = 0,
+    full = false;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async () => ({ token: "synthetic-token" }),
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    const u = String(input);
+    if (init.method === "POST") {
+      if (full)
+        return Response.json(
+          {
+            error: {
+              errors: [
+                {
+                  domain: "usageLimits",
+                  reason: "storageQuotaExceeded",
+                  message: "The user's Drive storage quota has been exceeded.",
+                },
+              ],
+              code: 403,
+              message: "The user's Drive storage quota has been exceeded.",
+            },
+          },
+          { status: 403 },
+        );
+      const json = String(init.body)
+        .split("Content-Type: application/json\r\n\r\n")[1]
+        .split("\r\n--")[0];
+      const id = "f" + nextId++;
+      remote.set(id, JSON.parse(json));
+      return Response.json({ id });
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE")
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
+    if (u.includes("alt=media"))
+      return remote.has(id)
+        ? Response.json(remote.get(id))
+        : new Response("", { status: 404 });
+    return Response.json({ files: [...remote.keys()].map((id) => ({ id })) });
+  };
+  try {
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.driveEnabled;
+    delete local.driveConflict;
+    local.syncError = "";
+    quickTimers.clear();
+    await rpc("CREATE", { password: "abcd" });
+    await rpc("SYNC");
+    const before = structuredClone([...remote.entries()]);
+    full = true;
+    await rpc("UPSERT", { entry: { title: "after full", url: "https://example.com" } });
+    // Background sync after the edit records the clear message.
+    const due = [...quickTimers.values()];
+    quickTimers.clear();
+    for (const t of due) t.fn();
+    const s = await rpc("STATUS");
+    assert.match(s.syncError, /空間已滿/);
+    assert(!s.driveConflict);
+    assert.deepEqual([...remote.entries()], before, "old snapshot is kept");
+    await assert.rejects(rpc("SYNC"), /空間已滿/);
+    assert.deepEqual(
+      (await rpc("LIST")).entries.map((x: any) => x.title),
+      ["after full"],
+      "local data is kept",
+    );
+    // Other 403 errors keep the generic message.
+    full = false;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (input: any, init: any = {}) =>
+      init.method === "POST"
+        ? Response.json({ error: { code: 403, message: "rate" } }, { status: 403 })
+        : realFetch(input, init);
+    await assert.rejects(rpc("SYNC"), /Drive 請求失敗 \(403\)/);
+    globalThis.fetch = realFetch;
+    // Space freed: the next sync uploads and clears the message.
+    await rpc("SYNC");
+    assert.equal((await rpc("STATUS")).syncError, "");
+    assert.equal(remote.size, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.driveEnabled;
+  }
+});
+
+test("new installation: looks for a vault in Drive without prompting, or after the user asks", async () => {
+  const originalFetch = globalThis.fetch;
+  let files: string[] = [];
+  let prompts = 0;
+  let granted = false;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async ({ interactive }: any) => {
+      if (interactive) {
+        prompts++;
+        granted = true;
+      }
+      if (!granted) throw Error("OAuth2 not granted or revoked.");
+      return { token: "synthetic-token" };
+    },
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  const requests: string[] = [];
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    requests.push(`${init.method || "GET"} ${input}`);
+    return Response.json({ files: files.map((id) => ({ id })) });
+  };
+  try {
+    await rpc("LOCK");
+    delete local.vault;
+    // Not authorised yet: no prompt, no request, answer "unknown".
+    assert.deepEqual(await rpc("DRIVE_PROBE"), { state: "unknown" });
+    assert.equal(prompts, 0);
+    assert.equal(requests.length, 0);
+    // The user asks: prompt once, then list only (no download).
+    files = ["snap"];
+    assert.deepEqual(await rpc("DRIVE_PROBE", { interactive: true }), {
+      state: "found",
+    });
+    assert.equal(prompts, 1);
+    assert(requests.every((r) => r.startsWith("GET ") && !r.includes("alt=media")));
+    // Already authorised (e.g. on another computer): found without a prompt.
+    assert.deepEqual(await rpc("DRIVE_PROBE"), { state: "found" });
+    assert.equal(prompts, 1);
+    files = [];
+    assert.deepEqual(await rpc("DRIVE_PROBE"), { state: "empty" });
+    // Once a vault exists here, nothing is checked.
+    await rpc("CREATE", { password: "abcd" });
+    const n = requests.length;
+    assert.deepEqual(await rpc("DRIVE_PROBE"), { state: "exists" });
+    assert.equal(requests.length, n);
+    // No OAuth client configured: nothing to check.
+    await rpc("LOCK");
+    delete local.vault;
+    (chrome.runtime.getManifest as any) = () => ({});
+    assert.deepEqual(await rpc("DRIVE_PROBE"), { state: "unavailable" });
+  } finally {
+    globalThis.fetch = originalFetch;
+    (chrome.runtime.getManifest as any) = () => ({});
+    delete local.vault;
+  }
+});
