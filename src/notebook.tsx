@@ -36,13 +36,14 @@ const PAPER_COLORS = [
   "#eee3f3",
   "#fffdf5",
 ];
-const STYLES: [string, string][] = [
-  ["P", "內文"],
-  ["H1", "標題 1"],
-  ["H2", "標題 2"],
-  ["H3", "標題 3"],
-  ["BLOCKQUOTE", "引文"],
-  ["PRE", "程式碼"],
+// Text size comes from these styles (as in Notion); there is no font-size picker.
+const STYLES: [string, string, string][] = [
+  ["P", "內文", "paragraph"],
+  ["H1", "標題 1", "h1"],
+  ["H2", "標題 2", "h2"],
+  ["H3", "標題 3", "h3"],
+  ["BLOCKQUOTE", "引文", "quote"],
+  ["PRE", "程式碼", "code"],
 ];
 
 function titleOf(m: Memo) {
@@ -468,8 +469,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     sel?.addRange(range);
   }
   function roomFor(added: MemoImage[]) {
-    const used = usedImages(editor.current?.innerHTML || "").map(
-      (x) => images.current.get(x)!,
+    const used = usedImages(editor.current?.innerHTML || "").map((x) =>
+      images.current.get(x)!,
     );
     if (used.length + added.length > MEMO_IMAGES_MAX)
       throw Error("這份記事的圖片數量已達上限");
@@ -515,6 +516,29 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     } finally {
       setImageBusy(false);
     }
+  }
+
+  // Chrome's print dialog saves PDFs ("Save as PDF"); the document title
+  // becomes the suggested file name. Nothing leaves the computer.
+  async function saveAsPdf() {
+    await save();
+    const before = document.title;
+    const name =
+      (
+        state.current.title.trim() ||
+        htmlToText(editor.current?.innerHTML || "").split("\n")[0] ||
+        t("未命名記事")
+      )
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .trim()
+        .slice(0, 80) || "Veil Bookmark";
+    document.title = name;
+    const restore = () => {
+      document.title = before;
+      window.removeEventListener("afterprint", restore);
+    };
+    window.addEventListener("afterprint", restore);
+    window.print();
   }
 
   function insertLink() {
@@ -695,29 +719,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             </div>
             <div className="rg">
               <div className="rgRow">
-                <select
-                  className="rSelect"
-                  aria-label={t("字型大小")}
-                  title={t("字型大小")}
-                  defaultValue=""
-                  onChange={(e) => {
-                    if (e.target.value) exec("fontSize", e.target.value);
-                    e.target.value = "";
-                  }}
-                >
-                  <option value="">{t("字型大小")}</option>
-                  <option value="2">{t("小")}</option>
-                  <option value="3">{t("標準")}</option>
-                  <option value="4">{t("大")}</option>
-                  <option value="5">{t("特大")}</option>
-                  <option value="6">{t("超大")}</option>
-                </select>
-              </div>
-              <div className="rgRow">
                 <Btn cmd="bold" label="粗體" icon={<b>B</b>} />
                 <Btn cmd="italic" label="斜體" icon={<i>I</i>} />
                 <Btn cmd="underline" label="底線" icon={<u>U</u>} />
                 <Btn cmd="strikeThrough" label="刪除線" icon={<s>ab</s>} />
+              </div>
+              <div className="rgRow">
                 <label className="rb color" title={t("字型色彩")}>
                   <span style={{ borderBottomColor: "#c0392b" }}>A</span>
                   <input
@@ -756,21 +763,24 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               <span className="rgName">{t("段落")}</span>
             </div>
             <div className="rg styles">
-              <div className="rgRow">
-                {STYLES.map(([tag, label]) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={
-                      "styleChip s" + tag + (block === tag ? " on" : "")
-                    }
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => exec("formatBlock", `<${tag}>`)}
-                  >
-                    {t(label)}
-                  </button>
-                ))}
-              </div>
+              {[STYLES.slice(0, 4), STYLES.slice(4)].map((row, i) => (
+                <div className="rgRow" key={i}>
+                  {row.map(([tag, label, icon]) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={"rb" + (block === tag ? " on" : "")}
+                      title={t(label)}
+                      aria-label={t(label)}
+                      aria-pressed={block === tag}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => exec("formatBlock", `<${tag}>`)}
+                    >
+                      <ToolIcon name={icon} />
+                    </button>
+                  ))}
+                </div>
+              ))}
               <span className="rgName">{t("樣式")}</span>
             </div>
           </>
@@ -778,21 +788,50 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
         {tab === "insert" && (
           <>
             <div className="rg">
-              <div className="rgRow">
-                <Btn
-                  label="圖片"
-                  icon={<>🖼 {imageBusy ? t("處理中…") : t("圖片")}</>}
-                  onClick={() => {
-                    pictureRange.current = caret();
-                    imageInput.current?.click();
-                  }}
-                />
+              <div className="rgRow big">
+                {(
+                  [
+                    [
+                      "圖片",
+                      "image",
+                      () => {
+                        pictureRange.current = caret();
+                        imageInput.current?.click();
+                      },
+                    ],
+                    ["連結", "link", insertLink],
+                    ["水平線", "rule", () => exec("insertHorizontalRule")],
+                    [
+                      "日期和時間",
+                      "calendar",
+                      () =>
+                        exec("insertText", new Date().toLocaleString(lang())),
+                    ],
+                    ["核取方塊", "checkbox", () => exec("insertText", "☐ ")],
+                  ] as [string, string, () => void][]
+                ).map(([label, icon, run]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className="rbBig"
+                    title={t(label)}
+                    disabled={icon === "image" && imageBusy}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={run}
+                  >
+                    <ToolIcon name={icon} />
+                    <span>
+                      {icon === "image" && imageBusy ? t("處理中…") : t(label)}
+                    </span>
+                  </button>
+                ))}
                 <input
                   ref={imageInput}
+                  className="nbFileInput"
                   type="file"
                   accept="image/*"
                   multiple
-                  hidden
+                  tabIndex={-1}
                   aria-hidden="true"
                   onChange={(e) => {
                     const files = Array.from(e.target.files || []);
@@ -803,28 +842,6 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                         pictureRange.current,
                       );
                   }}
-                />
-                <Btn
-                  label="連結"
-                  icon={<>🔗 {t("連結")}</>}
-                  onClick={insertLink}
-                />
-                <Btn
-                  cmd="insertHorizontalRule"
-                  label="水平線"
-                  icon={<>― {t("水平線")}</>}
-                />
-                <Btn
-                  label="日期和時間"
-                  icon={<>📅 {t("日期和時間")}</>}
-                  onClick={() =>
-                    exec("insertText", new Date().toLocaleString(lang()))
-                  }
-                />
-                <Btn
-                  label="核取方塊"
-                  icon={<>☐ {t("核取方塊")}</>}
-                  onClick={() => exec("insertText", "☐ ")}
                 />
               </div>
               <span className="rgName">{t("插入")}</span>
@@ -855,6 +872,11 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             </div>
             <div className="rg">
               <div className="rgRow">
+                <Btn
+                  label="另存 PDF"
+                  icon={<>📄 {t("另存 PDF")}</>}
+                  onClick={() => void saveAsPdf()}
+                />
                 <Btn
                   label="列印"
                   icon={<>🖨 {t("列印")}</>}

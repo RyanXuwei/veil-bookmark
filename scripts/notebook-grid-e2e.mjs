@@ -227,7 +227,28 @@ try {
     const m = v.data.memos.find((x) => x.id === id);
     return m && m.images.length === 0;
   }, memo.id);
-  console.log("PASS notebook grid (zoom 80/100/150%), click any line to type, picture paste/drop encrypted, reload, copy, delete");
+  // Save as PDF: Chrome's print dialog with the note title as file name.
+  await page.getByRole("textbox", { name: "文件標題" }).fill("旅行/計畫:2026");
+  await page.keyboard.type("x");
+  await page.locator(".nbEditor").click({ position: { x: 20, y: 10 } });
+  await page.keyboard.type("PDF 內容");
+  await page.evaluate(() => {
+    window.__printed = [];
+    window.print = () => window.__printed.push(document.title);
+  });
+  await page.getByRole("tab", { name: "檢視" }).click();
+  await page.getByRole("button", { name: "另存 PDF" }).click();
+  await page.waitForFunction(() => window.__printed.length === 1);
+  assert.equal(await page.evaluate(() => window.__printed[0]), "旅行 計畫 2026x");
+  await page.evaluate(() => dispatchEvent(new Event("afterprint")));
+  assert.equal(await page.title(), await page.evaluate(() => document.title));
+  assert.notEqual(await page.title(), "旅行 計畫 2026x", "title restored after printing");
+  await page.emulateMedia({ media: "print" });
+  await page.screenshot({ path: resolve(shots, "55-notebook-pdf-print.png") });
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  assert(pdf.subarray(0, 5).toString() === "%PDF-" && pdf.length > 5000);
+  await page.emulateMedia({ media: "screen" });
+  console.log("PASS notebook grid (zoom 80/100/150%), click any line to type, picture paste/drop encrypted, reload, copy, delete; save as PDF");
 } finally {
   await context.close();
 }

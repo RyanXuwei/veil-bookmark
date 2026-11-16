@@ -747,16 +747,22 @@
     background: #fff;
     overflow: visible;
   }
+  /* PDF / print: the A4 page as on screen (paper colour, ruled lines,
+     pictures, drawings at the same positions), without desk and shadows. */
   .nbPage {
     zoom: 1 !important;
-    width: auto;
-    min-height: 0;
+    width: 794px;
+    min-height: 1123px;
+    margin: 0;
     box-shadow: none;
-    padding: 0;
-    background-image: none;
     border: 0;
     border-radius: 0;
     print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .nbEditor {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
   .nbBinding,
   .nbPage::after {
@@ -840,3 +846,55 @@
   background: transparent;
 }
 
+/* Ribbon: style icons and Word-like large Insert buttons. */
+.rg.styles .rgRow {
+  gap: 2px;
+}
+.rg.styles .rb {
+  width: 32px;
+  padding: 0;
+}
+.rgRow.big {
+  flex: 1;
+  align-items: stretch;
+  gap: 2px;
+}
+.nb .rbBig {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 56px;
+  height: auto;
+  padding: 6px 8px 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--nb-ink);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+.nb .rbBig:hover {
+  background: #e6ece8;
+  border-color: #cdd8d1;
+}
+.nb .rbBig:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.nb .rbBig svg {
+  width: 24px;
+  height: 24px;
+}
+.nb .nbFileInput {
+  display: none !important;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}

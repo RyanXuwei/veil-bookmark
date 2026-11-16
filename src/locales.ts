@@ -2019,5 +2019,10 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "图片太大，请先缩小后再粘贴",
   "en": "The picture is too large. Make it smaller and paste again.",
   "ja": "画像が大きすぎます。縮小してから貼り付けてください。"
+ },
+ "另存 PDF": {
+  "zh-CN": "另存 PDF",
+  "en": "Save as PDF",
+  "ja": "PDF として保存"
  }
 };
