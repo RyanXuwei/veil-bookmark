@@ -1,8 +1,50 @@
+<div align="center">
+
+<img src="docs/icon.png" width="96" alt="Veil Bookmark">
+
 # Veil Bookmark
 
-加密的私人書籤與記事本 Chrome 擴充功能，一般視窗與無痕視窗都能使用。
+### 只有你打得開的私人書籤與記事本
 
-Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.2.0
+不想被看到的收藏，不該躺在瀏覽器的書籤列上。<br>
+Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳號，沒有伺服器，沒有追蹤，完全免費。
+
+<a href="https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg"><img src="https://img.shields.io/badge/%E5%8A%A0%E5%88%B0_Chrome-%E5%85%8D%E8%B2%BB%E5%AE%89%E8%A3%9D-335a49?style=for-the-badge&logo=googlechrome&logoColor=white" alt="加到 Chrome：免費安裝" height="44"></a>
+&nbsp;
+<a href="https://ryanxuwei.github.io/veil-bookmark/app/"><img src="https://img.shields.io/badge/%E6%89%8B%E6%A9%9F%E7%89%88-%E7%9B%B4%E6%8E%A5%E9%96%8B%E5%95%9F-6f9b7b?style=for-the-badge" alt="手機版：直接開啟" height="44"></a>
+
+**[👉 到 Chrome 線上應用程式商店安裝](https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg)**
+
+<img src="docs/images/bookmarks.png" width="820" alt="Veil Bookmark 浮框：資料夾、搜尋與拖曳排序">
+
+</div>
+
+## 為什麼用 Veil Bookmark
+
+| | |
+|---|---|
+| 🔒 **真的只有你看得到** | 書籤、標籤、備註、記事全部在你的瀏覽器裡用 AES-256 加密。開發者沒有伺服器，看不到也收不到你的資料。 |
+| 🕶️ **不留在書籤列** | 收藏不會出現在 Chrome 書籤列或書籤管理員。一般視窗與無痕視窗都能用。 |
+| 📝 **不只是書籤** | 內建 Word 風格的加密記事本：格線紙張、貼圖、手繪、錄音，還能另存 PDF。 |
+| 📱 **手機也能開** | 掃 QR code 就能在手機上看書籤、寫記事，支援 Face ID／指紋解鎖。 |
+| ☁️ **同步由你決定** | 想跨裝置就開 Google Drive 同步，上傳的只有密文，放在你自己的 Drive 裡。不開也完全能用。 |
+| 🗝️ **忘記密碼有救** | 救援金鑰可以重設主密碼；閒置 15 分鐘自動上鎖。 |
+| 🌏 **五種語言** | 繁體中文、简体中文、English、日本語、한국어。 |
+
+<div align="center">
+
+<img src="docs/images/notes.png" width="820" alt="加密記事本：格線紙張與圖片">
+
+## 手機掃一下，帶著走
+
+<a href="https://ryanxuwei.github.io/veil-bookmark/app/"><img src="public/mobile-qr.svg" width="200" alt="手機版 QR code"></a>
+
+用手機相機掃描，或直接開啟 <https://ryanxuwei.github.io/veil-bookmark/app/><br>
+先在電腦的擴充功能「同步與備份」連接 Google Drive，手機上連同一個 Google 帳號、輸入主密碼就能用。
+
+</div>
+
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.3.2
 
 ## 功能
 
