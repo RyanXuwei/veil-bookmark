@@ -33,6 +33,7 @@ import {
   forgetToken,
   handleReturn,
   loadConfig,
+  renewSilently,
   signInPopup,
   signInRedirect,
   token,
@@ -153,6 +154,8 @@ function App({ shared }: { shared: Draft | null }) {
   useEffect(() => {
     void (async () => {
       await loadConfig();
+      // Connected before but the hour is over: get a new token unprompted.
+      if (!shared && renewSilently()) return;
       setCache(await hasCache());
       setReady(true);
     })();

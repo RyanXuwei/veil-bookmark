@@ -1,12 +1,19 @@
 // Google sign-in for the mobile web app: the OAuth 2.0 token flow, by redirect
 // before unlocking, or in a popup window once the vault is open (so it stays
 // unlocked). No Google script is loaded. The access token (about one hour,
-// Drive app-data folder only) is kept for this tab only.
+// Drive app-data folder only) is kept on this phone until it expires, so a
+// reload or reopening the app does not ask to connect again. After it
+// expires the app asks Google for a new one without any prompt (a redirect
+// with prompt=none) when the user has connected on this phone before.
 import { SCOPE } from "../src/drive";
 
 const TOKEN = "veilGoogleToken";
 const STATE = "veilOAuthState";
 const CHANNEL = "veil-oauth";
+// Set once the user has connected Google on this phone.
+const CONNECTED = "veilGoogleConnected";
+// One silent attempt per tab, so a refusal cannot loop.
+const SILENT = "veilSilentTried";
 type Stored = { token: string; expires: number };
 
 let clientId = "";
@@ -28,21 +35,25 @@ export const configured = () => !!clientId;
 export const redirectUri = () => location.origin + location.pathname;
 
 export function token(): string {
-  try {
-    const s = JSON.parse(
-      sessionStorage.getItem(TOKEN) || "null",
-    ) as Stored | null;
-    if (s && s.expires > Date.now() + 60_000) return s.token;
-  } catch {}
+  for (const store of ["localStorage", "sessionStorage"] as const)
+    try {
+      const s = JSON.parse(
+        window[store].getItem(TOKEN) || "null",
+      ) as Stored | null;
+      if (s && s.expires > Date.now() + 60_000) return s.token;
+    } catch {}
   return "";
 }
+/** Signs out on this phone: no token, and no silent reconnection. */
 export function forgetToken() {
-  try {
-    sessionStorage.removeItem(TOKEN);
-  } catch {}
+  for (const store of ["localStorage", "sessionStorage"] as const)
+    try {
+      window[store].removeItem(TOKEN);
+      window[store].removeItem(CONNECTED);
+    } catch {}
 }
 
-function authUrl(state: string) {
+function authUrl(state: string, silent = false) {
   const u = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   u.search = new URLSearchParams({
     client_id: clientId,
@@ -51,12 +62,14 @@ function authUrl(state: string) {
     scope: SCOPE,
     state,
     include_granted_scopes: "true",
+    ...(silent ? { prompt: "none" } : {}),
   }).toString();
   return u.toString();
 }
-// "p." marks the popup flow, so the popup knows to hand the reply back.
-function newState(popup: boolean) {
-  const state = (popup ? "p." : "r.") + crypto.randomUUID();
+// "p." marks the popup flow, so the popup knows to hand the reply back;
+// "s." marks a silent renewal, whose refusal is not an error to show.
+function newState(kind: "p" | "r" | "s") {
+  const state = kind + "." + crypto.randomUUID();
   sessionStorage.setItem(STATE, state);
   return state;
 }
@@ -64,14 +77,35 @@ function newState(popup: boolean) {
 /** Leaves the page for Google's sign-in; the app reopens with a token. */
 export function signInRedirect() {
   if (!clientId) throw Error("手機版尚未設定 Google 用戶端");
-  location.assign(authUrl(newState(false)));
+  location.assign(authUrl(newState("r")));
+}
+
+/** When this phone connected before and the token has expired: asks Google
+ *  for a new one without showing anything. Returns true when the page is
+ *  leaving for Google (it comes straight back, with or without a token). */
+export function renewSilently() {
+  try {
+    if (
+      !clientId ||
+      token() ||
+      !navigator.onLine ||
+      !localStorage.getItem(CONNECTED) ||
+      sessionStorage.getItem(SILENT)
+    )
+      return false;
+    sessionStorage.setItem(SILENT, "1");
+    location.replace(authUrl(newState("s"), true));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Signs in in a popup window and resolves when the token arrives. Falls back
  *  to a redirect when the browser blocks popups. */
 export function signInPopup(): Promise<void> {
   if (!clientId) return Promise.reject(Error("手機版尚未設定 Google 用戶端"));
-  const url = authUrl(newState(true));
+  const url = authUrl(newState("p"));
   const channel = new BroadcastChannel(CHANNEL);
   const w = window.open(url, "_blank");
   if (!w) {
@@ -118,10 +152,14 @@ function accept(hash: string) {
   if (!(p.get("scope") || "").split(" ").includes(SCOPE))
     throw Error("請在 Google 授權畫面允許存取應用程式資料");
   const expires = Date.now() + Number(p.get("expires_in") || 3600) * 1000;
-  sessionStorage.setItem(
-    TOKEN,
-    JSON.stringify({ token: t, expires } satisfies Stored),
-  );
+  const value = JSON.stringify({ token: t, expires } satisfies Stored);
+  try {
+    localStorage.setItem(TOKEN, value);
+    localStorage.setItem(CONNECTED, "1");
+  } catch {
+    sessionStorage.setItem(TOKEN, value); // Private mode: this tab only.
+  }
+  sessionStorage.removeItem(SILENT);
 }
 
 /** Handles Google's reply when the page loads. "popup" means this window is
@@ -137,6 +175,12 @@ export function handleReturn(): "popup" | "done" | "" {
     channel.close();
     window.close();
     return "popup";
+  }
+  if (state.startsWith("s.") && !/(^|[#&])access_token=/.test(hash)) {
+    // Google needs the user (signed out, or several accounts): the Connect
+    // button is shown as usual.
+    sessionStorage.removeItem(STATE);
+    return "";
   }
   accept(hash);
   return "done";

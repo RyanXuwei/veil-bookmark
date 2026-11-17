@@ -531,6 +531,68 @@ try {
     await fresh.evaluate(() => sessionStorage.getItem("veilGoogleToken")),
     null,
   );
+  // The real reply is kept on this phone: a reload (or reopening the app)
+  // stays connected instead of asking again.
+  const scope = encodeURIComponent(
+    "https://www.googleapis.com/auth/drive.appdata",
+  );
+  await fresh
+    .getByRole("button", { name: /使用 Google 帳號連接 Drive/ })
+    .click();
+  await fresh.waitForURL(/accounts\.google\.com/);
+  const state2 = new URL(authUrl).searchParams.get("state")!;
+  await fresh.goto(
+    `${APP}#access_token=synthetic-token&expires_in=3600&state=${state2}&scope=${scope}`,
+  );
+  await fresh.getByText("已連接 Google Drive").waitFor();
+  await fresh.reload();
+  await fresh.getByText("已連接 Google Drive").waitFor();
+  const again = await context.newPage(); // A new tab, as after closing the app.
+  await again.goto(APP);
+  await again.evaluate(() => sessionStorage.setItem("veilTestNoToken", "1"));
+  await again.reload();
+  await again.getByText("已連接 Google Drive").waitFor();
+  await again.close();
+  // After the hour: a new token is requested without a prompt.
+  await fresh.evaluate(() =>
+    localStorage.setItem(
+      "veilGoogleToken",
+      JSON.stringify({ token: "old", expires: Date.now() - 1000 }),
+    ),
+  );
+  await fresh.reload();
+  await fresh.waitForURL(/accounts\.google\.com/);
+  const silent = new URL(authUrl);
+  assert.equal(silent.searchParams.get("prompt"), "none");
+  const state3 = silent.searchParams.get("state")!;
+  assert(state3.startsWith("s."));
+  await fresh.goto(
+    `${APP}#access_token=synthetic-token&expires_in=3600&state=${state3}&scope=${scope}`,
+  );
+  await fresh.getByText("已連接 Google Drive").waitFor();
+  // Google refuses the silent request (signed out): no error, no loop.
+  await fresh.evaluate(() =>
+    localStorage.setItem(
+      "veilGoogleToken",
+      JSON.stringify({ token: "old", expires: Date.now() - 1000 }),
+    ),
+  );
+  await fresh.reload();
+  await fresh.waitForURL(/accounts\.google\.com/);
+  const state4 = new URL(authUrl).searchParams.get("state")!;
+  await fresh.goto(`${APP}#error=interaction_required&state=${state4}`);
+  await fresh
+    .getByRole("button", { name: /使用 Google 帳號連接 Drive/ })
+    .waitFor();
+  assert.equal(await fresh.getByRole("alert").count(), 0);
+  await fresh.reload();
+  await fresh
+    .getByRole("button", { name: /使用 Google 帳號連接 Drive/ })
+    .waitFor();
+  await fresh.evaluate(() => {
+    localStorage.removeItem("veilGoogleToken");
+    localStorage.removeItem("veilGoogleConnected");
+  });
   await fresh.close();
   void state;
 
@@ -578,7 +640,7 @@ try {
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
   assert.equal(remote.size, 1, "clearing the phone leaves Drive alone");
   console.log(
-    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, unconfigured, clear phone",
+    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, Google connection kept across reloads and tabs, silent renewal (accepted, refused without a loop), unconfigured, clear phone",
   );
 } finally {
   await browser.close();
