@@ -16,6 +16,7 @@ import {
 } from "../src/crypto";
 import { readRemoteWith, removeSnapshots, upload } from "../src/drive";
 import { deleteEntry, upsertEntry } from "../src/entry-ops";
+import { deleteMemo, upsertMemo } from "../src/memo-ops";
 import { mergeSnapshots, VaultMismatch } from "../src/sync-core";
 import { token } from "./google";
 import * as bio from "./biometric";
@@ -264,6 +265,21 @@ export async function saveEntry(x: Parameters<typeof upsertEntry>[1]) {
 export async function removeEntry(id: string) {
   if (!open) throw Error("已上鎖，請重新解鎖");
   if (deleteEntry(open.v, id)) {
+    open.v = { ...open.v };
+    await save();
+  }
+}
+/** Adds or replaces a memo; returns the stored memo (with its permanent ID). */
+export async function saveMemo(x: Record<string, unknown>) {
+  if (!open) throw Error("已上鎖，請重新解鎖");
+  const memo = upsertMemo(open.v, x);
+  open.v = { ...open.v };
+  await save();
+  return memo;
+}
+export async function removeMemo(id: string) {
+  if (!open) throw Error("已上鎖，請重新解鎖");
+  if (deleteMemo(open.v, id)) {
     open.v = { ...open.v };
     await save();
   }

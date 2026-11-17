@@ -704,3 +704,110 @@ select:focus {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* Notebook on the phone */
+.ghost.strong {
+  font-weight: 700;
+  color: var(--green);
+}
+.memoBody blockquote {
+  margin: 8px 0;
+  padding-left: 12px;
+  border-left: 3px solid #b9cbbd;
+  color: #4d5f57;
+}
+.memoBody h1,
+.memoBody h2,
+.memoBody h3 {
+  font-family: Georgia, "Noto Serif TC", serif;
+  line-height: 1.4;
+  margin: 14px 0 6px;
+}
+.memoEdit {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
+}
+.editPaper {
+  min-height: 60dvh;
+}
+.editError {
+  margin: 0 12px 8px;
+}
+.memoTitle {
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1px dashed #c9d4c6;
+  background: transparent;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 22px;
+  font-weight: 700;
+  outline: none;
+}
+.editable {
+  min-height: 45dvh;
+  font-size: 16px; /* 16px or more: iOS does not zoom while typing */
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.editable:empty::before {
+  content: attr(data-placeholder);
+  color: #9aa68f;
+}
+.editable p {
+  margin: 0;
+}
+.tools {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 16;
+  display: flex;
+  gap: 4px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 6px 8px calc(env(safe-area-inset-bottom) + 6px);
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  scrollbar-width: none;
+}
+.tools button {
+  flex: none;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-size: 17px;
+}
+.tools button[aria-pressed="true"] {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.tools mark {
+  background: #fff176;
+  padding: 0 3px;
+}
+.swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.swatches button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+.swatches button[aria-pressed="true"] {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+[hidden] {
+  display: none !important;
+}

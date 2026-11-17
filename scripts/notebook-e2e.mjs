@@ -42,7 +42,7 @@ try {
   // The popup opens the notebook in a tab.
   const [nb] = await Promise.all([
     context.waitForEvent("page"),
-    popup.getByRole("button", { name: "開啟筆記本 ↗" }).click(),
+    popup.getByRole("button", { name: "開啟記事本 ↗" }).click(),
   ]);
   await nb.waitForLoadState();
   assert(popup.isClosed(), "popup closes after opening the notebook");

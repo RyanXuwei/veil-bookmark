@@ -19,6 +19,7 @@ for (const f of [
   "src/drive-conflict.tsx",
   "src/tag-input.tsx",
   "src/entry-ops.ts",
+  "src/memo-ops.ts",
   "web/main.tsx",
   "web/google.ts",
   "web/vault.ts",

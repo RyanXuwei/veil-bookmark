@@ -890,3 +890,43 @@ hr {
 .tagOptions b {
   font-weight: 700;
 }
+
+/* "Use on your phone": QR code for the mobile web app */
+.mobileQr {
+  text-align: center;
+}
+.mobileQr > p:first-child {
+  text-align: left;
+}
+.mobileQr img {
+  display: block;
+  width: 196px;
+  height: 196px;
+  margin: 8px auto 6px;
+  image-rendering: pixelated;
+  border: 1px solid #dce4d8;
+  border-radius: 12px;
+}
+.mobileQr a {
+  font-size: 12px;
+  word-break: break-all;
+}
+.mobileQr .note {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fdf6e8;
+  color: #7a5a1f;
+  text-align: left;
+}
+.linkButton {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #335a49;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

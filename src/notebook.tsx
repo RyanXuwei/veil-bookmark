@@ -653,7 +653,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           }}
         >
           <img src="icons/128.png" alt="" width="64" height="64" />
-          <h1>{t("加密筆記本")}</h1>
+          <h1>{t("加密記事本")}</h1>
           <p>
             {status.exists
               ? t("保險庫已上鎖。輸入主密碼以開啟你的記事。")
@@ -699,7 +699,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     <div className="nb">
       <header className="nbTitlebar">
         <img src="icons/32.png" alt="" width="20" height="20" />
-        <span className="nbApp">{t("加密筆記本")}</span>
+        <span className="nbApp">{t("加密記事本")}</span>
         <input
           className="nbTitle"
           aria-label={t("文件標題")}

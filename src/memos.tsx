@@ -93,7 +93,7 @@ export function MemoList({
             <>
               <button
                 className="quickLink memoLink"
-                title={t("在筆記本中開啟")}
+                title={t("在記事本中開啟")}
                 onClick={() => open(m)}
               >
                 <span className="quickIcon">✎</span>
@@ -123,7 +123,7 @@ export function MemoList({
         {menuId === m.id && renaming !== m.id && (
           <div className="quickActions">
             <button disabled={busy} onClick={() => open(m)}>
-              {t("在筆記本中開啟")}
+              {t("在記事本中開啟")}
             </button>
             <button onClick={() => setRenaming(m.id)}>{t("重新命名")}</button>
             {moving === m.id ? (
@@ -185,7 +185,7 @@ export function MemoList({
           {t("＋ 新增記事")}
         </button>
         <button onClick={() => onOpen({ ...emptyMemo })}>
-          {t("開啟筆記本 ↗")}
+          {t("開啟記事本 ↗")}
         </button>
         <button
           className="quickNewFolder"

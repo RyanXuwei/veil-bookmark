@@ -6,7 +6,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { createRoot } from "react-dom/client";
-import type { Entry, Memo } from "../src/crypto";
+import type { Entry, Memo, MemoImage } from "../src/crypto";
 import {
   LANGS,
   detect,
@@ -17,8 +17,15 @@ import {
   type Lang,
 } from "../src/i18n";
 import { memoTitle } from "../src/memos";
-import { imageSrc } from "../src/ruled";
-import { memoHtml, memoText } from "../src/sanitize";
+import { imageSrc, importImage } from "../src/ruled";
+import { DEFAULT_PAPER } from "../src/memo-ops";
+import {
+  htmlToText,
+  imageIds,
+  memoHtml,
+  memoText,
+  sanitizeHtml,
+} from "../src/sanitize";
 import { folderNames, ordered } from "../src/sortable";
 import { TagInput } from "../src/tag-input";
 import {
@@ -35,7 +42,9 @@ import {
   hasCache,
   lock,
   removeEntry,
+  removeMemo,
   saveEntry,
+  saveMemo,
   subscribe,
   syncNow,
   syncState,
@@ -53,6 +62,34 @@ const IDLE_LOCK = 15 * 60 * 1000;
 const HIDDEN_LOCK = 5 * 60 * 1000;
 const ALL = "\u0000all";
 const UNFILED = "\u0000unfiled";
+const STORE =
+  "https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg";
+const PAPER_COLORS = [
+  "#fff4be",
+  "#fbe0dc",
+  "#e4eddb",
+  "#dfeef4",
+  "#eee3f3",
+  "#fffdf5",
+];
+
+/** Google Chrome on a computer, where the extension can be installed.
+ *  Phones, tablets and other desktop browsers keep using this app. */
+function desktopChrome() {
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return false;
+  // iPadOS asks for desktop sites with a Mac user agent.
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return false;
+  const data = (
+    navigator as {
+      userAgentData?: { mobile?: boolean; brands?: { brand: string }[] };
+    }
+  ).userAgentData;
+  return (
+    data?.mobile === false &&
+    !!data.brands?.some((b) => b.brand === "Google Chrome")
+  );
+}
 
 // Language: saved choice on this phone, otherwise the browser's.
 function initLang() {
@@ -338,6 +375,7 @@ function Library({
   const [editing, setEditing] = useState<Draft | null>(null);
   const [actions, setActions] = useState<Entry | null>(null);
   const [reading, setReading] = useState<Memo | null>(null);
+  const [writing, setWriting] = useState<{ memo: Memo | null } | null>(null);
   const [settings, setSettings] = useState(false);
   const [toast, setToast] = useState("");
   useEffect(() => {
@@ -553,9 +591,18 @@ function Library({
           {!memoShown.length && (
             <div className="empty">
               <p>{q ? t("沒有符合的記事") : t("還沒有加密記事")}</p>
-              <small>{t("記事請在電腦的筆記本中撰寫；手機版可以閱讀。")}</small>
+              <small>
+                {q ? t("試試其他關鍵字") : t("點右下角的 ＋ 寫下第一則記事。")}
+              </small>
             </div>
           )}
+          <button
+            className="fab"
+            aria-label={t("新增記事")}
+            onClick={() => setWriting({ memo: null })}
+          >
+            ＋
+          </button>
         </main>
       )}
       {editing && (
@@ -592,7 +639,26 @@ function Library({
           />
         </Sheet>
       )}
-      {reading && <Reader memo={reading} onClose={() => setReading(null)} />}
+      {reading && (
+        <Reader
+          memo={reading}
+          onClose={() => setReading(null)}
+          onEdit={() => {
+            setWriting({ memo: reading });
+            setReading(null);
+          }}
+        />
+      )}
+      {writing && (
+        <MemoEditor
+          memo={writing.memo}
+          folders={memoFolders}
+          onClose={(msg) => {
+            setWriting(null);
+            if (msg) setToast(msg);
+          }}
+        />
+      )}
       {settings && (
         <Settings
           onClose={() => setSettings(false)}
@@ -807,20 +873,32 @@ function Editor({
   );
 }
 
-function Reader({ memo, onClose }: { memo: Memo; onClose: () => void }) {
+/** Shows notebook pictures (stored encrypted beside the memo) in place. */
+function showImages(el: HTMLElement, images: Map<string, MemoImage>) {
+  for (const img of Array.from(
+    el.querySelectorAll<HTMLImageElement>("img[data-veil-img]"),
+  )) {
+    const i = images.get(img.dataset.veilImg || "");
+    if (i) img.src = imageSrc(i);
+    else img.remove();
+  }
+}
+
+function Reader({
+  memo,
+  onClose,
+  onEdit,
+}: {
+  memo: Memo;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
   const body = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = body.current;
     if (!el) return;
     el.innerHTML = memoHtml(memo);
-    const images = new Map((memo.images || []).map((i) => [i.id, i]));
-    for (const img of Array.from(
-      el.querySelectorAll<HTMLImageElement>("img[data-veil-img]"),
-    )) {
-      const i = images.get(img.dataset.veilImg || "");
-      if (i) img.src = imageSrc(i);
-      else img.remove();
-    }
+    showImages(el, new Map((memo.images || []).map((i) => [i.id, i])));
     // Links in notes open outside the app without a referrer.
     for (const a of Array.from(el.querySelectorAll("a"))) {
       a.target = "_blank";
@@ -840,16 +918,449 @@ function Reader({ memo, onClose }: { memo: Memo; onClose: () => void }) {
           {t("← 返回")}
         </button>
         <span>{new Date(memo.updated).toLocaleString(lang())}</span>
+        <button className="ghost strong" onClick={onEdit}>
+          {t("編輯")}
+        </button>
       </header>
-      <article className="paper">
+      <article
+        className="paper"
+        style={{ background: memo.paperColor || DEFAULT_PAPER }}
+      >
         <h1>{memoTitle(memo)}</h1>
         {extras > 0 && (
           <p className="note">
-            {t("這則記事含有錄音或手繪，請在電腦的筆記本中檢視。")}
+            {t("這則記事含有錄音或手繪，請在電腦的記事本中檢視。")}
           </p>
         )}
         <div className="memoBody" ref={body} />
       </article>
+    </div>
+  );
+}
+
+// The phone's notebook: text styles, lists, quotes, highlight and pictures.
+// Drawing, recording, fonts, alignment and page layout stay on the computer.
+const TOOLS: {
+  cmd: string;
+  label: string;
+  icon: React.ReactNode;
+  value?: string;
+}[] = [
+  { cmd: "bold", label: "粗體", icon: <b>B</b> },
+  { cmd: "italic", label: "斜體", icon: <i>I</i> },
+  { cmd: "underline", label: "底線", icon: <u>U</u> },
+  { cmd: "strikeThrough", label: "刪除線", icon: <s>S</s> },
+  { cmd: "heading", label: "標題 2", icon: <b>H</b> },
+  { cmd: "insertUnorderedList", label: "項目符號", icon: "•≡" },
+  { cmd: "insertOrderedList", label: "編號", icon: "1." },
+  { cmd: "quote", label: "引言", icon: "❝" },
+  {
+    cmd: "hiliteColor",
+    label: "螢光筆",
+    icon: <mark>A</mark>,
+    value: "#fff176",
+  },
+  { cmd: "removeFormat", label: "清除格式設定", icon: "⌫" },
+  { cmd: "image", label: "插入圖片", icon: "🖼" },
+  { cmd: "undo", label: "復原", icon: "↶" },
+  { cmd: "redo", label: "取消復原", icon: "↷" },
+];
+
+function MemoEditor({
+  memo,
+  folders,
+  onClose,
+}: {
+  memo: Memo | null;
+  folders: string[];
+  onClose: (msg?: string) => void;
+}) {
+  const [title, setTitle] = useState(memo?.title || "");
+  const [paper, setPaper] = useState(
+    /^#[0-9a-f]{6}$/i.test(memo?.paperColor || "")
+      ? memo!.paperColor!
+      : DEFAULT_PAPER,
+  );
+  const [folder, setFolder] = useState(memo?.folder || "");
+  const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving">(
+    "saved",
+  );
+  const [error, setError] = useState("");
+  const [failed, setFailed] = useState(false);
+  const [more, setMore] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [active, setActive] = useState<Record<string, boolean>>({});
+  const [keyboard, setKeyboard] = useState(0);
+  const body = useRef<HTMLDivElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
+  const id = useRef(memo?.id || "");
+  const images = useRef(new Map((memo?.images || []).map((i) => [i.id, i])));
+  const dirty = useRef(false);
+  const range = useRef<Range | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const chain = useRef<Promise<boolean>>(Promise.resolve(true));
+  const latest = useRef({ title, paper, folder });
+  latest.current = { title, paper, folder };
+  const extras =
+    (memo?.recordings?.length || 0) + (memo?.drawing?.length || 0);
+
+  useLayoutEffect(() => {
+    const el = body.current!;
+    el.innerHTML = memo ? memoHtml(memo) : "";
+    showImages(el, images.current);
+    document.execCommand("defaultParagraphSeparator", false, "p");
+  }, []);
+
+  // Keep the toolbar above the on-screen keyboard; remember the caret so
+  // toolbar taps and the photo picker insert where the user was typing.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const place = () =>
+      vv && setKeyboard(Math.max(0, innerHeight - vv.height - vv.offsetTop));
+    const selection = () => {
+      const sel = getSelection();
+      const el = body.current;
+      if (!sel?.rangeCount || !el) return;
+      const r = sel.getRangeAt(0);
+      if (!el.contains(r.commonAncestorContainer)) return;
+      range.current = r.cloneRange();
+      const q = (c: string) => {
+        try {
+          return document.queryCommandState(c);
+        } catch {
+          return false;
+        }
+      };
+      const block = String(document.queryCommandValue("formatBlock") || "")
+        .replace(/[<>]/g, "")
+        .toLowerCase();
+      setActive({
+        bold: q("bold"),
+        italic: q("italic"),
+        underline: q("underline"),
+        strikeThrough: q("strikeThrough"),
+        insertUnorderedList: q("insertUnorderedList"),
+        insertOrderedList: q("insertOrderedList"),
+        heading: /^h[1-3]$/.test(block),
+        quote: block === "blockquote",
+      });
+    };
+    const hidden = () => document.hidden && void save();
+    vv?.addEventListener("resize", place);
+    vv?.addEventListener("scroll", place);
+    document.addEventListener("selectionchange", selection);
+    document.addEventListener("visibilitychange", hidden);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    place();
+    return () => {
+      vv?.removeEventListener("resize", place);
+      vv?.removeEventListener("scroll", place);
+      document.removeEventListener("selectionchange", selection);
+      document.removeEventListener("visibilitychange", hidden);
+      document.body.style.overflow = prev;
+      clearTimeout(timer.current);
+    };
+  }, []);
+
+  function changed() {
+    dirty.current = true;
+    setSaveState("dirty");
+    setFailed(false);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => void save(), 1000);
+  }
+
+  // One save at a time; the first one gives a new memo its permanent ID.
+  function save(): Promise<boolean> {
+    clearTimeout(timer.current);
+    chain.current = chain.current.then(async () => {
+      const el = body.current;
+      if (!dirty.current || !el) return true;
+      dirty.current = false;
+      const html = sanitizeHtml(el.innerHTML);
+      const used = imageIds(html).filter((x) => images.current.has(x));
+      const now = latest.current;
+      if (
+        !id.current &&
+        !now.title.trim() &&
+        !htmlToText(html) &&
+        !used.length
+      ) {
+        setSaveState("saved");
+        return true; // An untouched new memo is not kept.
+      }
+      setSaveState("saving");
+      try {
+        const m = await saveMemo({
+          id: id.current || undefined,
+          title: now.title,
+          body: html,
+          format: "html",
+          paperColor: now.paper,
+          folder: now.folder,
+          images: used.map((x) => images.current.get(x)!),
+        });
+        id.current = m.id;
+        setSaveState(dirty.current ? "dirty" : "saved");
+        setError("");
+        return true;
+      } catch (e) {
+        dirty.current = true;
+        setSaveState("dirty");
+        setError((e as Error).message);
+        return false;
+      }
+    });
+    return chain.current;
+  }
+
+  async function back() {
+    if (failed) return onClose(); // Second tap: leave without saving.
+    const isNew = !id.current;
+    if (await save()) onClose(isNew && id.current ? "已加密收藏記事" : "");
+    else setFailed(true);
+  }
+
+  function restore() {
+    const el = body.current!;
+    el.focus({ preventScroll: true });
+    const sel = getSelection();
+    if (
+      range.current &&
+      sel &&
+      el.contains(range.current.commonAncestorContainer)
+    ) {
+      sel.removeAllRanges();
+      sel.addRange(range.current);
+    }
+  }
+
+  function exec(cmd: string, value?: string) {
+    if (cmd === "image") return picker.current?.click();
+    restore();
+    if (cmd === "heading" || cmd === "quote") {
+      const tag = cmd === "heading" ? "h2" : "blockquote";
+      const now = String(document.queryCommandValue("formatBlock") || "")
+        .replace(/[<>]/g, "")
+        .toLowerCase();
+      const on = cmd === "heading" ? /^h[1-3]$/.test(now) : now === tag;
+      document.execCommand("formatBlock", false, on ? "p" : tag);
+    } else {
+      document.execCommand(
+        "styleWithCSS",
+        false,
+        String(cmd === "hiliteColor"),
+      );
+      document.execCommand(cmd, false, value);
+    }
+    changed();
+    document.dispatchEvent(new Event("selectionchange"));
+  }
+
+  async function addImages(files: FileList | null) {
+    if (!files?.length) return;
+    setError("");
+    for (const f of Array.from(files).slice(0, 10)) {
+      try {
+        const i = await importImage(f);
+        images.current.set(i.id, i);
+        restore();
+        const el = body.current!;
+        const sel = getSelection()!;
+        let r = sel.rangeCount ? sel.getRangeAt(0) : null;
+        if (!r || !el.contains(r.commonAncestorContainer)) {
+          r = document.createRange();
+          r.selectNodeContents(el);
+          r.collapse(false);
+        }
+        const img = document.createElement("img");
+        img.setAttribute("data-veil-img", i.id);
+        img.alt = "";
+        img.src = imageSrc(i);
+        r.deleteContents();
+        r.insertNode(img);
+        r.setStartAfter(img);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+        range.current = r.cloneRange();
+        changed();
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    }
+  }
+
+  return (
+    <div
+      className="reader memoEdit"
+      role="dialog"
+      aria-modal="true"
+      aria-label={memo ? t("編輯記事") : t("新增記事")}
+    >
+      <header className="readerBar">
+        <button className="ghost" onClick={() => void back()}>
+          {failed ? t("放棄修改並返回") : t("← 完成")}
+        </button>
+        <span role="status">
+          {saveState === "saving"
+            ? t("儲存中…")
+            : saveState === "dirty"
+              ? t("尚未儲存")
+              : id.current
+                ? t("已加密儲存")
+                : ""}
+        </span>
+        <button
+          className="ghost"
+          aria-label={t("記事選項")}
+          onClick={() => setMore(true)}
+        >
+          ⋯
+        </button>
+      </header>
+      {error && (
+        <p className="error editError" role="alert">
+          {tError(error)}
+        </p>
+      )}
+      <article className="paper editPaper" style={{ background: paper }}>
+        <input
+          className="memoTitle"
+          aria-label={t("標題")}
+          placeholder={t("標題")}
+          maxLength={300}
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            latest.current.title = e.target.value;
+            changed();
+          }}
+        />
+        {extras > 0 && (
+          <p className="note">
+            {t(
+              "這則記事的錄音與手繪只能在電腦上檢視；在手機上編輯文字不會影響它們。",
+            )}
+          </p>
+        )}
+        <div
+          ref={body}
+          className="memoBody editable"
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          aria-multiline="true"
+          aria-label={t("記事內容")}
+          data-placeholder={t("開始寫下你的想法…")}
+          onInput={changed}
+          onPaste={(e) => {
+            // Plain text only: pasted pages could carry remote pictures.
+            e.preventDefault();
+            document.execCommand(
+              "insertText",
+              false,
+              e.clipboardData.getData("text/plain"),
+            );
+          }}
+        />
+      </article>
+      <div
+        className="tools"
+        role="toolbar"
+        aria-label={t("格式工具列")}
+        style={{ bottom: keyboard }}
+      >
+        {TOOLS.map((x) => (
+          <button
+            key={x.cmd}
+            type="button"
+            aria-label={t(x.label)}
+            title={t(x.label)}
+            aria-pressed={x.cmd in active ? !!active[x.cmd] : undefined}
+            onPointerDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => exec(x.cmd, x.value)}
+          >
+            {x.icon}
+          </button>
+        ))}
+      </div>
+      <input
+        ref={picker}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          void addImages(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {more && (
+        <Sheet title={t("記事選項")} onClose={() => setMore(false)}>
+          <section className="settings">
+            <h3>{t("資料夾")}</h3>
+            <select
+              aria-label={t("資料夾")}
+              value={folder}
+              onChange={(e) => {
+                setFolder(e.target.value);
+                latest.current.folder = e.target.value;
+                changed();
+              }}
+            >
+              <option value="">{t("未分類")}</option>
+              {[...new Set([...folders, ...(folder ? [folder] : [])])].map(
+                (f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ),
+              )}
+            </select>
+            <h3>{t("紙張顏色")}</h3>
+            <div className="swatches">
+              {PAPER_COLORS.map((c) => (
+                <button
+                  key={c}
+                  aria-label={c}
+                  aria-pressed={paper === c}
+                  style={{ background: c }}
+                  onClick={() => {
+                    setPaper(c);
+                    latest.current.paper = c;
+                    changed();
+                  }}
+                />
+              ))}
+            </div>
+            <h3>{t("刪除")}</h3>
+            {confirmDelete ? (
+              <button
+                className="danger full"
+                onClick={async () => {
+                  clearTimeout(timer.current);
+                  dirty.current = false;
+                  await chain.current;
+                  if (id.current) await removeMemo(id.current);
+                  onClose(id.current ? "已刪除記事" : "");
+                }}
+              >
+                {t("確定刪除？會同步到所有裝置")}
+              </button>
+            ) : (
+              <button
+                className="secondary full dangerText"
+                onClick={() => setConfirmDelete(true)}
+              >
+                {t("刪除記事")}
+              </button>
+            )}
+          </section>
+        </Sheet>
+      )}
     </div>
   );
 }
@@ -1187,7 +1698,14 @@ if (window.top !== window.self) {
     startError = (e as Error).message;
   }
   const root = createRoot(document.getElementById("root")!);
-  if (returned === "popup")
+  if (
+    returned !== "popup" &&
+    desktopChrome() &&
+    !new URLSearchParams(location.search).has("desktop")
+  ) {
+    // In Chrome on a computer the extension is the full product.
+    location.replace(STORE);
+  } else if (returned === "popup")
     root.render(
       <main className="unlock">
         <section className="welcomeCard">

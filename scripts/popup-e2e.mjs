@@ -560,11 +560,26 @@ try {
   assert(
     await evaluate(() =>
       [...document.querySelectorAll("button")].some(
-        (b) => b.textContent.trim() === "開啟筆記本 ↗",
+        (b) => b.textContent.trim() === "開啟記事本 ↗",
       ),
     ),
   );
   await screenshot("30-memo-list.png");
+  // "Mobile": QR code that opens the mobile web app.
+  await click("手機版");
+  await wait(() => {
+    const img = document.querySelector(".mobileQr img");
+    return !!img && img.complete && img.naturalWidth > 0;
+  });
+  assert(
+    await evaluate(() =>
+      document
+        .querySelector(".mobileQr a")
+        .href.startsWith("https://ryanxuwei.github.io/veil-bookmark/app/"),
+    ),
+  );
+  await screenshot("31-mobile-qr.png");
+  await click("×");
   await click("書籤");
   await wait(() => !!document.querySelector(".quickList .quickLink"));
   async function setLanguage(code) {
@@ -581,6 +596,7 @@ try {
   const languageChecks = [
     ["en", "Lock", "Sync & backup", "18-lang-en.png"],
     ["ja", "ロック", "同期とバックアップ", "19-lang-ja.png"],
+    ["ko", "잠금", "동기화 및 백업", "19b-lang-ko.png"],
     ["zh-CN", "上锁", "同步与备份", "20-lang-zh-cn.png"],
   ];
   for (const [code, lockLabel, syncLabel, shot] of languageChecks) {
@@ -653,7 +669,7 @@ try {
   await click("解鎖保險庫 →");
   await wait(() => !!document.querySelector(".quickList .quickLink"));
   console.log(
-    "PASS: recovery key shown once, not stored, forgot-password reset with new password and rotated key; password ack gate; notes tab links to notebook; language switch zh-TW/zh-CN/en/ja with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
+    "PASS: recovery key shown once, not stored, forgot-password reset with new password and rotated key; password ack gate; notes tab links to Notes; mobile QR code; language switch zh-TW/zh-CN/en/ja/ko with persistence; normal and private native toolbar popups; shared vault/session; current-mode navigation; normal and private capture; shared lock; encrypted persistence",
     dimensions,
     "; no automatic management tab; activeTab current-page capture; 4-char create/unlock; folders/search/edit/delete; lock/reopen; opening bookmark.",
   );

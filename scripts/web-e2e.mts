@@ -341,7 +341,64 @@ try {
   );
   assert.equal(await reader.locator("script").count(), 0);
   await snap("web-5-reader.png");
-  await reader.getByRole("button", { name: "← 返回" }).click();
+
+  // ---- Notes: edit on the phone (picture kept), synced as the extension's
+  // memo format ---------------------------------------------------------------
+  await reader.getByRole("button", { name: "編輯" }).click();
+  const edit = page.getByRole("dialog", { name: "編輯記事" });
+  const text = edit.getByRole("textbox", { name: "記事內容" });
+  await text.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.press("Enter");
+  await edit.getByRole("button", { name: "粗體" }).click();
+  await page.keyboard.type("記得帶傘");
+  assert.equal(
+    await edit.getByRole("button", { name: "粗體" }).getAttribute("aria-pressed"),
+    "true",
+  );
+  await edit.getByText("已加密儲存").waitFor();
+  await snap("web-6-memo-edit.png");
+  await edit.getByRole("button", { name: "← 完成" }).click();
+  await edit.waitFor({ state: "detached" });
+  await expectRemote(async (rv) => {
+    const m = rv.memos.find((x) => x.title === "京都行程")!;
+    assert.match(m.body, /<b>記得帶傘<\/b>/);
+    assert.match(m.body, /清水寺/);
+    assert.equal(m.images?.[0].data, png, "picture kept");
+    assert.equal(m.folder, "旅行計畫");
+  });
+
+  // New note from ＋, with a heading and a list; then delete it.
+  await page.getByRole("button", { name: "新增記事" }).click();
+  const fresh0 = page.getByRole("dialog", { name: "新增記事" });
+  await fresh0.getByRole("textbox", { name: "標題", exact: true }).fill("購物清單");
+  await fresh0.getByRole("textbox", { name: "記事內容" }).click();
+  await fresh0.getByRole("button", { name: "項目符號" }).click();
+  await page.keyboard.type("牛奶");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("雞蛋");
+  await fresh0.getByRole("button", { name: "記事選項" }).click();
+  await page.getByRole("button", { name: "#dfeef4" }).click();
+  await page.getByRole("button", { name: "關閉" }).click();
+  await fresh0.getByRole("button", { name: "← 完成" }).click();
+  await page.getByRole("status").filter({ hasText: "已加密收藏記事" }).waitFor();
+  await expectRemote(async (rv) => {
+    const m = rv.memos.find((x) => x.title === "購物清單" && !x.deleted)!;
+    assert.match(m.body, /<ul><li>牛奶<\/li><li>雞蛋<\/li><\/ul>/);
+    assert.equal(m.paperColor, "#dfeef4");
+    assert.equal(m.format, "html");
+  });
+  await page.getByRole("button", { name: /購物清單/ }).click();
+  await page.getByRole("button", { name: "編輯" }).click();
+  await page.getByRole("button", { name: "記事選項" }).click();
+  await page.getByRole("button", { name: "刪除記事" }).click();
+  await page.getByRole("button", { name: "確定刪除？會同步到所有裝置" }).click();
+  await page.getByRole("status").filter({ hasText: "已刪除記事" }).waitFor();
+  await expectRemote(async (rv) => {
+    const m = rv.memos.find((x) => x.deleted)!;
+    assert.equal(m.body, "");
+    assert.equal(rv.memos.filter((x) => !x.deleted).length, 1);
+  });
   await page.getByRole("tab", { name: /書籤/ }).click();
 
   // ---- Lock, then open offline from the phone's encrypted copy -------------
@@ -477,6 +534,25 @@ try {
   await fresh.close();
   void state;
 
+  // ---- Computers: Chrome goes to the extension; other browsers stay --------
+  const desk = await browser.newContext({ locale: "zh-TW", serviceWorkers: "block" });
+  await desk.route("https://chromewebstore.google.com/**", (r) =>
+    r.fulfill({ body: "store", contentType: "text/plain" }),
+  );
+  const other = await desk.newPage(); // Headless Chromium is not Google Chrome.
+  await other.goto(APP);
+  await other.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
+  // A string, not a function: tsx would add helpers the page does not have.
+  await desk.addInitScript(
+    `Object.defineProperty(Navigator.prototype, "userAgentData", { configurable: true, get: () => ({ mobile: false, brands: [{ brand: "Google Chrome", version: "142" }] }) });`,
+  );
+  const chrome = await desk.newPage();
+  await chrome.goto(APP);
+  await chrome.waitForURL(/chromewebstore\.google\.com\/detail\/chpabfajilpjflfmnkopjjcnoaaliefg/);
+  await chrome.goto(APP + "?desktop");
+  await chrome.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
+  await desk.close();
+
   // ---- Not configured -------------------------------------------------------
   const bare = await context.newPage();
   await bare.route("**/app/config.json", (r) =>
@@ -502,7 +578,7 @@ try {
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
   assert.equal(remote.size, 1, "clearing the phone leaves Drive alone");
   console.log(
-    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, offline copy, reconnect upload, share target, sign-in URL and state check, unconfigured, clear phone",
+    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, unconfigured, clear phone",
   );
 } finally {
   await browser.close();

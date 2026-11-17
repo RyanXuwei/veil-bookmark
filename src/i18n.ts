@@ -5,6 +5,7 @@ export const LANGS = [
   { code: "zh-CN", label: "简体中文" },
   { code: "en", label: "English" },
   { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
 ] as const;
 export type Lang = (typeof LANGS)[number]["code"];
 
@@ -14,6 +15,7 @@ export function detect(browser: string): Lang {
   const l = browser.toLowerCase();
   if (l.startsWith("zh")) return /hans|cn|sg/.test(l) ? "zh-CN" : "zh-TW";
   if (l.startsWith("ja")) return "ja";
+  if (l.startsWith("ko")) return "ko";
   if (l.startsWith("en")) return "en";
   return "en";
 }

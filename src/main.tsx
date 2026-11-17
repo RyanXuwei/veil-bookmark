@@ -25,7 +25,7 @@ const CREDITS = {
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
   version: VERSION,
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-16",
+  lastUpdatedDate: "2026-11-17",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -95,6 +95,7 @@ function App() {
         recoveryShown ||
         panel === "settings" ||
         panel === "security" ||
+        panel === "mobile" ||
         panel === "about"
           ? "570px"
           : "";
@@ -972,6 +973,7 @@ function App() {
               <button onClick={() => setPanel("settings")}>
                 {t("同步與備份")}
               </button>
+              <button onClick={() => setPanel("mobile")}>{t("手機版")}</button>
             </span>
           </div>
         </main>
@@ -1009,6 +1011,9 @@ function App() {
               </button>
               <button className="nav" onClick={() => setPanel("settings")}>
                 {t("⚙ 同步與備份")}
+              </button>
+              <button className="nav" onClick={() => setPanel("mobile")}>
+                {t("📱 手機版")}
               </button>
             </div>
           </aside>
@@ -1258,7 +1263,10 @@ function App() {
           </section>
         </div>
       )}
-      {(panel === "settings" || panel === "security" || panel === "about") && (
+      {(panel === "settings" ||
+        panel === "security" ||
+        panel === "mobile" ||
+        panel === "about") && (
         <div className="overlay">
           <section
             className="modal card"
@@ -1269,7 +1277,9 @@ function App() {
                 ? t("同步與備份")
                 : panel === "security"
                   ? t("安全性")
-                  : t("關於 Veil Bookmark")
+                  : panel === "mobile"
+                    ? t("在手機上使用")
+                    : t("關於 Veil Bookmark")
             }
           >
             <div className="modalTitle">
@@ -1278,7 +1288,9 @@ function App() {
                   ? t("同步與備份")
                   : panel === "security"
                     ? t("安全性")
-                    : t("關於 Veil Bookmark")}
+                    : panel === "mobile"
+                      ? t("在手機上使用")
+                      : t("關於 Veil Bookmark")}
               </h2>
               <button onClick={() => setPanel("")} aria-label={t("關閉")}>
                 ×
@@ -1426,6 +1438,11 @@ function App() {
                   )}
                 </p>
               </>
+            ) : panel === "mobile" ? (
+              <MobileSection
+                driveOn={!!status?.driveEnabled}
+                onDrive={() => setPanel("settings")}
+              />
             ) : panel === "security" ? (
               <>
                 <PasswordChangeSection rpc={rpc} />
@@ -1505,3 +1522,39 @@ void loadLang().then(() =>
   ),
 );
 import "./popup.css";
+
+const MOBILE_URL = "https://ryanxuwei.github.io/veil-bookmark/app/";
+/** QR code that opens the mobile web app on a phone. */
+function MobileSection({
+  driveOn,
+  onDrive,
+}: {
+  driveOn: boolean;
+  onDrive: () => void;
+}) {
+  return (
+    <div className="mobileQr">
+      <p className="muted">
+        {t(
+          "用手機相機掃描，開啟 Veil Bookmark 手機版：可以瀏覽、搜尋、收藏書籤，閱讀與撰寫記事，並支援 Face ID／指紋解鎖。",
+        )}
+      </p>
+      <img src="mobile-qr.svg" alt={t("手機版網址的 QR code")} />
+      <a href={MOBILE_URL} target="_blank" rel="noopener noreferrer">
+        {MOBILE_URL.replace("https://", "")}
+      </a>
+      {driveOn ? (
+        <p className="small muted">
+          {t("在手機上連接同一個 Google 帳號，再輸入主密碼即可開啟。")}
+        </p>
+      ) : (
+        <p className="small note">
+          {t("手機版透過 Google Drive 讀取資料，請先在「同步與備份」連接 Google Drive。")}{" "}
+          <button className="linkButton" onClick={onDrive}>
+            {t("前往同步與備份")}
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
