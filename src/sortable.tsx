@@ -2,6 +2,17 @@
 import React, { useRef, useState } from "react";
 import type { Folder, FolderKind } from "./crypto";
 import { t } from "./i18n";
+import {
+  baseName,
+  cleanSegment,
+  depthOf,
+  folderTree,
+  joinPath,
+  parentOf,
+  pathLabel,
+  within,
+} from "./folders";
+import { ConfirmDelete } from "./confirm";
 
 type Orderable = { id: string; folder?: string; order?: number };
 
@@ -21,27 +32,13 @@ export function ordered<T extends Orderable>(
   );
 }
 
-/** Folder names in display order: saved order first, then by name. */
+/** Folder paths in display (tree) order, ancestors included. */
 export function folderNames(
   kind: FolderKind,
   records: Folder[] | undefined,
   items: Orderable[],
 ) {
-  const live = (records || []).filter((f) => f.kind === kind && !f.deleted);
-  const known = new Map(live.map((f) => [f.name, f.order]));
-  const names = new Set([
-    ...live.map((f) => f.name),
-    ...items.map((x) => x.folder || "").filter(Boolean),
-  ]);
-  return [...names].sort((a, b) =>
-    known.has(a) && known.has(b)
-      ? known.get(a)! - known.get(b)!
-      : known.has(a)
-        ? -1
-        : known.has(b)
-          ? 1
-          : a.localeCompare(b),
-  );
+  return folderTree(kind, records, items);
 }
 
 type Drag = { type: "item"; id: string } | { type: "folder"; name: string };
@@ -60,19 +57,23 @@ export function FolderTree<T extends Orderable>({
   onReorder,
   onFolderOrder,
   onRenameFolder,
+  onMoveFolder,
   onDeleteFolder,
   creating,
   onCreate,
   onCancelCreate,
 }: {
   kind: FolderKind;
-  folders: string[];
+  folders: string[]; // full paths in tree order (folderNames)
   items: T[]; // already in display order
   busy: boolean;
   renderItem: (x: T) => React.ReactNode;
   onReorder: (folder: string, ids: string[]) => void;
   onFolderOrder: (names: string[]) => void;
   onRenameFolder: (from: string, to: string) => void;
+  /** Moves a folder (and everything in it) to a new full path; `order` is
+   *  the new order of its siblings there. */
+  onMoveFolder: (from: string, to: string, order?: string[]) => void;
   onDeleteFolder: (name: string) => void;
   creating: boolean;
   onCreate: (name: string) => void;
@@ -84,9 +85,22 @@ export function FolderTree<T extends Orderable>({
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [creatingIn, setCreatingIn] = useState<string | null>(null);
+  const [moving, setMoving] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const openTimer = useRef(0);
+  void kind;
   const inFolder = (f: string) => items.filter((x) => (x.folder || "") === f);
+  const children = (parent: string) =>
+    folders.filter((f) => parentOf(f) === parent);
+  const countIn = (f: string) =>
+    items.filter((x) => within(x.folder || "", f)).length;
+  const openPath = (f: string) =>
+    setOpen((o) => {
+      const next = new Set(o);
+      for (let p = f; p; p = parentOf(p)) next.add(p);
+      return next;
+    });
 
   function end() {
     drag.current = null;
@@ -96,6 +110,7 @@ export function FolderTree<T extends Orderable>({
   }
   function start(e: React.DragEvent, d: Drag) {
     if (busy) return e.preventDefault();
+    e.stopPropagation();
     drag.current = d;
     setDragging(d);
     setMenu(null);
@@ -105,6 +120,13 @@ export function FolderTree<T extends Orderable>({
   const lower = (e: React.DragEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     return e.clientY > r.top + r.height / 2;
+  };
+  // A folder dropped on a folder: the upper and lower quarters place it
+  // before or after (as a sibling), the middle puts it inside.
+  const folderZone = (e: React.DragEvent): "before" | "after" | "into" => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = (e.clientY - r.top) / r.height;
+    return y < 0.25 ? "before" : y > 0.75 ? "after" : "into";
   };
   function dropOnItem(target: T, after: boolean) {
     const d = drag.current;
@@ -124,12 +146,30 @@ export function FolderTree<T extends Orderable>({
       .filter((id) => id !== d.id);
     onReorder(folder, [...ids, d.id]);
   }
-  function dropFolder(target: string, after: boolean) {
+  /** Moves `from` under `parent`, at `index` among its new siblings. */
+  function placeFolder(from: string, parent: string, index?: number) {
+    if (within(parent, from)) return; // not into itself
+    const to = joinPath(parent, baseName(from));
+    const siblings = children(parent).filter((f) => f !== from && f !== to);
+    siblings.splice(index ?? siblings.length, 0, to);
+    if (to === from) onFolderOrder(siblings);
+    else {
+      if (folders.includes(to)) return; // a sibling has the same name
+      onMoveFolder(from, to, siblings);
+      if (open.has(from)) openPath(to);
+    }
+  }
+  function dropFolder(target: string, zone: "before" | "after" | "into") {
     const d = drag.current;
     if (d?.type !== "folder" || d.name === target) return;
-    const names = folders.filter((f) => f !== d.name);
-    names.splice(names.indexOf(target) + (after ? 1 : 0), 0, d.name);
-    onFolderOrder(names);
+    if (zone === "into") return placeFolder(d.name, target);
+    const parent = parentOf(target);
+    const siblings = children(parent).filter((f) => f !== d.name);
+    placeFolder(
+      d.name,
+      parent,
+      siblings.indexOf(target) + (zone === "after" ? 1 : 0),
+    );
   }
   function move(x: T, step: -1 | 1) {
     const ids = inFolder(x.folder || "").map((y) => y.id);
@@ -181,207 +221,286 @@ export function FolderTree<T extends Orderable>({
     );
   };
 
+  const folderNode = (f: string): React.ReactNode => {
+    const h =
+      hint?.kind === "into" && hint.folder === f
+        ? " dropInto"
+        : hint?.kind === "folder" && hint.name === f
+          ? hint.after
+            ? " dropAfter"
+            : " dropBefore"
+          : "";
+    const count = countIn(f);
+    const siblings = children(parentOf(f));
+    const index = siblings.indexOf(f);
+    const subs = children(f);
+    const isOpen = open.has(f);
+    return (
+      <details
+        className={
+          "quickFolder" +
+          (isOpen ? "" : " collapsed") +
+          h +
+          (dragging?.type === "folder" && dragging.name === f
+            ? " dragging"
+            : "")
+        }
+        key={f}
+        style={{ "--depth": depthOf(f) } as React.CSSProperties}
+        // The menu and forms live in the folder element, so keep it rendered
+        // open while they show; contents appear only when expanded.
+        open={
+          isOpen ||
+          menu === f ||
+          renaming === f ||
+          creatingIn === f ||
+          moving === f
+        }
+      >
+        <summary
+          draggable={!busy && renaming !== f}
+          onClick={(e) => {
+            e.preventDefault();
+            if (renaming === f) return;
+            const next = new Set(open);
+            if (next.has(f)) next.delete(f);
+            else next.add(f);
+            setOpen(next);
+          }}
+          onDragStart={(e) => start(e, { type: "folder", name: f })}
+          onDragEnd={end}
+          onDragOver={(e) => {
+            const d = drag.current;
+            if (!d) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (d.type === "item" || folderZone(e) === "into") {
+              if (d.type === "folder" && within(f, d.name)) return;
+              if (hint?.kind !== "into" || hint.folder !== f) {
+                setHint({ kind: "into", folder: f });
+                // Hovering a closed folder opens it.
+                window.clearTimeout(openTimer.current);
+                openTimer.current = window.setTimeout(
+                  () => setOpen((o) => new Set(o).add(f)),
+                  700,
+                );
+              }
+            } else {
+              const after = folderZone(e) === "after";
+              if (
+                hint?.kind !== "folder" ||
+                hint.name !== f ||
+                hint.after !== after
+              )
+                setHint({ kind: "folder", name: f, after });
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (drag.current?.type === "item") dropInto(f);
+            else dropFolder(f, folderZone(e));
+            end();
+          }}
+        >
+          <span>▰</span>
+          {renaming === f ? (
+            <NameForm
+              inline
+              initial={baseName(f)}
+              placeholder={t("資料夾名稱")}
+              submit={t("儲存")}
+              onSubmit={(name) => {
+                setRenaming(null);
+                const to = joinPath(parentOf(f), cleanSegment(name));
+                if (open.has(f)) openPath(to);
+                onRenameFolder(f, to);
+              }}
+              onCancel={() => setRenaming(null)}
+            />
+          ) : (
+            <>
+              <strong title={pathLabel(f)}>{baseName(f)}</strong>
+              <small>{count}</small>
+              <button
+                type="button"
+                className="quickMore folderMore"
+                aria-label={t("資料夾操作：{title}", { title: baseName(f) })}
+                aria-expanded={menu === f}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMoving(null);
+                  setMenu(menu === f ? null : f);
+                }}
+              >
+                ⋯
+              </button>
+            </>
+          )}
+        </summary>
+        {menu === f && (
+          <div className="quickActions">
+            <button
+              onClick={() => {
+                setMenu(null);
+                setRenaming(f);
+              }}
+            >
+              {t("重新命名")}
+            </button>
+            <button
+              onClick={() => {
+                setMenu(null);
+                openPath(f);
+                setCreatingIn(f);
+              }}
+            >
+              {t("新增子資料夾")}
+            </button>
+            {moving === f ? (
+              <select
+                autoFocus
+                aria-label={t("移到資料夾")}
+                value={parentOf(f)}
+                onChange={(e) => {
+                  setMenu(null);
+                  setMoving(null);
+                  placeFolder(f, e.target.value);
+                }}
+              >
+                <option value="">{t("最上層")}</option>
+                {folders
+                  .filter((p) => !within(p, f))
+                  .map((p) => (
+                    <option key={p} value={p}>
+                      {"  ".repeat(depthOf(p)) + baseName(p)}
+                    </option>
+                  ))}
+              </select>
+            ) : (
+              <button onClick={() => setMoving(f)}>{t("移到資料夾")}</button>
+            )}
+            <button
+              disabled={index === 0}
+              onClick={() => {
+                const names = siblings.filter((x) => x !== f);
+                names.splice(index - 1, 0, f);
+                onFolderOrder(names);
+              }}
+            >
+              {t("上移")}
+            </button>
+            <button
+              disabled={index === siblings.length - 1}
+              onClick={() => {
+                const names = siblings.filter((x) => x !== f);
+                names.splice(index + 1, 0, f);
+                onFolderOrder(names);
+              }}
+            >
+              {t("下移")}
+            </button>
+            <button
+              onClick={() => {
+                setMenu(null);
+                setConfirmDelete(f);
+              }}
+            >
+              {t("刪除資料夾")}
+            </button>
+          </div>
+        )}
+        {(isOpen || creatingIn === f) && (
+          <div className="quickSub">
+            {creatingIn === f && (
+              <NameForm
+                placeholder={t("子資料夾名稱")}
+                submit={t("建立")}
+                onSubmit={(name) => {
+                  setCreatingIn(null);
+                  onCreate(joinPath(f, cleanSegment(name)));
+                }}
+                onCancel={() => setCreatingIn(null)}
+              />
+            )}
+            {isOpen && subs.map(folderNode)}
+            {isOpen && (
+              <ul>
+                {inFolder(f).map(row)}
+                {!count && !subs.length && (
+                  <li className="quickFolderEmpty">{t("拖曳項目到這裡")}</li>
+                )}
+              </ul>
+            )}
+          </div>
+        )}
+      </details>
+    );
+  };
+
+  const draggedFolder =
+    dragging?.type === "folder" ? dragging.name : null;
   return (
     <>
       {creating && (
         <NameForm
           placeholder={t("資料夾名稱")}
           submit={t("建立")}
-          onSubmit={onCreate}
+          onSubmit={(name) => onCreate(cleanSegment(name))}
           onCancel={onCancelCreate}
         />
       )}
-      {folders.map((f) => {
-        const h =
-          hint?.kind === "into" && hint.folder === f
-            ? " dropInto"
-            : hint?.kind === "folder" && hint.name === f
-              ? hint.after
-                ? " dropAfter"
-                : " dropBefore"
-              : "";
-        const count = inFolder(f).length;
-        return (
-          <details
-            className={
-              "quickFolder" +
-              (open.has(f) ? "" : " collapsed") +
-              h +
-              (dragging?.type === "folder" && dragging.name === f
-                ? " dragging"
-                : "")
-            }
-            key={f}
-            // The menu and rename form live in the folder element, so keep it
-            // rendered open while they show; items appear only when expanded.
-            open={open.has(f) || menu === f || renaming === f}
-          >
-            <summary
-              draggable={!busy && renaming !== f}
-              onClick={(e) => {
-                e.preventDefault();
-                if (renaming === f) return;
-                const next = new Set(open);
-                if (next.has(f)) next.delete(f);
-                else next.add(f);
-                setOpen(next);
-              }}
-              onDragStart={(e) => start(e, { type: "folder", name: f })}
-              onDragEnd={end}
-              onDragOver={(e) => {
-                const d = drag.current;
-                if (!d) return;
-                e.preventDefault();
-                if (d.type === "item") {
-                  if (hint?.kind !== "into" || hint.folder !== f) {
-                    setHint({ kind: "into", folder: f });
-                    // Hovering a closed folder opens it.
-                    window.clearTimeout(openTimer.current);
-                    openTimer.current = window.setTimeout(
-                      () => setOpen((o) => new Set(o).add(f)),
-                      700,
-                    );
-                  }
-                } else {
-                  const after = lower(e);
-                  if (
-                    hint?.kind !== "folder" ||
-                    hint.name !== f ||
-                    hint.after !== after
-                  )
-                    setHint({ kind: "folder", name: f, after });
-                }
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (drag.current?.type === "item") dropInto(f);
-                else dropFolder(f, lower(e));
-                end();
-              }}
-            >
-              <span>▰</span>
-              {renaming === f ? (
-                <NameForm
-                  inline
-                  initial={f}
-                  placeholder={t("資料夾名稱")}
-                  submit={t("儲存")}
-                  onSubmit={(to) => {
-                    setRenaming(null);
-                    if (open.has(f)) setOpen((o) => new Set(o).add(to));
-                    onRenameFolder(f, to);
-                  }}
-                  onCancel={() => setRenaming(null)}
-                />
-              ) : (
-                <>
-                  <strong>{f}</strong>
-                  <small>{count}</small>
-                  <button
-                    type="button"
-                    className="quickMore folderMore"
-                    aria-label={t("資料夾操作：{title}", { title: f })}
-                    aria-expanded={menu === f}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setConfirmDelete(null);
-                      setMenu(menu === f ? null : f);
-                    }}
-                  >
-                    ⋯
-                  </button>
-                </>
-              )}
-            </summary>
-            {menu === f && (
-              <div className="quickActions">
-                <button
-                  onClick={() => {
-                    setMenu(null);
-                    setRenaming(f);
-                  }}
-                >
-                  {t("重新命名")}
-                </button>
-                <button
-                  disabled={folders.indexOf(f) === 0}
-                  onClick={() => {
-                    const names = folders.filter((x) => x !== f);
-                    names.splice(folders.indexOf(f) - 1, 0, f);
-                    onFolderOrder(names);
-                  }}
-                >
-                  {t("上移")}
-                </button>
-                <button
-                  disabled={folders.indexOf(f) === folders.length - 1}
-                  onClick={() => {
-                    const names = folders.filter((x) => x !== f);
-                    names.splice(folders.indexOf(f) + 1, 0, f);
-                    onFolderOrder(names);
-                  }}
-                >
-                  {t("下移")}
-                </button>
-                {confirmDelete === f ? (
-                  <button
-                    className="danger"
-                    onClick={() => {
-                      setMenu(null);
-                      setConfirmDelete(null);
-                      onDeleteFolder(f);
-                    }}
-                  >
-                    {count
-                      ? t("確定刪除？{count} 個項目會移到未分類", { count })
-                      : t("確定刪除？")}
-                  </button>
-                ) : (
-                  <button onClick={() => setConfirmDelete(f)}>
-                    {t("刪除資料夾")}
-                  </button>
-                )}
-              </div>
-            )}
-            {open.has(f) && (
-              <ul>
-                {inFolder(f).map(row)}
-                {!count && (
-                  <li className="quickFolderEmpty">{t("拖曳項目到這裡")}</li>
-                )}
-              </ul>
-            )}
-          </details>
-        );
-      })}
+      {children("").map(folderNode)}
       <ul
         className={
           "quickRoot" +
-          (dragging?.type === "item" &&
-          items.find((x) => x.id === dragging.id)?.folder
+          ((dragging?.type === "item" &&
+            items.find((x) => x.id === dragging.id)?.folder) ||
+          (draggedFolder && parentOf(draggedFolder))
             ? " dropZone"
             : "") +
           (hint?.kind === "into" && hint.folder === "" ? " dropInto" : "")
         }
         onDragOver={(e) => {
-          if (drag.current?.type !== "item") return;
+          const d = drag.current;
+          if (!d || (d.type === "folder" && !parentOf(d.name))) return;
           e.preventDefault();
           if (hint?.kind !== "into" || hint.folder !== "")
             setHint({ kind: "into", folder: "" });
         }}
         onDrop={(e) => {
           e.preventDefault();
-          dropInto("");
+          const d = drag.current;
+          if (d?.type === "folder") placeFolder(d.name, "");
+          else dropInto("");
           end();
         }}
       >
         {inFolder("").map(row)}
-        {dragging?.type === "item" &&
-          items.find((x) => x.id === dragging.id)?.folder && (
-            <li className="quickFolderEmpty">{t("拖到這裡移出資料夾")}</li>
-          )}
+        {((dragging?.type === "item" &&
+          items.find((x) => x.id === dragging.id)?.folder) ||
+          (draggedFolder && parentOf(draggedFolder))) && (
+          <li className="quickFolderEmpty">{t("拖到這裡移到最上層")}</li>
+        )}
       </ul>
+      {confirmDelete !== null && (
+        <ConfirmDelete
+          title={t("刪除資料夾「{title}」？", {
+            title: baseName(confirmDelete),
+          })}
+          detail={t(
+            "資料夾裡的項目與子資料夾會移到上一層，不會被刪除。",
+          )}
+          busy={busy}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => {
+            const f = confirmDelete;
+            setConfirmDelete(null);
+            onDeleteFolder(f);
+          }}
+        />
+      )}
     </>
   );
 }

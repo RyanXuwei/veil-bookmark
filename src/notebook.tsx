@@ -14,6 +14,9 @@ import {
   type MemoRecording,
 } from "./crypto";
 import { folderNames, ordered } from "./sortable";
+import { baseName, depthOf, pathLabel, within } from "./folders";
+import { ConfirmDelete, itemDeleteDetail } from "./confirm";
+import { IMPORT_ACCEPT, importFile } from "./import-doc";
 import { type Folder } from "./crypto";
 import { importHtmlImages, importImage, layoutRuled, RULE } from "./ruled";
 import { LANGS, lang, saveLang, t, tError, type Lang } from "./i18n";
@@ -60,6 +63,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [status, setStatus] = useState<any>(null);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [folderRecords, setFolderRecords] = useState<Folder[]>([]);
+  const [askDelete, setAskDelete] = useState(false);
   const [current, setCurrent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [paperColor, setPaperColor] = useState(DEFAULT_PAPER);
@@ -404,7 +408,59 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     }
   }
 
-  async function remove() {
+  // Import: each chosen file becomes a new encrypted note.
+  const importInput = useRef<HTMLInputElement>(null);
+  async function importFiles(files: FileList | null) {
+    if (!files?.length || transition.current) return;
+    if (recording || pendingAudio) {
+      setError("請先停止錄音並放置播放貼紙");
+      return;
+    }
+    transition.current = true;
+    setSwitching(true);
+    setError("");
+    const importEpoch = epoch.current;
+    let last: Memo | null = null;
+    let skipped = 0;
+    try {
+      if (!(await save()) || importEpoch !== epoch.current) return;
+      for (const f of Array.from(files).slice(0, 20)) {
+        try {
+          const r = await importFile(f);
+          skipped += r.skipped;
+          last = await rpc("MEMO_UPSERT", {
+            memo: {
+              title: r.title,
+              body: r.html,
+              format: "html",
+              images: r.images,
+            },
+          });
+        } catch (e) {
+          setError(
+            t("無法匯入「{name}」：{reason}", {
+              name: f.name,
+              reason: tError((e as Error).message),
+            }),
+          );
+        }
+      }
+      if (importEpoch !== epoch.current) return;
+      await refresh();
+      if (last) load(last);
+      if (skipped)
+        setError(
+          t("有 {count} 張圖片的格式無法匯入（例如 EMF／WMF），已略過。", {
+            count: skipped,
+          }),
+        );
+    } finally {
+      transition.current = false;
+      setSwitching(false);
+    }
+  }
+
+  async function remove(confirmed = false) {
     if (recording || pendingAudio) {
       setError("請先停止錄音並放置播放貼紙");
       return;
@@ -414,7 +470,11 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       load(null);
       return;
     }
-    if (!confirm(t("刪除這份記事？內容會立即清除，無法復原。"))) return;
+    if (!confirmed) {
+      setAskDelete(true); // ConfirmDelete, as everywhere else
+      return;
+    }
+    setAskDelete(false);
     transition.current = true;
     setSwitching(true);
     const deletionEpoch = epoch.current;
@@ -570,7 +630,9 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           live.filter((x) => (x.folder || "") === f),
           (a, b) => b.updated - a.updated,
         );
-        if (!notes.length) return [];
+        // A parent folder shows when notes are anywhere below it.
+        if (!notes.length && !live.some((x) => within(x.folder || "", f)))
+          return [];
         return navFolders.length ? [f, ...notes] : notes;
       });
 
@@ -697,6 +759,17 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
 
   return (
     <div className="nb">
+      {askDelete && (
+        <ConfirmDelete
+          title={t("刪除「{title}」？", {
+            title: title.trim() || t("未命名記事"),
+          })}
+          detail={itemDeleteDetail()}
+          busy={switching}
+          onCancel={() => setAskDelete(false)}
+          onConfirm={() => void remove(true)}
+        />
+      )}
       <header className="nbTitlebar">
         <img src="icons/32.png" alt="" width="20" height="20" />
         <span className="nbApp">{t("加密記事本")}</span>
@@ -735,6 +808,25 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
         >
           {t("＋ 新增")}
         </button>
+        <button
+          className="nbFile nbImport"
+          disabled={switching}
+          onClick={() => importInput.current?.click()}
+          title={t("匯入文字檔、Markdown、HTML 或 Word（.docx），每個檔案成為一則新記事")}
+        >
+          {t("匯入")}
+        </button>
+        <input
+          ref={importInput}
+          type="file"
+          accept={IMPORT_ACCEPT}
+          multiple
+          hidden
+          onChange={(e) => {
+            void importFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
         {(
           [
             ["home", "常用"],
@@ -1056,8 +1148,13 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             <ul>
               {navList.map((m) =>
                 typeof m === "string" ? (
-                  <li key={"folder:" + m} className="nbNavFolder">
-                    {m || t("未分類")}
+                  <li
+                    key={"folder:" + m}
+                    className="nbNavFolder"
+                    style={{ paddingLeft: 12 + depthOf(m) * 12 }}
+                    title={m ? pathLabel(m) : undefined}
+                  >
+                    {m ? baseName(m) : t("未分類")}
                   </li>
                 ) : (
                   <li key={m.id}>

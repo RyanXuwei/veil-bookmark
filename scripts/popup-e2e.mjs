@@ -439,7 +439,12 @@ try {
       .click(),
   );
   await click("刪除");
-  await click("確定刪除");
+  await wait(() => !!document.querySelector("[role=alertdialog]"));
+  await evaluate(() =>
+    [...document.querySelectorAll("[role=alertdialog] button")]
+      .find((b) => b.textContent.trim() === "刪除")
+      .click(),
+  );
   await wait(() => !document.querySelector("[role=alertdialog]"));
   await wait(
     () =>

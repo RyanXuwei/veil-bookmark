@@ -3263,5 +3263,131 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "You can turn on biometric unlock later under Sync & settings.",
   "ja": "生体認証ロック解除は、あとで「同期と設定」からオンにできます。",
   "ko": "생체 인증 잠금 해제는 나중에 '동기화 및 설정'에서 켤 수 있습니다."
+ },
+ "無法匯入「{name}」：{reason}": {
+  "zh-CN": "无法导入「{name}」：{reason}",
+  "en": "Couldn't import “{name}”: {reason}",
+  "ja": "「{name}」をインポートできません：{reason}",
+  "ko": "'{name}'을(를) 가져올 수 없습니다: {reason}"
+ },
+ "有 {count} 張圖片的格式無法匯入（例如 EMF／WMF），已略過。": {
+  "zh-CN": "有 {count} 张图片的格式无法导入（例如 EMF／WMF），已略过。",
+  "en": "{count} picture(s) in an unsupported format (such as EMF/WMF) were skipped.",
+  "ja": "対応していない形式（EMF／WMF など）の画像 {count} 枚をスキップしました。",
+  "ko": "지원하지 않는 형식(EMF/WMF 등)의 사진 {count}장을 건너뛰었습니다."
+ },
+ "匯入文字檔、Markdown、HTML 或 Word（.docx），每個檔案成為一則新記事": {
+  "zh-CN": "导入文字档、Markdown、HTML 或 Word（.docx），每个文件成为一则新记事",
+  "en": "Import text, Markdown, HTML or Word (.docx) files; each file becomes a new note",
+  "ja": "テキスト、Markdown、HTML、Word（.docx）をインポートします。ファイルごとに新しいメモになります",
+  "ko": "텍스트, Markdown, HTML, Word(.docx) 파일을 가져옵니다. 파일마다 새 메모가 됩니다"
+ },
+ "匯入": {
+  "zh-CN": "导入",
+  "en": "Import",
+  "ja": "インポート",
+  "ko": "가져오기"
+ },
+ "不能把資料夾移到它自己的子資料夾": {
+  "zh-CN": "不能把文件夹移到它自己的子文件夹",
+  "en": "A folder can't be moved into its own subfolder.",
+  "ja": "フォルダーを自分のサブフォルダーには移動できません。",
+  "ko": "폴더를 자신의 하위 폴더로 옮길 수 없습니다."
+ },
+ "新增子資料夾": {
+  "zh-CN": "添加子文件夹",
+  "en": "New subfolder",
+  "ja": "サブフォルダーを作成",
+  "ko": "하위 폴더 만들기"
+ },
+ "最上層": {
+  "zh-CN": "最上层",
+  "en": "Top level",
+  "ja": "最上位",
+  "ko": "최상위"
+ },
+ "子資料夾名稱": {
+  "zh-CN": "子文件夹名称",
+  "en": "Subfolder name",
+  "ja": "サブフォルダー名",
+  "ko": "하위 폴더 이름"
+ },
+ "拖到這裡移到最上層": {
+  "zh-CN": "拖到这里移到最上层",
+  "en": "Drop here to move to the top level",
+  "ja": "ここにドロップして最上位へ移動",
+  "ko": "여기에 놓으면 최상위로 이동"
+ },
+ "刪除資料夾「{title}」？": {
+  "zh-CN": "删除文件夹「{title}」？",
+  "en": "Delete folder “{title}”?",
+  "ja": "フォルダー「{title}」を削除しますか？",
+  "ko": "'{title}' 폴더를 삭제할까요?"
+ },
+ "資料夾裡的項目與子資料夾會移到上一層，不會被刪除。": {
+  "zh-CN": "文件夹里的项目与子文件夹会移到上一层，不会被删除。",
+  "en": "Its items and subfolders move up one level; they are not deleted.",
+  "ja": "中の項目とサブフォルダーは一つ上の階層に移動し、削除されません。",
+  "ko": "폴더 안의 항목과 하위 폴더는 한 단계 위로 이동하며 삭제되지 않습니다."
+ },
+ "無法讀取這個檔案": {
+  "zh-CN": "无法读取这个文件",
+  "en": "This file can't be read.",
+  "ja": "このファイルを読み込めません。",
+  "ko": "이 파일을 읽을 수 없습니다."
+ },
+ "檔案太大，無法匯入": {
+  "zh-CN": "文件太大，无法导入",
+  "en": "The file is too large to import.",
+  "ja": "ファイルが大きすぎてインポートできません。",
+  "ko": "파일이 너무 커서 가져올 수 없습니다."
+ },
+ "不支援舊版 Word 文件（.doc），請先在 Word 另存為 .docx 再匯入": {
+  "zh-CN": "不支持旧版 Word 文档（.doc），请先在 Word 另存为 .docx 再导入",
+  "en": "Old Word documents (.doc) aren't supported. Save as .docx in Word first.",
+  "ja": "旧形式の Word 文書（.doc）には対応していません。Word で .docx として保存してからインポートしてください。",
+  "ko": "이전 Word 문서(.doc)는 지원하지 않습니다. Word에서 .docx로 저장한 뒤 가져오세요."
+ },
+ "不支援這種檔案，請選擇 .txt、.md、.html 或 .docx": {
+  "zh-CN": "不支持这种文件，请选择 .txt、.md、.html 或 .docx",
+  "en": "This kind of file isn't supported. Choose a .txt, .md, .html or .docx file.",
+  "ja": "このファイル形式には対応していません。.txt、.md、.html、.docx を選んでください。",
+  "ko": "이 파일 형식은 지원하지 않습니다. .txt, .md, .html, .docx 파일을 선택하세요."
+ },
+ "刪除後會同步到所有裝置，無法復原。": {
+  "zh-CN": "删除后会同步到所有设备，无法复原。",
+  "en": "The deletion syncs to all your devices and can't be undone.",
+  "ja": "削除はすべての端末に同期され、元に戻せません。",
+  "ko": "삭제 내용은 모든 기기에 동기화되며 되돌릴 수 없습니다."
+ },
+ "已匯入 {count} 則記事": {
+  "zh-CN": "已导入 {count} 则记事",
+  "en": "Imported {count} note(s)",
+  "ja": "{count} 件のメモをインポートしました",
+  "ko": "메모 {count}개를 가져왔습니다"
+ },
+ "匯入中…": {
+  "zh-CN": "导入中…",
+  "en": "Importing…",
+  "ja": "インポート中…",
+  "ko": "가져오는 중…"
+ },
+ "匯入檔案": {
+  "zh-CN": "导入文件",
+  "en": "Import files",
+  "ja": "ファイルをインポート",
+  "ko": "파일 가져오기"
+ },
+ "支援 .txt、.md、.html、.docx": {
+  "zh-CN": "支持 .txt、.md、.html、.docx",
+  "en": ".txt, .md, .html and .docx",
+  "ja": ".txt、.md、.html、.docx に対応",
+  "ko": ".txt, .md, .html, .docx 지원"
+ },
+ "閱讀": {
+  "zh-CN": "阅读",
+  "en": "Read",
+  "ja": "読む",
+  "ko": "읽기"
  }
 };

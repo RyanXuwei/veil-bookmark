@@ -108,9 +108,49 @@ try {
   await page.locator(".quickFolder summary", { hasText: "Job" }).waitFor();
   await page.getByRole("button", { name: "資料夾操作：Job" }).click();
   await page.getByRole("button", { name: "刪除資料夾" }).click();
-  await page.getByRole("button", { name: /確定刪除？3 個項目/ }).click();
+  await page.getByRole("alertdialog").getByText("會移到上一層").waitFor();
+  await page.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
   await page.waitForFunction(() => document.querySelectorAll(".quickRoot > .quickItem").length === 4);
   assert.deepEqual(await order(), ["Home"]);
+
+  // Nested folders: a subfolder from the menu, dragging a folder into
+  // another, and moving one back to the top level.
+  await page.getByRole("button", { name: "資料夾操作：Home" }).click();
+  await page.getByRole("button", { name: "新增子資料夾" }).click();
+  await page.getByRole("textbox", { name: "子資料夾名稱" }).fill("Trips");
+  await page.getByRole("button", { name: "建立", exact: true }).click();
+  await page.locator(".quickSub .quickFolder summary", { hasText: "Trips" }).waitFor();
+  let nested = await rpc("LIST");
+  assert(nested.folders.some((f) => f.name === "Home/Trips" && !f.deleted));
+  await rpc("FOLDER_CREATE", { kind: "entry", name: "Later" });
+  await page.reload();
+  await page.locator(".quickFolder summary", { hasText: "Later" }).waitFor();
+  // Drag "Later" onto the middle of "Home": it goes inside.
+  await page.locator(".quickFolder summary", { hasText: "Later" }).dragTo(
+    page.locator(".quickFolder summary", { hasText: "Home" }).first(),
+    { targetPosition: { x: 60, y: 19 } },
+  );
+  for (let i = 0; i < 40; i++) {
+    nested = await rpc("LIST");
+    if (nested.folders.some((f) => f.name === "Home/Later" && !f.deleted)) break;
+    await page.waitForTimeout(100);
+  }
+  assert(nested.folders.some((f) => f.name === "Home/Later" && !f.deleted), "dragged into Home");
+  await page.screenshot({ path: resolve(shots, "57-nested-folders.png") });
+  // "Move to folder" → top level.
+  await page.locator(".quickFolder summary", { hasText: "Home" }).first().click();
+  await page.getByRole("button", { name: "資料夾操作：Later" }).click();
+  await page.getByRole("button", { name: "移到資料夾" }).click();
+  await page.getByRole("combobox", { name: "移到資料夾" }).selectOption("");
+  for (let i = 0; i < 40; i++) {
+    nested = await rpc("LIST");
+    if (nested.folders.some((f) => f.name === "Later" && !f.deleted)) break;
+    await page.waitForTimeout(100);
+  }
+  assert(nested.folders.some((f) => f.name === "Later" && !f.deleted), "moved to the top level");
+  await rpc("FOLDER_DELETE", { kind: "entry", name: "Later" });
+  await rpc("FOLDER_DELETE", { kind: "entry", name: "Home/Trips" });
+  await page.reload();
 
   // Notes tab: folders, "…" quick menu, drag ordering.
   for (const title of ["第一篇", "第二篇", "第三篇"])
@@ -142,7 +182,8 @@ try {
   // Delete from the quick menu (two-step confirmation).
   await page.getByRole("button", { name: "更多操作：第二篇" }).click();
   await page.getByRole("button", { name: "刪除", exact: true }).click();
-  await page.getByRole("button", { name: "確定刪除？內容將無法復原" }).click();
+  await page.getByRole("alertdialog", { name: "刪除「第二篇」？" }).waitFor();
+  await page.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
   await page.waitForFunction(() => ![...document.querySelectorAll(".quickText strong")].some((e) => e.textContent === "第二篇"));
   await page.getByRole("button", { name: "更多操作：第三篇" }).click();
   await page.screenshot({ path: resolve(shots, "61-note-folders-menu.png") });

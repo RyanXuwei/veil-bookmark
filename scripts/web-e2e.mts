@@ -132,6 +132,75 @@ v.memos.push({
   deleted: false,
 });
 
+// ---- A minimal .docx for the import test (ZIP, stored, with CRC-32) -------
+const crcTable = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+const crc32 = (b: Uint8Array) => {
+  let c = 0xffffffff;
+  for (const x of b) c = crcTable[(c ^ x) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+};
+function zip(files: Record<string, Uint8Array | string>) {
+  const enc = new TextEncoder();
+  const local: Buffer[] = [],
+    central: Buffer[] = [];
+  let offset = 0;
+  for (const [name, raw] of Object.entries(files)) {
+    const data = typeof raw === "string" ? enc.encode(raw) : raw;
+    const n = enc.encode(name);
+    const crc = crc32(data);
+    const h = Buffer.alloc(30);
+    h.writeUInt32LE(0x04034b50, 0);
+    h.writeUInt16LE(20, 4);
+    h.writeUInt32LE(crc, 14);
+    h.writeUInt32LE(data.length, 18);
+    h.writeUInt32LE(data.length, 22);
+    h.writeUInt16LE(n.length, 26);
+    local.push(h, Buffer.from(n), Buffer.from(data));
+    const c = Buffer.alloc(46);
+    c.writeUInt32LE(0x02014b50, 0);
+    c.writeUInt16LE(20, 4);
+    c.writeUInt16LE(20, 6);
+    c.writeUInt32LE(crc, 16);
+    c.writeUInt32LE(data.length, 20);
+    c.writeUInt32LE(data.length, 24);
+    c.writeUInt16LE(n.length, 28);
+    c.writeUInt32LE(offset, 42);
+    central.push(c, Buffer.from(n));
+    offset += 30 + n.length + data.length;
+  }
+  const cd = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(Object.keys(files).length, 8);
+  end.writeUInt16LE(Object.keys(files).length, 10);
+  end.writeUInt32LE(cd.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...local, cd, end]);
+}
+const W_NS =
+  'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+const docx = zip({
+  "[Content_Types].xml": '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
+  "word/document.xml": `<?xml version="1.0"?><w:document ${W_NS}><w:body>
+<w:p><w:pPr><w:pStyle w:val="1"/></w:pPr><w:r><w:t>會議紀錄</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>重點</w:t></w:r><w:r><w:t xml:space="preserve">：預算 &amp; 時程</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>第一項</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>第二項</w:t></w:r></w:p>
+<w:p><w:hyperlink r:id="rLink"><w:r><w:t>參考網址</w:t></w:r></w:hyperlink></w:p>
+<w:p><w:r><w:drawing><wp:inline><a:graphic><a:graphicData><pic:pic><pic:blipFill><a:blip r:embed="rImg"/></pic:blipFill></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>
+<w:tbl><w:tr><w:tc><w:p><w:r><w:t>品項</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>金額</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+<w:p><w:r><w:t>&lt;script&gt;alert(1)&lt;/script&gt;</w:t></w:r></w:p>
+</w:body></w:document>`,
+  "word/_rels/document.xml.rels": '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rLink" Type="hyperlink" Target="https://example.com/ref" TargetMode="External"/><Relationship Id="rImg" Type="image" Target="media/image1.png"/></Relationships>',
+  "word/styles.xml": `<?xml version="1.0"?><w:styles ${W_NS}><w:style w:type="paragraph" w:styleId="1"><w:name w:val="heading 1"/></w:style></w:styles>`,
+  "word/numbering.xml": `<?xml version="1.0"?><w:numbering ${W_NS}><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`,
+  "word/media/image1.png": Buffer.from(png, "base64"),
+});
+
 // ---- Simulated Drive -----------------------------------------------------
 const remote = new Map<string, unknown>();
 let next = 0;
@@ -335,7 +404,7 @@ try {
   // ---- Notes: read-only, with pictures ------------------------------------
   await page.getByRole("tab", { name: /記事本/ }).click();
   await page.locator(".groupTitle", { hasText: "旅行計畫" }).waitFor();
-  await page.getByRole("button", { name: /京都行程/ }).click();
+  await page.locator("button.rowMain", { hasText: "京都行程" }).click();
   const reader = page.getByRole("dialog", { name: "京都行程" });
   await reader.getByRole("heading", { name: "第一天" }).waitFor();
   assert.match(
@@ -395,7 +464,7 @@ try {
     assert.equal(m.paperColor, "#dfeef4");
     assert.equal(m.format, "html");
   });
-  await page.getByRole("button", { name: /購物清單/ }).click();
+  await page.locator("button.rowMain", { hasText: "購物清單" }).click();
   await page.getByRole("button", { name: "編輯" }).click();
   await page.getByRole("button", { name: "記事選項" }).click();
   await page.getByRole("button", { name: "刪除記事" }).click();
@@ -406,6 +475,38 @@ try {
     assert.equal(m.body, "");
     assert.equal(rv.memos.filter((x) => !x.deleted).length, 1);
   });
+  await page.getByRole("tab", { name: /書籤/ }).click();
+
+  // ---- Import: .docx, Markdown and a Big5 text file become notes ---------
+  await page.getByRole("tab", { name: /記事本/ }).click();
+  await page.locator('input[type=file][accept*=".docx"]').setInputFiles([
+    { name: "會議.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx },
+    { name: "清單.md", mimeType: "text/markdown", buffer: Buffer.from("## 待辦\n\n- **買** 牛奶\n- 寄信\n\n[說明](https://example.com/md)\n") },
+    { name: "舊檔.txt", mimeType: "text/plain", buffer: Buffer.from([0xa4, 0xa4, 0xa4, 0xe5, 0x0a, 0x41]) },
+    { name: "舊版.doc", mimeType: "application/msword", buffer: Buffer.from("x") },
+  ]);
+  await page.getByRole("status").filter({ hasText: "已匯入 3 則記事" }).waitFor();
+  await page.getByRole("alert").filter({ hasText: "不支援舊版 Word 文件" }).waitFor();
+  await expectRemote(async (rv) => {
+    const live = rv.memos.filter((m) => !m.deleted);
+    const d = live.find((m) => m.title === "會議")!;
+    assert(d, "docx imported");
+    assert.match(d.body, /<h1>會議紀錄<\/h1>/);
+    assert.match(d.body, /<b>重點<\/b>：預算 &amp; 時程/);
+    assert.match(d.body, /<ol><li>第一項<\/li><li>第二項<\/li><\/ol>/);
+    assert.match(d.body, /<a href="https:\/\/example\.com\/ref"[^>]*>參考網址<\/a>/);
+    assert.match(d.body, /<p>品項 \| 金額<\/p>/);
+    assert.match(d.body, /&lt;script&gt;/, "text stays text");
+    assert.doesNotMatch(d.body, /<script/i);
+    assert.equal(d.images?.length, 1, "picture imported");
+    assert.match(d.body, new RegExp(`data-veil-img="${d.images![0].id}"`));
+    const m = live.find((x) => x.title === "清單")!;
+    assert.match(m.body, /<h2>待辦<\/h2><ul><li><b>買<\/b> 牛奶<\/li><li>寄信<\/li><\/ul>/);
+    assert.match(m.body, /href="https:\/\/example\.com\/md"/);
+    const t = live.find((x) => x.title === "舊檔")!;
+    assert.match(t.body, /<p>中文<\/p><p>A<\/p>/, "Big5 text decoded");
+  });
+  await snap("web-8-import.png");
   await page.getByRole("tab", { name: /書籤/ }).click();
 
   // ---- Lock, then open offline from the phone's encrypted copy -------------
@@ -647,7 +748,7 @@ try {
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
   assert.equal(remote.size, 1, "clearing the phone leaves Drive alone");
   console.log(
-    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, Google connection kept across reloads and tabs, silent renewal (accepted, refused without a loop), unconfigured, clear phone",
+    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), import .docx/.md/Big5 .txt (old .doc refused), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, Google connection kept across reloads and tabs, silent renewal (accepted, refused without a loop), unconfigured, clear phone",
   );
 } finally {
   await browser.close();

@@ -173,13 +173,19 @@ export type Folder = {
   revision: string;
   deleted: boolean;
 };
-export const FOLDER_MAX = 100; // characters in a folder name
+export const FOLDER_MAX = 100; // characters in a folder path ("A/B/C")
 export const folderId = (kind: FolderKind, name: string) => `${kind}:${name}`;
+/** A folder path: "/" separates levels; empty levels and spaces around
+ *  them are removed ("  Work / / Projects " -> "Work/Projects"). */
 export function cleanFolderName(value: unknown) {
   return String(value ?? "")
     .replace(/[\u0000-\u001f]/g, " ")
-    .trim()
-    .slice(0, FOLDER_MAX);
+    .split("/")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("/")
+    .slice(0, FOLDER_MAX)
+    .replace(/\/+$/, "");
 }
 // Vault v2 adds encrypted memos. Older releases reject v2 instead of silently
 // dropping memos during a sync merge.

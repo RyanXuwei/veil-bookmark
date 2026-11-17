@@ -846,3 +846,23 @@ select:focus {
   min-height: 40px;
   padding: 8px 18px;
 }
+
+/* Import files as notes */
+.importRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 10px;
+}
+.importRow button {
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 14px;
+}
+.importRow small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.importError {
+  white-space: pre-line;
+}

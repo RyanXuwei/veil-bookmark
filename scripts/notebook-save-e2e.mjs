@@ -164,8 +164,8 @@ try {
   await nb.keyboard.press("Control+s");
   await nb.waitForFunction(() => window.saveTest.waiters.length === 1);
   await nb.getByRole("tab", { name: "檢視" }).click();
-  nb.once("dialog", (d) => d.accept());
   await nb.getByRole("button", { name: "刪除記事" }).click();
+  await nb.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
   await nb.evaluate(() => window.saveTest.release());
   await nb.waitForFunction(
     () => document.querySelector(".nbTitle").value !== "暫存待刪除",

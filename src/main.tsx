@@ -1,4 +1,6 @@
 import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
+import { baseName, depthOf, pathLabel, within } from "./folders";
+import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { DRIVE_FULL, STORAGE_URL } from "./drive";
@@ -436,6 +438,8 @@ function App() {
     },
     rename: (kind: Kind, from: string, to: string) =>
       apply("FOLDER_RENAME", { kind, from, to }),
+    move: (kind: Kind, from: string, to: string, order?: string[]) =>
+      apply("FOLDER_RENAME", { kind, from, to, order }),
     remove: (kind: Kind, name: string) =>
       apply("FOLDER_DELETE", { kind, name }),
   };
@@ -482,7 +486,7 @@ function App() {
   const visible = entries
     .filter(
       (x) =>
-        (folder === ALL || x.folder === folder) &&
+        (folder === ALL || within(x.folder, folder)) &&
         `${x.title} ${x.url} ${x.tags.join(" ")} ${x.notes}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -936,6 +940,9 @@ function App() {
                         void organize.rename("entry", a, b)
                       }
                       onDeleteFolder={(f) => void organize.remove("entry", f)}
+                      onMoveFolder={(a, b, o) =>
+                        void organize.move("entry", a, b, o)
+                      }
                       creating={creatingFolder}
                       onCreate={(n) => void organize.create("entry", n)}
                       onCancelCreate={() => setCreatingFolder(false)}
@@ -992,10 +999,12 @@ function App() {
               <button
                 key={f}
                 className={folder === f ? "nav active" : "nav"}
+                style={{ paddingLeft: 14 + depthOf(f) * 16 }}
+                title={pathLabel(f)}
                 onClick={() => setFolder(f)}
               >
-                ▱ {f}
-                <span>{entries.filter((x) => x.folder === f).length}</span>
+                ▱ {baseName(f)}
+                <span>{entries.filter((x) => within(x.folder, f)).length}</span>
               </button>
             ))}
             {!folders.length && (
@@ -1021,7 +1030,7 @@ function App() {
             <div className="eyebrow">COLLECT WHAT MATTERS</div>
             <div className="libraryTitle">
               <div>
-                <h1>{folder === ALL ? t("全部書籤") : folder}</h1>
+                <h1>{folder === ALL ? t("全部書籤") : pathLabel(folder)}</h1>
                 <p className="muted">{t("讓每一個好去處，都有自己的位置。")}</p>
               </div>
               <button
@@ -1059,7 +1068,7 @@ function App() {
                         {x.title.slice(0, 1).toUpperCase()}
                       </div>
                       <span className="folderChip">
-                        {x.folder || t("未分類")}
+                        {x.folder ? pathLabel(x.folder) : t("未分類")}
                       </span>
                     </div>
                     <h2>{x.title}</h2>
@@ -1203,7 +1212,9 @@ function App() {
                 </label>
                 <datalist id="folders">
                   {folders.map((f) => (
-                    <option key={f}>{f}</option>
+                    <option key={f} value={f}>
+                      {pathLabel(f)}
+                    </option>
                   ))}
                 </datalist>
                 <TagInput
@@ -1238,30 +1249,19 @@ function App() {
         />
       )}
       {deleting && (
-        <div className="overlay">
-          <section className="modal card" role="alertdialog" aria-modal="true">
-            <h2>{t("刪除「{title}」？", { title: deleting.title })}</h2>
-            <p className="muted">
-              {t("這項刪除也會在下次同步時套用到其他裝置。")}
-            </p>
-            <div className="row">
-              <button onClick={() => setDeleting(null)}>{t("取消")}</button>
-              <button
-                className="danger"
-                disabled={busy}
-                onClick={() =>
-                  run(async () => {
-                    await rpc("DELETE", { id: deleting.id });
-                    setDeleting(null);
-                    await refresh();
-                  })
-                }
-              >
-                {t("確定刪除")}
-              </button>
-            </div>
-          </section>
-        </div>
+        <ConfirmDelete
+          title={t("刪除「{title}」？", { title: deleting.title })}
+          detail={itemDeleteDetail()}
+          busy={busy}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() =>
+            run(async () => {
+              await rpc("DELETE", { id: deleting.id });
+              setDeleting(null);
+              await refresh();
+            })
+          }
+        />
       )}
       {(panel === "settings" ||
         panel === "security" ||

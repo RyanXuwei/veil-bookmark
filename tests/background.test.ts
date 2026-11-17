@@ -1307,3 +1307,52 @@ test("new installation: looks for a vault in Drive without prompting, or after t
     delete local.vault;
   }
 });
+
+test("nested folders: create sub, rename/move a subtree, delete moves contents up, paths cleaned", async () => {
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.driveEnabled;
+  quickTimers.clear();
+  await rpc("CREATE", { password: "abcd" });
+  const { folderNames } = await import("../src/sortable");
+  const { cleanFolderName } = await import("../src/crypto");
+  assert.equal(cleanFolderName("  Work / / Projects /"), "Work/Projects");
+  const names = (v: any, kind = "entry") =>
+    folderNames(kind as any, v.folders, (kind === "entry" ? v.entries : v.memos).filter((x: any) => !x.deleted));
+  const add = async (title: string, folder: string) =>
+    (await rpc("UPSERT", { entry: { title, url: `https://${title}.example`, folder } })).entries.find(
+      (x: any) => x.title === title,
+    ).id;
+  await rpc("FOLDER_CREATE", { kind: "entry", name: "Work" });
+  await rpc("FOLDER_CREATE", { kind: "entry", name: "Work/Projects" });
+  await rpc("FOLDER_CREATE", { kind: "entry", name: "Home" });
+  await assert.rejects(rpc("FOLDER_CREATE", { kind: "entry", name: "Work/Projects" }), /同名/);
+  const p = await add("p", "Work/Projects");
+  // A bookmark saved into a deep path creates its parents too.
+  await add("q", "Work/Projects/2026");
+  let v = await rpc("LIST");
+  assert.deepEqual(names(v), ["Work", "Work/Projects", "Work/Projects/2026", "Home"]);
+  // Rename the middle folder: the subtree and its items follow.
+  v = await rpc("FOLDER_RENAME", { kind: "entry", from: "Work/Projects", to: "Work/Plans" });
+  assert.deepEqual(names(v), ["Work", "Work/Plans", "Work/Plans/2026", "Home"]);
+  assert.equal(v.entries.find((x: any) => x.id === p).folder, "Work/Plans");
+  assert.equal(v.entries.find((x: any) => x.title === "q").folder, "Work/Plans/2026");
+  // Move it under Home, placed first among Home's children.
+  v = await rpc("FOLDER_RENAME", { kind: "entry", from: "Work/Plans", to: "Home/Plans", order: ["Home/Plans"] });
+  assert.deepEqual(names(v), ["Work", "Home", "Home/Plans", "Home/Plans/2026"]);
+  await assert.rejects(rpc("FOLDER_RENAME", { kind: "entry", from: "Home", to: "Home/Plans/Home" }), /子資料夾/);
+  await assert.rejects(rpc("FOLDER_RENAME", { kind: "entry", from: "Home/Plans", to: "Work" }), /同名/);
+  // Deleting Home/Plans moves its bookmark and subfolder up to Home.
+  v = await rpc("FOLDER_DELETE", { kind: "entry", name: "Home/Plans" });
+  assert.deepEqual(names(v), ["Work", "Home", "Home/2026"]);
+  assert.equal(v.entries.find((x: any) => x.id === p).folder, "Home");
+  assert.equal(v.entries.find((x: any) => x.title === "q").folder, "Home/2026");
+  // Deleting a top-level folder moves things to the top level.
+  v = await rpc("FOLDER_DELETE", { kind: "entry", name: "Home" });
+  assert.deepEqual(names(v), ["Work", "2026"]);
+  assert.equal(v.entries.find((x: any) => x.id === p).folder, "");
+  // Notes use the same rules.
+  await rpc("FOLDER_CREATE", { kind: "memo", name: "日記/2026" });
+  v = await rpc("LIST");
+  assert.deepEqual(names(v, "memo"), ["日記", "日記/2026"]);
+});

@@ -930,3 +930,22 @@ hr {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Delete confirmation (bookmarks, notes and folders) */
+.overlay.confirmOverlay {
+  z-index: 80;
+  padding: 16px;
+}
+.modal.confirmDelete {
+  width: min(420px, 100%);
+  padding: 24px;
+}
+.modal.confirmDelete h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  word-break: break-word;
+}
+.modal.confirmDelete .row {
+  justify-content: flex-end;
+  margin-top: 18px;
+}

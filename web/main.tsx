@@ -27,6 +27,8 @@ import {
   sanitizeHtml,
 } from "../src/sanitize";
 import { folderNames, ordered } from "../src/sortable";
+import { baseName, depthOf, parentOf, pathLabel, within } from "../src/folders";
+import { IMPORT_ACCEPT, importFile } from "../src/import-doc";
 import { TagInput } from "../src/tag-input";
 import {
   configured,
@@ -379,6 +381,48 @@ function Library({
   const [actions, setActions] = useState<Entry | null>(null);
   const [reading, setReading] = useState<Memo | null>(null);
   const [writing, setWriting] = useState<{ memo: Memo | null } | null>(null);
+  const [memoActions, setMemoActions] = useState<Memo | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const importInput = useRef<HTMLInputElement>(null);
+  // Each chosen file (.txt, .md, .html, .docx) becomes a new note.
+  async function importFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setImporting(true);
+    setImportError("");
+    let done = 0,
+      skipped = 0;
+    const failed: string[] = [];
+    for (const f of Array.from(files).slice(0, 20)) {
+      try {
+        const r = await importFile(f);
+        skipped += r.skipped;
+        await saveMemo({
+          title: r.title,
+          body: r.html,
+          format: "html",
+          images: r.images,
+        });
+        done++;
+      } catch (e) {
+        failed.push(
+          t("無法匯入「{name}」：{reason}", {
+            name: f.name,
+            reason: tError((e as Error).message),
+          }),
+        );
+      }
+    }
+    setImporting(false);
+    if (skipped)
+      failed.push(
+        t("有 {count} 張圖片的格式無法匯入（例如 EMF／WMF），已略過。", {
+          count: skipped,
+        }),
+      );
+    setImportError(failed.join("\n"));
+    if (done) setToast(t("已匯入 {count} 則記事", { count: done }));
+  }
   const [settings, setSettings] = useState(false);
   const [toast, setToast] = useState("");
   useEffect(() => {
@@ -402,7 +446,7 @@ function Library({
     entries.filter(
       (x) =>
         (folder === ALL ||
-          (folder === UNFILED ? !x.folder : x.folder === folder)) &&
+          (folder === UNFILED ? !x.folder : within(x.folder, folder))) &&
         (!q ||
           `${x.title} ${x.url} ${x.tags.join(" ")} ${x.notes}`
             .toLowerCase()
@@ -410,15 +454,21 @@ function Library({
     ),
     (a, b) => b.updated - a.updated,
   );
-  // "All": grouped by folder in the extension's order.
+  // Grouped by folder in the extension's (tree) order: everything under
+  // "All", or the chosen top-level folder and its subfolders.
+  const topFolders = folders.filter((f) => !parentOf(f));
   const groups =
-    folder === ALL && !q
+    (folder === ALL || (folder !== UNFILED && folders.includes(folder))) && !q
       ? [
-          ...folders.map((f) => ({
-            name: f,
-            items: shown.filter((x) => x.folder === f),
-          })),
-          { name: "", items: shown.filter((x) => !x.folder) },
+          ...folders
+            .filter((f) => folder === ALL || within(f, folder))
+            .map((f) => ({
+              name: f,
+              items: shown.filter((x) => x.folder === f),
+            })),
+          ...(folder === ALL
+            ? [{ name: "", items: shown.filter((x) => !x.folder) }]
+            : []),
         ].filter((g) => g.items.length)
       : [{ name: null as string | null, items: shown }];
   const memoFolders = folderNames("memo", v.folders, memos);
@@ -507,7 +557,7 @@ function Library({
             <div className="chips" role="toolbar" aria-label={t("資料夾")}>
               {[
                 [ALL, t("全部")],
-                ...folders.map((f) => [f, f]),
+                ...topFolders.map((f) => [f, f]),
                 ...(folders.length && hasUnfiled
                   ? [[UNFILED, t("未分類")]]
                   : []),
@@ -526,7 +576,9 @@ function Library({
             {groups.map((g) => (
               <section key={g.name ?? "*"}>
                 {g.name !== null && folders.length > 0 && (
-                  <h2 className="groupTitle">{g.name || t("未分類")}</h2>
+                  <h2 className="groupTitle">
+                    {g.name ? pathLabel(g.name) : t("未分類")}
+                  </h2>
                 )}
                 <ul>
                   {g.items.map((x) => (
@@ -565,10 +617,38 @@ function Library({
         </>
       ) : (
         <main className="list">
+          <div className="importRow">
+            <button
+              className="secondary"
+              disabled={importing}
+              onClick={() => importInput.current?.click()}
+            >
+              {importing ? t("匯入中…") : t("匯入檔案")}
+            </button>
+            <small>{t("支援 .txt、.md、.html、.docx")}</small>
+            <input
+              ref={importInput}
+              type="file"
+              accept={IMPORT_ACCEPT}
+              multiple
+              hidden
+              onChange={(e) => {
+                void importFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {importError && (
+            <p className="error importError" role="alert">
+              {importError}
+            </p>
+          )}
           {memoGroups.map((g) => (
             <section key={g.name ?? "*"}>
               {g.name !== null && memoFolders.length > 0 && (
-                <h2 className="groupTitle">{g.name || t("未分類")}</h2>
+                <h2 className="groupTitle">
+                  {g.name ? pathLabel(g.name) : t("未分類")}
+                </h2>
               )}
               <ul>
                 {g.items.map((m) => {
@@ -585,6 +665,15 @@ function Library({
                               ` · ${text.replace(/\s+/g, " ").slice(0, 80)}`}
                           </small>
                         </span>
+                      </button>
+                      <button
+                        className="more"
+                        aria-label={t("更多操作：{title}", {
+                          title: memoTitle(m),
+                        })}
+                        onClick={() => setMemoActions(m)}
+                      >
+                        ⋯
                       </button>
                     </li>
                   );
@@ -652,6 +741,25 @@ function Library({
             setReading(null);
           }}
         />
+      )}
+      {memoActions && (
+        <Sheet title={memoTitle(memoActions)} onClose={() => setMemoActions(null)}>
+          <MemoActionList
+            m={memoActions}
+            onRead={() => {
+              setReading(memoActions);
+              setMemoActions(null);
+            }}
+            onEdit={() => {
+              setWriting({ memo: memoActions });
+              setMemoActions(null);
+            }}
+            onDone={(msg) => {
+              setMemoActions(null);
+              if (msg) setToast(msg);
+            }}
+          />
+        </Sheet>
       )}
       {writing && (
         <MemoEditor
@@ -776,6 +884,46 @@ function ActionList({
   );
 }
 
+// Same actions and the same two-step delete as a bookmark's ⋯ sheet.
+function MemoActionList({
+  m,
+  onRead,
+  onEdit,
+  onDone,
+}: {
+  m: Memo;
+  onRead: () => void;
+  onEdit: () => void;
+  onDone: (msg?: string) => void;
+}) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <div className="actions">
+      <button className="action" onClick={onRead}>
+        {t("閱讀")}
+      </button>
+      <button className="action" onClick={onEdit}>
+        {t("編輯")}
+      </button>
+      {confirm ? (
+        <button
+          className="action danger"
+          onClick={async () => {
+            await removeMemo(m.id);
+            onDone("已刪除記事");
+          }}
+        >
+          {t("確定刪除？會同步到所有裝置")}
+        </button>
+      ) : (
+        <button className="action dangerText" onClick={() => setConfirm(true)}>
+          {t("刪除")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Editor({
   draft,
   folders,
@@ -850,7 +998,7 @@ function Editor({
           />
           <datalist id="webFolders">
             {folders.map((f) => (
-              <option key={f} value={f} />
+              <option key={f} value={f} label={pathLabel(f)} />
             ))}
           </datalist>
         </label>
@@ -1319,7 +1467,7 @@ function MemoEditor({
               {[...new Set([...folders, ...(folder ? [folder] : [])])].map(
                 (f) => (
                   <option key={f} value={f}>
-                    {f}
+                    {"\u00a0\u00a0".repeat(depthOf(f)) + baseName(f)}
                   </option>
                 ),
               )}

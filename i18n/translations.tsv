@@ -542,3 +542,24 @@ Google 連線已過期，修改尚未上傳。點這裡重新連線。|Your Goog
 立即啟用|Turn on|オンにする|지금 켜기
 以後再說|Not now|あとで|나중에
 之後可以在「同步與設定」啟用生物辨識解鎖。|You can turn on biometric unlock later under Sync & settings.|生体認証ロック解除は、あとで「同期と設定」からオンにできます。|생체 인증 잠금 해제는 나중에 '동기화 및 설정'에서 켤 수 있습니다.
+無法匯入「{name}」：{reason}|Couldn't import “{name}”: {reason}|「{name}」をインポートできません：{reason}|'{name}'을(를) 가져올 수 없습니다: {reason}
+有 {count} 張圖片的格式無法匯入（例如 EMF／WMF），已略過。|{count} picture(s) in an unsupported format (such as EMF/WMF) were skipped.|対応していない形式（EMF／WMF など）の画像 {count} 枚をスキップしました。|지원하지 않는 형식(EMF/WMF 등)의 사진 {count}장을 건너뛰었습니다.
+匯入文字檔、Markdown、HTML 或 Word（.docx），每個檔案成為一則新記事|Import text, Markdown, HTML or Word (.docx) files; each file becomes a new note|テキスト、Markdown、HTML、Word（.docx）をインポートします。ファイルごとに新しいメモになります|텍스트, Markdown, HTML, Word(.docx) 파일을 가져옵니다. 파일마다 새 메모가 됩니다
+匯入|Import|インポート|가져오기
+不能把資料夾移到它自己的子資料夾|A folder can't be moved into its own subfolder.|フォルダーを自分のサブフォルダーには移動できません。|폴더를 자신의 하위 폴더로 옮길 수 없습니다.
+新增子資料夾|New subfolder|サブフォルダーを作成|하위 폴더 만들기
+最上層|Top level|最上位|최상위
+子資料夾名稱|Subfolder name|サブフォルダー名|하위 폴더 이름
+拖到這裡移到最上層|Drop here to move to the top level|ここにドロップして最上位へ移動|여기에 놓으면 최상위로 이동
+刪除資料夾「{title}」？|Delete folder “{title}”?|フォルダー「{title}」を削除しますか？|'{title}' 폴더를 삭제할까요?
+資料夾裡的項目與子資料夾會移到上一層，不會被刪除。|Its items and subfolders move up one level; they are not deleted.|中の項目とサブフォルダーは一つ上の階層に移動し、削除されません。|폴더 안의 항목과 하위 폴더는 한 단계 위로 이동하며 삭제되지 않습니다.
+無法讀取這個檔案|This file can't be read.|このファイルを読み込めません。|이 파일을 읽을 수 없습니다.
+檔案太大，無法匯入|The file is too large to import.|ファイルが大きすぎてインポートできません。|파일이 너무 커서 가져올 수 없습니다.
+不支援舊版 Word 文件（.doc），請先在 Word 另存為 .docx 再匯入|Old Word documents (.doc) aren't supported. Save as .docx in Word first.|旧形式の Word 文書（.doc）には対応していません。Word で .docx として保存してからインポートしてください。|이전 Word 문서(.doc)는 지원하지 않습니다. Word에서 .docx로 저장한 뒤 가져오세요.
+不支援這種檔案，請選擇 .txt、.md、.html 或 .docx|This kind of file isn't supported. Choose a .txt, .md, .html or .docx file.|このファイル形式には対応していません。.txt、.md、.html、.docx を選んでください。|이 파일 형식은 지원하지 않습니다. .txt, .md, .html, .docx 파일을 선택하세요.
+刪除後會同步到所有裝置，無法復原。|The deletion syncs to all your devices and can't be undone.|削除はすべての端末に同期され、元に戻せません。|삭제 내용은 모든 기기에 동기화되며 되돌릴 수 없습니다.
+已匯入 {count} 則記事|Imported {count} note(s)|{count} 件のメモをインポートしました|메모 {count}개를 가져왔습니다
+匯入中…|Importing…|インポート中…|가져오는 중…
+匯入檔案|Import files|ファイルをインポート|파일 가져오기
+支援 .txt、.md、.html、.docx|.txt, .md, .html and .docx|.txt、.md、.html、.docx に対応|.txt, .md, .html, .docx 지원
+閱讀|Read|読む|읽기

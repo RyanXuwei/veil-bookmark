@@ -176,10 +176,26 @@ try {
   await nb.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
 
-  // Delete the open note (confirm dialog).
-  nb.once("dialog", (d) => d.accept());
+  // Import a Markdown file: it becomes a new note and opens.
+  await nb.locator('input[type=file][accept*=".docx"]').setInputFiles({
+    name: "匯入測試.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("# 匯入標題\n\n- **粗體** 項目\n"),
+  });
+  await nb.locator(".nbEditor h1").getByText("匯入標題").waitFor();
+  await nb.locator(".nbEditor li b").getByText("粗體").waitFor();
+  assert.equal(await nb.locator(".nbTitle").inputValue(), "匯入測試");
   await nb.getByRole("tab", { name: "檢視" }).click();
   await nb.getByRole("button", { name: "刪除記事" }).click();
+  await nb.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
+  await nb.waitForFunction(() => ![...document.querySelectorAll(".nbNav li")].some((x) => x.textContent.includes("匯入測試")));
+  await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
+
+  // Delete the open note (the same confirmation dialog as the popup).
+  await nb.getByRole("tab", { name: "檢視" }).click();
+  await nb.getByRole("button", { name: "刪除記事" }).click();
+  await nb.getByRole("alertdialog").getByText("刪除後會同步到所有裝置").waitFor();
+  await nb.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
   await nb.waitForFunction(
     () => document.querySelectorAll(".nbNav li").length === 1,
   );

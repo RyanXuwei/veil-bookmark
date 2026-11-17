@@ -34,6 +34,7 @@ import {
   folderId,
 } from "./crypto";
 import { deleteMemo, upsertMemo } from "./memo-ops";
+import { folderTree, joinPath, parentOf, within } from "./folders";
 import {
   clearClientId,
   clearTokens,
@@ -290,18 +291,48 @@ function folderKind(k: unknown): FolderKind {
   if (k !== "entry" && k !== "memo") throw Error("未知操作");
   return k;
 }
-/** Folder names in use (records and items), unordered. */
+/** Folder paths in use (records, items and their ancestors). */
 function liveFolders(v: Vault, kind: FolderKind) {
   const items: { folder?: string; deleted: boolean }[] =
     kind === "entry" ? v.entries : v.memos;
-  return [
-    ...new Set([
-      ...(v.folders || [])
-        .filter((f) => f.kind === kind && !f.deleted)
-        .map((f) => f.name),
-      ...items.filter((x) => !x.deleted && x.folder).map((x) => x.folder!),
-    ]),
-  ];
+  return folderTree(
+    kind,
+    v.folders,
+    items.filter((x) => !x.deleted),
+  );
+}
+/** A folder record for the path and each missing ancestor. */
+function ensureFolder(v: Vault, kind: FolderKind, path: string) {
+  const chain: string[] = [];
+  for (let p = path; p; p = parentOf(p)) chain.unshift(p);
+  for (const p of chain) {
+    const rec = (v.folders || []).find(
+      (f) => f.id === folderId(kind, p) && !f.deleted,
+    );
+    if (!rec) upsertFolder(v, kind, p);
+  }
+}
+/** Renames (or moves) a folder with everything below it. */
+function renameTree(v: Vault, kind: FolderKind, from: string, to: string) {
+  if (!from || !to || from === to) return;
+  if (within(to, from)) throw Error("不能把資料夾移到它自己的子資料夾");
+  const live = liveFolders(v, kind);
+  const moving = live.filter((p) => within(p, from));
+  for (const p of moving) {
+    const next = to + p.slice(from.length);
+    if (live.includes(next) && !within(next, from))
+      throw Error("已有同名資料夾");
+  }
+  ensureFolder(v, kind, parentOf(to));
+  for (const p of moving) {
+    const next = to + p.slice(from.length);
+    const old = (v.folders || []).find(
+      (f) => f.id === folderId(kind, p) && !f.deleted,
+    );
+    upsertFolder(v, kind, next, old?.order);
+    removeFolder(v, kind, p);
+    moveItems(v, kind, p, next);
+  }
 }
 function upsertFolder(
   v: Vault,
@@ -691,7 +722,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
       x.updated = Math.max(Date.now(), x.updated + 1);
       x.revision = crypto.randomUUID();
     });
-    if (folder) upsertFolder(v, kind, folder);
+    if (folder) ensureFolder(v, kind, folder);
     await save(v, s);
     await touch(s);
   } else if (m.type === "FOLDER_ORDER") {
@@ -708,7 +739,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const name = cleanFolderName(m.name);
     if (!name) throw Error("請輸入資料夾名稱");
     if (liveFolders(v, kind).includes(name)) throw Error("已有同名資料夾");
-    upsertFolder(v, kind, name);
+    ensureFolder(v, kind, name);
     await save(v, s);
     await touch(s);
   } else if (m.type === "FOLDER_RENAME") {
@@ -716,23 +747,35 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const from = cleanFolderName(m.from);
     const to = cleanFolderName(m.to);
     if (!to) throw Error("請輸入資料夾名稱");
-    if (from !== to) {
-      if (liveFolders(v, kind).includes(to)) throw Error("已有同名資料夾");
-      const old = (v.folders || []).find(
-        (f) => f.id === folderId(kind, from) && !f.deleted,
-      );
-      upsertFolder(v, kind, to, old?.order);
-      removeFolder(v, kind, from);
-      moveItems(v, kind, from, to);
-    }
+    // Renaming, or moving to another parent ("to" is the new full path).
+    renameTree(v, kind, from, to);
+    // Optional new order of the siblings at the destination.
+    if (Array.isArray(m.order))
+      m.order
+        .slice(0, 5000)
+        .map(cleanFolderName)
+        .filter(Boolean)
+        .forEach((name: string, i: number) => upsertFolder(v, kind, name, i));
     await save(v, s);
     await touch(s);
   } else if (m.type === "FOLDER_DELETE") {
-    // The folder goes away; its bookmarks or notes move to "Unfiled".
+    // The folder goes away; its bookmarks or notes and its subfolders move
+    // up one level (to "Unfiled" for a top-level folder).
     const kind = folderKind(m.kind);
     const name = cleanFolderName(m.name);
+    const up = parentOf(name);
+    const live = liveFolders(v, kind);
+    for (const p of live.filter((p) => within(p, name) && p !== name)) {
+      const next = joinPath(up, p.slice(name.length + 1));
+      const old = (v.folders || []).find(
+        (f) => f.id === folderId(kind, p) && !f.deleted,
+      );
+      if (!live.includes(next)) upsertFolder(v, kind, next, old?.order);
+      removeFolder(v, kind, p);
+      moveItems(v, kind, p, next);
+    }
     removeFolder(v, kind, name);
-    moveItems(v, kind, name, "");
+    moveItems(v, kind, name, up);
     await save(v, s);
     await touch(s);
   } else if (m.type === "OPEN") {

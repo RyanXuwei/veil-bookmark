@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { memoText } from "./sanitize";
 import type { Folder, Memo } from "./crypto";
 import { lang, t } from "./i18n";
+import { baseName, depthOf } from "./folders";
+import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import {
   FolderPlusIcon,
   FolderTree,
@@ -29,6 +31,7 @@ type Organize = {
   create: (kind: "memo", name: string) => unknown;
   rename: (kind: "memo", from: string, to: string) => unknown;
   remove: (kind: "memo", name: string) => unknown;
+  move: (kind: "memo", from: string, to: string, order?: string[]) => unknown;
 };
 
 export function MemoList({
@@ -139,27 +142,14 @@ export function MemoList({
                 <option value="">{t("未分類")}</option>
                 {folders.map((f) => (
                   <option key={f} value={f}>
-                    {f}
+                    {"\u00a0\u00a0".repeat(depthOf(f)) + baseName(f)}
                   </option>
                 ))}
               </select>
             ) : (
               <button onClick={() => setMoving(m.id)}>{t("移到資料夾")}</button>
             )}
-            {deleting === m.id ? (
-              <button
-                className="danger"
-                disabled={busy}
-                onClick={() => {
-                  closeMenu();
-                  onDelete(m.id);
-                }}
-              >
-                {t("確定刪除？內容將無法復原")}
-              </button>
-            ) : (
-              <button onClick={() => setDeleting(m.id)}>{t("刪除")}</button>
-            )}
+            <button onClick={() => setDeleting(m.id)}>{t("刪除")}</button>
           </div>
         )}
       </>
@@ -216,12 +206,31 @@ export function MemoList({
             onFolderOrder={(n) => void organize.folderOrder("memo", n)}
             onRenameFolder={(a, b) => void organize.rename("memo", a, b)}
             onDeleteFolder={(f) => void organize.remove("memo", f)}
+            onMoveFolder={(a, b, o) => void organize.move("memo", a, b, o)}
             creating={creating}
             onCreate={(n) => {
               setCreating(false);
               void organize.create("memo", n);
             }}
             onCancelCreate={() => setCreating(false)}
+          />
+        )}
+        {deleting && (
+          <ConfirmDelete
+            title={t("刪除「{title}」？", {
+              title: memoTitle(live.find((m) => m.id === deleting) || {
+                title: "",
+                body: "",
+              }),
+            })}
+            detail={itemDeleteDetail()}
+            busy={busy}
+            onCancel={() => setDeleting(null)}
+            onConfirm={() => {
+              const id = deleting;
+              closeMenu();
+              onDelete(id);
+            }}
           />
         )}
         {!shown.length && (query || (!folders.length && !creating)) && (
