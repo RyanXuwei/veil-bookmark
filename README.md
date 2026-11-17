@@ -25,13 +25,19 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 ## 安裝
 
-目前尚未上架 Chrome 線上應用程式商店，請手動安裝：
+從 Chrome 線上應用程式商店安裝：<https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg>
 
-1. 下載並解壓縮 `VeilBookmark_v1.2.0_Chrome.zip`，放在固定的資料夾。
+1. 開啟上面的連結，按「加到 Chrome」。
+2. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。
+3. 若要在無痕視窗使用：在擴充功能的「詳細資料」開啟「允許在無痕模式中執行」。
+
+商店上的版本需要經過審查，可能比這裡的最新版稍晚。想先用最新版，或不經由商店安裝時，可以手動安裝：
+
+1. 下載並解壓縮 `VeilBookmark_v<版號>_Chrome.zip`，放在固定的資料夾。
 2. 在 Chrome 網址列輸入 `chrome://extensions`，開啟右上角的「開發人員模式」。
 3. 按「載入未封裝項目」，選擇剛才解壓縮的資料夾。
-4. 點工具列上的 Veil Bookmark 圖示，設定至少 4 個字元的主密碼，並把畫面上顯示的**救援金鑰**抄寫、列印或下載後離線保存。
-5. 若要在無痕視窗使用：在擴充功能的「詳細資料」開啟「允許在無痕模式中執行」。
+
+商店版與手動安裝版是兩個不同的擴充功能（ID 不同），本機資料不共用；要在兩者之間搬移資料，請用 Google Drive 同步或加密備份檔。
 
 ### 錄音使用
 
