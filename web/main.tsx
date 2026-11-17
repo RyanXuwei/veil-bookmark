@@ -45,9 +45,9 @@ import {
   unlockBiometric,
 } from "./vault";
 import * as bio from "./biometric";
+import { VERSION } from "../src/version";
 import "./app.css";
 
-const VERSION = "1.2.0";
 const GITHUB = "https://github.com/RyanXuwei/veil-bookmark";
 const IDLE_LOCK = 15 * 60 * 1000;
 const HIDDEN_LOCK = 5 * 60 * 1000;
