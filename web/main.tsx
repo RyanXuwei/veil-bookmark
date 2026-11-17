@@ -386,14 +386,16 @@ function Library({
   const [importError, setImportError] = useState("");
   const importInput = useRef<HTMLInputElement>(null);
   // Each chosen file (.txt, .md, .html, .docx) becomes a new note.
-  async function importFiles(files: FileList | null) {
-    if (!files?.length) return;
+  async function importFiles(chosen: FileList | null) {
+    // Copy the list now: clearing the input afterwards empties the FileList.
+    const files = Array.from(chosen || []).slice(0, 20);
+    if (!files.length) return;
     setImporting(true);
     setImportError("");
     let done = 0,
       skipped = 0;
     const failed: string[] = [];
-    for (const f of Array.from(files).slice(0, 20)) {
+    for (const f of files) {
       try {
         const r = await importFile(f);
         skipped += r.skipped;

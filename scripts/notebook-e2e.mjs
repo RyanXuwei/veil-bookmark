@@ -189,6 +189,8 @@ try {
   await nb.getByRole("button", { name: "刪除記事" }).click();
   await nb.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
   await nb.waitForFunction(() => ![...document.querySelectorAll(".nbNav li")].some((x) => x.textContent.includes("匯入測試")));
+  // Back to the meeting note for the rest of the test.
+  await nb.locator(".nbNav button", { hasText: "專案會議紀錄" }).click();
   await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
 
   // Delete the open note (the same confirmation dialog as the popup).

@@ -410,8 +410,10 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
 
   // Import: each chosen file becomes a new encrypted note.
   const importInput = useRef<HTMLInputElement>(null);
-  async function importFiles(files: FileList | null) {
-    if (!files?.length || transition.current) return;
+  async function importFiles(chosen: FileList | null) {
+    // Copy the list now: clearing the input afterwards empties the FileList.
+    const files = Array.from(chosen || []).slice(0, 20);
+    if (!files.length || transition.current) return;
     if (recording || pendingAudio) {
       setError("請先停止錄音並放置播放貼紙");
       return;
@@ -424,7 +426,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     let skipped = 0;
     try {
       if (!(await save()) || importEpoch !== epoch.current) return;
-      for (const f of Array.from(files).slice(0, 20)) {
+      for (const f of files) {
         try {
           const r = await importFile(f);
           skipped += r.skipped;
