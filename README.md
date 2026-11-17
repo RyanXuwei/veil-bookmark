@@ -64,6 +64,7 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 
 - 可以「加到主畫面」當成 App 使用；Android 可從其他 App「分享」網址到 Veil Bookmark 直接收藏。
 - 主密碼只在手機上使用；手機保留一份加密副本，沒有網路時也能開啟。閒置 15 分鐘或離開 5 分鐘後自動上鎖。
+- 可在「同步與設定」啟用 **Face ID／指紋解鎖**（需要支援通行金鑰的手機與瀏覽器，例如 Android 的 Chrome、iOS 18 以上的 Safari）。主密碼不會被儲存；每 30 天需要輸入一次主密碼。
 - Google 連線約 1 小時後過期，之後的修改會先存在手機，重新連線後再上傳。
 
 ## Google Drive 同步（選用）

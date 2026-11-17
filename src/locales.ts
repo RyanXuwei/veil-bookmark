@@ -2514,5 +2514,95 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "点右下角的 ＋ 收藏第一个网址。",
   "en": "Tap ＋ at the bottom right to save your first link.",
   "ja": "右下の ＋ をタップして最初のリンクを保存しましょう。"
+ },
+ "使用 Face ID／指紋解鎖": {
+  "zh-CN": "使用 Face ID／指纹解锁",
+  "en": "Unlock with Face ID / fingerprint",
+  "ja": "Face ID／指紋でロック解除"
+ },
+ "停用生物辨識解鎖": {
+  "zh-CN": "禁用生物辨识解锁",
+  "en": "Turn off biometric unlock",
+  "ja": "生体認証ロック解除をオフにする"
+ },
+ "啟用 Face ID／指紋解鎖": {
+  "zh-CN": "激活 Face ID／指纹解锁",
+  "en": "Turn on Face ID / fingerprint unlock",
+  "ja": "Face ID／指紋ロック解除をオンにする"
+ },
+ "尚未啟用生物辨識解鎖": {
+  "zh-CN": "尚未激活生物辨识解锁",
+  "en": "Biometric unlock isn't turned on",
+  "ja": "生体認証ロック解除はオンになっていません"
+ },
+ "已停用生物辨識解鎖。可在手機的密碼設定中刪除「Veil Bookmark」通行金鑰。": {
+  "zh-CN": "已禁用生物辨识解锁。可在手机的密码设置中删除「Veil Bookmark」通行密钥。",
+  "en": "Biometric unlock is off. You can delete the \"Veil Bookmark\" passkey in your phone's password settings.",
+  "ja": "生体認証ロック解除をオフにしました。スマートフォンのパスワード設定で「Veil Bookmark」のパスキーを削除できます。"
+ },
+ "已啟用": {
+  "zh-CN": "已激活",
+  "en": "On",
+  "ja": "オン"
+ },
+ "已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。": {
+  "zh-CN": "已激活生物辨识解锁。下次可以直接用 Face ID／指纹打开。",
+  "en": "Biometric unlock is on. Next time, open it with Face ID or your fingerprint.",
+  "ja": "生体認証ロック解除をオンにしました。次回から Face ID／指紋で開けます。"
+ },
+ "已啟用（需要輸入一次主密碼）": {
+  "zh-CN": "已激活（需要输入一次主密码）",
+  "en": "On (enter your master password once)",
+  "ja": "オン（マスターパスワードを一度入力してください）"
+ },
+ "已超過 30 天，請輸入一次主密碼": {
+  "zh-CN": "已超过 30 天，请输入一次主密码",
+  "en": "It's been over 30 days. Enter your master password once.",
+  "ja": "30 日以上経過しました。マスターパスワードを一度入力してください"
+ },
+ "或輸入主密碼": {
+  "zh-CN": "或输入主密码",
+  "en": "or enter your master password",
+  "ja": "またはマスターパスワードを入力"
+ },
+ "未完成生物辨識設定": {
+  "zh-CN": "未完成生物辨识设置",
+  "en": "Biometric setup wasn't completed",
+  "ja": "生体認証の設定が完了しませんでした"
+ },
+ "未完成生物辨識，請再試一次或輸入主密碼": {
+  "zh-CN": "未完成生物辨识，请再试一次或输入主密码",
+  "en": "Biometric check wasn't completed. Try again or enter your master password.",
+  "ja": "生体認証が完了しませんでした。もう一度試すか、マスターパスワードを入力してください。"
+ },
+ "生物辨識解鎖": {
+  "zh-CN": "生物辨识解锁",
+  "en": "Biometric unlock",
+  "ja": "生体認証ロック解除"
+ },
+ "生物辨識解鎖已超過 30 天，請輸入一次主密碼。": {
+  "zh-CN": "生物辨识解锁已超过 30 天，请输入一次主密码。",
+  "en": "Biometric unlock has been used for over 30 days. Enter your master password once.",
+  "ja": "生体認証ロック解除の利用から 30 日以上経過しました。マスターパスワードを一度入力してください。"
+ },
+ "生物辨識資料已失效，請輸入主密碼後重新啟用": {
+  "zh-CN": "生物辨识数据已失效，请输入主密码后重新激活",
+  "en": "Biometric unlock no longer works. Enter your master password, then turn it on again.",
+  "ja": "生体認証データが無効になりました。マスターパスワードを入力してから、もう一度オンにしてください。"
+ },
+ "用 Face ID 或指紋代替輸入主密碼。主密碼不會被儲存；能解鎖這支手機的人也能打開保險庫。每 30 天需要輸入一次主密碼。": {
+  "zh-CN": "用 Face ID 或指纹代替输入主密码。主密码不会被保存；能解锁这支手机的人也能打开保险库。每 30 天需要输入一次主密码。",
+  "en": "Use Face ID or your fingerprint instead of typing your master password. The master password isn't stored; anyone who can unlock this phone can also open the vault. You'll enter the master password once every 30 days.",
+  "ja": "マスターパスワードの代わりに Face ID または指紋を使います。マスターパスワードは保存されません。このスマートフォンのロックを解除できる人は保管庫も開けます。30 日ごとにマスターパスワードを一度入力します。"
+ },
+ "這支手機或瀏覽器不支援以 Face ID／指紋解鎖，請繼續使用主密碼。": {
+  "zh-CN": "这支手机或浏览器不支持以 Face ID／指纹解锁，请继续使用主密码。",
+  "en": "This phone or browser doesn't support Face ID / fingerprint unlock. Keep using your master password.",
+  "ja": "このスマートフォンまたはブラウザは Face ID／指紋ロック解除に対応していません。マスターパスワードをお使いください。"
+ },
+ "這支手機的瀏覽器不支援生物辨識解鎖": {
+  "zh-CN": "这支手机的浏览器不支持生物辨识解锁",
+  "en": "This phone's browser doesn't support biometric unlock",
+  "ja": "このスマートフォンのブラウザは生体認証ロック解除に対応していません"
  }
 };

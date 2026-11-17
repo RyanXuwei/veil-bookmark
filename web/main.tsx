@@ -41,7 +41,10 @@ import {
   syncState,
   unlock,
   vault,
+  enableBiometric,
+  unlockBiometric,
 } from "./vault";
+import * as bio from "./biometric";
 import "./app.css";
 
 const VERSION = "1.2.0";
@@ -117,6 +120,10 @@ function App({ shared }: { shared: Draft | null }) {
       setReady(true);
     })();
   }, []);
+  // After locking, offer the phone's encrypted copy even when offline.
+  useEffect(() => {
+    if (ready && !v) void hasCache().then(setCache);
+  }, [!!v]);
 
   // Auto-lock: idle for 15 minutes, or away from the app for 5 minutes.
   useEffect(() => {
@@ -190,20 +197,27 @@ function Unlock({
 }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [bioState, setBioState] = useState<bio.BioStatus>("off");
   const signedIn = !!token();
   const canOpen = signedIn || cache;
-  async function submit() {
+  useEffect(() => {
+    void bio.status().then(setBioState);
+  }, []);
+  async function submit(withBio = false) {
     setBusy(true);
     setError("");
     try {
-      await unlock(password);
+      if (withBio) await unlockBiometric();
+      else await unlock(password);
       setPassword("");
     } catch (e) {
       setError((e as Error).message);
+      void bio.status().then(setBioState);
     } finally {
       setBusy(false);
     }
   }
+  const useBio = canOpen && bioState === "on";
   return (
     <main className="unlock">
       <header className="brand">
@@ -248,6 +262,23 @@ function Unlock({
         ) : (
           <p className="status ok">● {t("已連接 Google Drive")}</p>
         )}
+        {useBio && (
+          <>
+            <button
+              className="primary full bioButton"
+              disabled={busy}
+              onClick={() => void submit(true)}
+            >
+              <FingerprintIcon /> {t("使用 Face ID／指紋解鎖")}
+            </button>
+            <p className="or">{t("或輸入主密碼")}</p>
+          </>
+        )}
+        {canOpen && bioState === "expired" && (
+          <p className="note">
+            {t("生物辨識解鎖已超過 30 天，請輸入一次主密碼。")}
+          </p>
+        )}
         {canOpen && (
           <form
             onSubmit={(e) => {
@@ -260,13 +291,16 @@ function Unlock({
               <input
                 type="password"
                 autoComplete="current-password"
-                autoFocus
+                autoFocus={!useBio}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </label>
-            <button className="primary full" disabled={busy || !password}>
+            <button
+              className={useBio ? "secondary full" : "primary full"}
+              disabled={busy || !password}
+            >
               {busy ? t("解密中…") : t("解鎖保險庫 →")}
             </button>
             {!signedIn && (
@@ -892,6 +926,7 @@ function Settings({
             "只使用 Google Drive 的隱藏應用程式資料夾，存放加密後的資料；不會讀取你的其他檔案。",
           )}
         </p>
+        <BiometricSettings />
         <h3>{t("語言")}</h3>
         <select
           aria-label={t("語言")}
@@ -914,9 +949,11 @@ function Settings({
           <button
             className="danger full"
             onClick={async () => {
-              lock();
+              // Remove everything first, then show the locked screen.
               forgetToken();
               await clearCache();
+              await bio.disable();
+              lock();
               onCleared();
             }}
           >
@@ -1002,6 +1039,114 @@ function Credits() {
         GitHub
       </a>
     </footer>
+  );
+}
+
+function BiometricSettings() {
+  const [state, setState] = useState<bio.BioStatus | "unavailable" | "">("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState("");
+  const refresh = async () =>
+    setState((await bio.available()) ? await bio.status() : "unavailable");
+  useEffect(() => {
+    void refresh();
+  }, []);
+  if (!state) return null;
+  return (
+    <>
+      <h3>{t("生物辨識解鎖")}</h3>
+      {state === "unavailable" ? (
+        <p className="small muted">
+          {t("這支手機或瀏覽器不支援以 Face ID／指紋解鎖，請繼續使用主密碼。")}
+        </p>
+      ) : (
+        <>
+          <p className="small muted">
+            {t(
+              "用 Face ID 或指紋代替輸入主密碼。主密碼不會被儲存；能解鎖這支手機的人也能打開保險庫。每 30 天需要輸入一次主密碼。",
+            )}
+          </p>
+          {error && (
+            <p className="error" role="alert">
+              {tError(error)}
+            </p>
+          )}
+          {done && (
+            <p className="note" role="status">
+              {t(done)}
+            </p>
+          )}
+          {state === "off" ? (
+            <button
+              className="secondary full"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                setDone("");
+                try {
+                  await enableBiometric();
+                  setDone(
+                    "已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。",
+                  );
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setBusy(false);
+                  void refresh();
+                }
+              }}
+            >
+              <FingerprintIcon /> {t("啟用 Face ID／指紋解鎖")}
+            </button>
+          ) : (
+            <>
+              <p className="status ok">
+                ●{" "}
+                {state === "on"
+                  ? t("已啟用")
+                  : t("已啟用（需要輸入一次主密碼）")}
+              </p>
+              <button
+                className="secondary full"
+                onClick={async () => {
+                  await bio.disable();
+                  setDone(
+                    "已停用生物辨識解鎖。可在手機的密碼設定中刪除「Veil Bookmark」通行金鑰。",
+                  );
+                  void refresh();
+                }}
+              >
+                {t("停用生物辨識解鎖")}
+              </button>
+            </>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+function FingerprintIcon() {
+  return (
+    <svg
+      className="gmark"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M6.5 6.2A8 8 0 0 1 20 12v1.5" />
+      <path d="M4 11.5A8 8 0 0 1 5 8" />
+      <path d="M8 12a4 4 0 0 1 8 0v2.5a10 10 0 0 1-1.2 4.8" />
+      <path d="M12 12v3a13 13 0 0 1-2 7" />
+      <path d="M4.5 15.5a14 14 0 0 0 .5-3" />
+      <path d="M7.7 19.5A13 13 0 0 0 9 14" />
+      <path d="M17.6 20.5c.6-1.7 1.4-4 1.4-7" />
+    </svg>
   );
 }
 

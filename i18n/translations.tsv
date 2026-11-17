@@ -503,3 +503,21 @@ Google 連線已過期，修改尚未上傳。點這裡重新連線。|Your Goog
 開啟網頁 ↗|Open page ↗|ページを開く ↗
 需要處理|Needs attention|対応が必要
 點右下角的 ＋ 收藏第一個網址。|Tap ＋ at the bottom right to save your first link.|右下の ＋ をタップして最初のリンクを保存しましょう。
+使用 Face ID／指紋解鎖|Unlock with Face ID / fingerprint|Face ID／指紋でロック解除
+停用生物辨識解鎖|Turn off biometric unlock|生体認証ロック解除をオフにする
+啟用 Face ID／指紋解鎖|Turn on Face ID / fingerprint unlock|Face ID／指紋ロック解除をオンにする
+尚未啟用生物辨識解鎖|Biometric unlock isn't turned on|生体認証ロック解除はオンになっていません
+已停用生物辨識解鎖。可在手機的密碼設定中刪除「Veil Bookmark」通行金鑰。|Biometric unlock is off. You can delete the "Veil Bookmark" passkey in your phone's password settings.|生体認証ロック解除をオフにしました。スマートフォンのパスワード設定で「Veil Bookmark」のパスキーを削除できます。
+已啟用|On|オン
+已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。|Biometric unlock is on. Next time, open it with Face ID or your fingerprint.|生体認証ロック解除をオンにしました。次回から Face ID／指紋で開けます。
+已啟用（需要輸入一次主密碼）|On (enter your master password once)|オン（マスターパスワードを一度入力してください）
+已超過 30 天，請輸入一次主密碼|It's been over 30 days. Enter your master password once.|30 日以上経過しました。マスターパスワードを一度入力してください
+或輸入主密碼|or enter your master password|またはマスターパスワードを入力
+未完成生物辨識設定|Biometric setup wasn't completed|生体認証の設定が完了しませんでした
+未完成生物辨識，請再試一次或輸入主密碼|Biometric check wasn't completed. Try again or enter your master password.|生体認証が完了しませんでした。もう一度試すか、マスターパスワードを入力してください。
+生物辨識解鎖|Biometric unlock|生体認証ロック解除
+生物辨識解鎖已超過 30 天，請輸入一次主密碼。|Biometric unlock has been used for over 30 days. Enter your master password once.|生体認証ロック解除の利用から 30 日以上経過しました。マスターパスワードを一度入力してください。
+生物辨識資料已失效，請輸入主密碼後重新啟用|Biometric unlock no longer works. Enter your master password, then turn it on again.|生体認証データが無効になりました。マスターパスワードを入力してから、もう一度オンにしてください。
+用 Face ID 或指紋代替輸入主密碼。主密碼不會被儲存；能解鎖這支手機的人也能打開保險庫。每 30 天需要輸入一次主密碼。|Use Face ID or your fingerprint instead of typing your master password. The master password isn't stored; anyone who can unlock this phone can also open the vault. You'll enter the master password once every 30 days.|マスターパスワードの代わりに Face ID または指紋を使います。マスターパスワードは保存されません。このスマートフォンのロックを解除できる人は保管庫も開けます。30 日ごとにマスターパスワードを一度入力します。
+這支手機或瀏覽器不支援以 Face ID／指紋解鎖，請繼續使用主密碼。|This phone or browser doesn't support Face ID / fingerprint unlock. Keep using your master password.|このスマートフォンまたはブラウザは Face ID／指紋ロック解除に対応していません。マスターパスワードをお使いください。
+這支手機的瀏覽器不支援生物辨識解鎖|This phone's browser doesn't support biometric unlock|このスマートフォンのブラウザは生体認証ロック解除に対応していません

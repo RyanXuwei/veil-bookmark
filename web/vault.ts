@@ -12,11 +12,13 @@ import {
   type KeySlots,
   type SealedEnvelope,
   type Vault,
+  verifySlots,
 } from "../src/crypto";
 import { readRemoteWith, removeSnapshots, upload } from "../src/drive";
 import { deleteEntry, upsertEntry } from "../src/entry-ops";
 import { mergeSnapshots, VaultMismatch } from "../src/sync-core";
 import { token } from "./google";
+import * as bio from "./biometric";
 
 // ---- Encrypted copy on this phone (IndexedDB) -------------------------------
 const DB = "veil-bookmark-web";
@@ -92,6 +94,43 @@ const NOT_FOUND =
 /** Opens the vault with the master password. */
 export async function unlock(password: string) {
   if (Date.now() < nextAttempt) throw Error("嘗試次數過多，請稍後再試");
+  await openVault(async (first) => {
+    try {
+      const { dek } = await openWithPassword(first, password);
+      attempts = 0;
+      return dek;
+    } catch (e) {
+      nextAttempt =
+        Date.now() + Math.min(60000, 1000 * 2 ** Math.min(attempts++, 6));
+      throw e;
+    }
+  });
+  await bio.passwordUsed(open!.v.id);
+}
+
+/** Opens the vault with Face ID / fingerprint (see biometric.ts). The
+ *  biometric prompt comes first: Safari only allows it right after a tap. */
+export async function unlockBiometric() {
+  const k = await bio.unlockKey();
+  await openVault(async (first) => {
+    try {
+      if (first.id !== k.vault) throw Error();
+      await verifySlots(k.dek, first.id, first.keys);
+      return k.dek;
+    } catch {
+      await bio.disable();
+      throw Error("生物辨識資料已失效，請輸入主密碼後重新啟用");
+    }
+  });
+}
+
+/** Turns on biometric unlock for the open vault. */
+export async function enableBiometric() {
+  if (!open) throw Error("已上鎖，請重新解鎖");
+  await bio.enable(open.dek, open.v.id);
+}
+
+async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
   const t = token();
   let remote: Envelope[] = [];
   let ids: string[] = [];
@@ -116,15 +155,7 @@ export async function unlock(password: string) {
           ? NOT_FOUND
           : "請先連接 Google Drive",
     );
-  let dek: CryptoKey;
-  try {
-    ({ dek } = await openWithPassword(first, password));
-    attempts = 0;
-  } catch (e) {
-    nextAttempt =
-      Date.now() + Math.min(60000, 1000 * 2 ** Math.min(attempts++, 6));
-    throw e;
-  }
+  const dek = await key(first);
   let v = await decrypt(first, dek);
   let keys = first.keys;
   // Edits made on this phone that were not uploaded yet.
