@@ -85,8 +85,7 @@
 關閉|Close|閉じる
 名稱|Title|名前
 網址|URL|URL
-標籤（逗號分隔）|Tags (comma-separated)|タグ（カンマ区切り）
-私人筆記|Private notes|プライベートメモ
+私密備註|Private memo|プライベートメモ
 儲存中…|Saving…|保存中…
 加密儲存 →|Encrypt & save →|暗号化して保存 →
 這項刪除也會在下次同步時套用到其他裝置。|This deletion will apply to other devices on the next sync.|次回の同期で、この削除は他の端末にも反映されます。
@@ -454,3 +453,6 @@ Google Drive 中沒有 Veil Bookmark 的備份，可以直接建立新的保險�
 從 Google Drive 還原 →|Restore from Google Drive →|Google Drive から復元 →
 改為建立新的保險庫|Create a new vault instead|代わりに新しい保管庫を作成
 新的保險庫不會和 Drive 上的資料合併；之後連接 Drive 時需要選擇保留哪一份。|A new vault isn't merged with the one in Drive; when you connect Drive later you'll choose which one to keep.|新しい保管庫は Drive のデータと統合されません。後で Drive に接続するときに、残す方を選ぶ必要があります。
+標籤|Tags|タグ
+移除標籤：{tag}|Remove tag: {tag}|タグを削除：{tag}
+輸入後按逗號或 Enter|Type, then press comma or Enter|入力してカンマか Enter

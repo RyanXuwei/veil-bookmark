@@ -17,6 +17,7 @@ for (const f of [
   "src/ruled.ts",
   "src/sortable.tsx",
   "src/drive-conflict.tsx",
+  "src/tag-input.tsx",
 ]) {
   const s = readFileSync(f, "utf8");
   const re =

@@ -435,14 +435,9 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "en": "URL",
   "ja": "URL"
  },
- "標籤（逗號分隔）": {
-  "zh-CN": "标签（逗号分隔）",
-  "en": "Tags (comma-separated)",
-  "ja": "タグ（カンマ区切り）"
- },
- "私人筆記": {
-  "zh-CN": "私人笔记",
-  "en": "Private notes",
+ "私密備註": {
+  "zh-CN": "私密备注",
+  "en": "Private memo",
   "ja": "プライベートメモ"
  },
  "儲存中…": {
@@ -2269,5 +2264,20 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "新的保险库不会和 Drive 上的数据合并；之后连接 Drive 时需要选择保留哪一份。",
   "en": "A new vault isn't merged with the one in Drive; when you connect Drive later you'll choose which one to keep.",
   "ja": "新しい保管庫は Drive のデータと統合されません。後で Drive に接続するときに、残す方を選ぶ必要があります。"
+ },
+ "標籤": {
+  "zh-CN": "标签",
+  "en": "Tags",
+  "ja": "タグ"
+ },
+ "移除標籤：{tag}": {
+  "zh-CN": "移除标签：{tag}",
+  "en": "Remove tag: {tag}",
+  "ja": "タグを削除：{tag}"
+ },
+ "輸入後按逗號或 Enter": {
+  "zh-CN": "输入后按逗号或 Enter",
+  "en": "Type, then press comma or Enter",
+  "ja": "入力してカンマか Enter"
  }
 };

@@ -781,3 +781,112 @@ hr {
 }
 
 .overlay.overlayTop{z-index:60}
+/* Bookmark editor: tags as chips with a quick-pick list. */
+.tagInput {
+  position: relative;
+  margin: 20px 0;
+  font-size: 12px;
+  font-weight: 550;
+  color: #52665c;
+}
+.tagBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 8px;
+  min-height: 46px;
+  box-sizing: border-box;
+  background: #fbfcf9;
+  border: 1px solid #dce4d8;
+  border-radius: 8px;
+  cursor: text;
+}
+.tagBox:focus-within {
+  border-color: #72917a;
+  outline: 2px solid #72917a30;
+}
+.tagBox input {
+  flex: 1;
+  min-width: 90px;
+  width: auto;
+  margin: 0;
+  padding: 5px 4px;
+  border: 0;
+  background: transparent;
+  outline: none;
+}
+.tagBox input:focus {
+  outline: none;
+}
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 4px 3px 4px;
+  border: 1px solid #b9cbbd;
+  border-radius: 999px;
+  background: #fff;
+  color: #243b38;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.3;
+  word-break: break-all;
+}
+.tagMark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #335a49;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tagChip button {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0 4px;
+  color: #52665c;
+  font-size: 14px;
+  line-height: 1;
+}
+.tagChip button:hover {
+  background: none;
+  color: #a34f3d;
+}
+.tagOptions {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #dce4d8;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px #1f332a24;
+}
+.tagOptions li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #243b38;
+  cursor: pointer;
+}
+.tagOptions li.active {
+  background: #eef3ec;
+}
+.tagOptions b {
+  font-weight: 700;
+}

@@ -743,3 +743,17 @@ html[data-surface="popup"] {
   line-height: 1.5;
   margin: -2px 0 6px;
 }
+[data-surface="popup"] .tagInput {
+  margin: 10px 0;
+  font-size: 11px;
+}
+[data-surface="popup"] .tagBox {
+  margin-top: 5px;
+  min-height: 36px;
+  padding: 4px 6px;
+}
+[data-surface="popup"] .modal .tagBox input {
+  margin: 0;
+  padding: 4px;
+  min-width: 80px;
+}

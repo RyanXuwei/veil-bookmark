@@ -2,6 +2,7 @@ import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { DRIVE_FULL, STORAGE_URL } from "./drive";
+import { TagInput } from "./tag-input";
 import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
 import { SetupPage } from "./setup";
@@ -304,13 +305,20 @@ function App() {
       if (isPopup) window.close();
     });
   }
+  function hoverText(x: Entry) {
+    const lines = [];
+    if (x.tags.length) lines.push(x.tags.map((tag) => `#${tag}`).join("  "));
+    const memo = x.notes.trim();
+    if (memo) lines.push(memo.length > 600 ? `${memo.slice(0, 600)}…` : memo);
+    return lines.length ? lines.join("\n") : x.url;
+  }
   function popupRow(x: Entry) {
     return (
       <>
         <div className="quickRow">
           <button
             className="quickLink"
-            title={x.url}
+            title={hoverText(x)}
             disabled={busy}
             onClick={(e) => void openBookmark(x, false, e.ctrlKey || e.metaKey)}
             onAuxClick={(e) => {
@@ -1192,18 +1200,15 @@ function App() {
                     <option key={f}>{f}</option>
                   ))}
                 </datalist>
-                <label>
-                  {t("標籤（逗號分隔）")}
-                  <input
-                    value={editor.tags}
-                    onChange={(e) =>
-                      setEditor({ ...editor, tags: e.target.value })
-                    }
-                  />
-                </label>
+                <TagInput
+                  label={t("標籤")}
+                  value={editor.tags}
+                  known={entries.map((x) => x.tags)}
+                  onChange={(tags) => setEditor({ ...editor, tags })}
+                />
               </div>
               <label>
-                {t("私人筆記")}
+                {t("私密備註")}
                 <textarea
                   rows={3}
                   maxLength={5000}
