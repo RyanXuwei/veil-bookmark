@@ -218,6 +218,13 @@ try {
   await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await page.getByRole("tab", { name: /書籤/ }).waitFor();
   await page.getByText("清水寺").waitFor();
+  // The biometric offer can be put off; it does not come back by itself.
+  await page
+    .locator(".bioPrompt")
+    .getByRole("button", { name: "以後再說" })
+    .click();
+  await page.getByRole("status").filter({ hasText: "同步與設定" }).waitFor();
+  assert.equal(await page.locator(".bioPrompt").count(), 0);
   // Grouped by folder in the extension's order; tags and memo on the row.
   assert.deepEqual(await page.locator(".groupTitle").allInnerTexts(), [
     "旅行",

@@ -471,6 +471,7 @@ function Library({
             : t("Google 連線已過期，修改尚未上傳。點這裡重新連線。")}
         </button>
       )}
+      <BioPrompt onDone={setToast} />
       <nav className="tabs" role="tablist">
         <button
           role="tab"
@@ -1553,6 +1554,74 @@ function Credits() {
         GitHub
       </a>
     </footer>
+  );
+}
+
+/** Offers Face ID / fingerprint unlock on the main screen, right after the
+ *  vault is opened with the master password, until it is turned on or the
+ *  user says "not now" (it stays available under Sync & settings). */
+function BioPrompt({ onDone }: { onDone: (msg: string) => void }) {
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    void (async () => {
+      let later = false;
+      try {
+        later = !!localStorage.getItem("veilBioLater");
+      } catch {}
+      if (!later && (await bio.available()) && (await bio.status()) === "off")
+        setShow(true);
+    })();
+  }, []);
+  if (!show) return null;
+  return (
+    <section className="bioPrompt" aria-label={t("生物辨識解鎖")}>
+      <FingerprintIcon />
+      <div>
+        <strong>{t("下次用 Face ID／指紋解鎖")}</strong>
+        <p>{t("不必每次輸入主密碼。主密碼不會被儲存。")}</p>
+        {error && (
+          <p className="error" role="alert">
+            {tError(error)}
+          </p>
+        )}
+        <div className="bioPromptButtons">
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={async () => {
+              // WebAuthn must start directly from this tap.
+              setBusy(true);
+              setError("");
+              try {
+                await enableBiometric();
+                setShow(false);
+                onDone("已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。");
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t("立即啟用")}
+          </button>
+          <button
+            className="ghost"
+            onClick={() => {
+              try {
+                localStorage.setItem("veilBioLater", "1");
+              } catch {}
+              setShow(false);
+              onDone("之後可以在「同步與設定」啟用生物辨識解鎖。");
+            }}
+          >
+            {t("以後再說")}
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -3233,5 +3233,35 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Note deleted",
   "ja": "メモを削除しました",
   "ko": "메모를 삭제했습니다"
+ },
+ "下次用 Face ID／指紋解鎖": {
+  "zh-CN": "下次用 Face ID／指纹解锁",
+  "en": "Unlock with Face ID / fingerprint next time",
+  "ja": "次回から Face ID／指紋でロック解除",
+  "ko": "다음부터 Face ID/지문으로 잠금 해제"
+ },
+ "不必每次輸入主密碼。主密碼不會被儲存。": {
+  "zh-CN": "不必每次输入主密码。主密码不会被保存。",
+  "en": "No need to type your master password every time. It is never stored.",
+  "ja": "毎回マスターパスワードを入力する必要はありません。パスワードは保存されません。",
+  "ko": "매번 마스터 비밀번호를 입력하지 않아도 됩니다. 비밀번호는 저장되지 않습니다."
+ },
+ "立即啟用": {
+  "zh-CN": "立即激活",
+  "en": "Turn on",
+  "ja": "オンにする",
+  "ko": "지금 켜기"
+ },
+ "以後再說": {
+  "zh-CN": "以后再说",
+  "en": "Not now",
+  "ja": "あとで",
+  "ko": "나중에"
+ },
+ "之後可以在「同步與設定」啟用生物辨識解鎖。": {
+  "zh-CN": "之后可以在「同步与设置」激活生物辨识解锁。",
+  "en": "You can turn on biometric unlock later under Sync & settings.",
+  "ja": "生体認証ロック解除は、あとで「同期と設定」からオンにできます。",
+  "ko": "생체 인증 잠금 해제는 나중에 '동기화 및 설정'에서 켤 수 있습니다."
  }
 };

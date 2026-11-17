@@ -156,11 +156,21 @@ try {
   assert.equal(await bioButton.count(), 0, "off until turned on");
   await unlockWithPassword();
 
-  // Turn on in Sync & settings.
+  // Offered on the main screen right after a password unlock.
+  const prompt = page.locator(".bioPrompt");
+  await prompt.waitFor();
+  if (shot) await page.screenshot({ path: resolve(shot, "bio-0-prompt.png") });
+  await prompt.getByRole("button", { name: "立即啟用" }).click();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "已啟用生物辨識解鎖" })
+    .waitFor();
+  assert.equal(await prompt.count(), 0, "the offer leaves once it is on");
+
+  // Sync & settings shows it is on (and can turn it off, tested below).
   await page.locator(".syncDot").click();
   await page.getByRole("heading", { name: "生物辨識解鎖" }).waitFor();
-  await page.getByRole("button", { name: "啟用 Face ID／指紋解鎖" }).click();
-  await page.getByText("已啟用生物辨識解鎖").waitFor();
+  await page.getByRole("button", { name: "停用生物辨識解鎖" }).waitFor();
   if (shot)
     await page.screenshot({ path: resolve(shot, "bio-1-settings.png") });
   const r = await record();
