@@ -10,5 +10,5 @@
     "noEmit": true,
     "types": ["chrome", "node"]
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "web", "tests", "vite.config.ts", "vite.web.config.ts"]
 }

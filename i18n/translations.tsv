@@ -456,3 +456,50 @@ Google Drive 中沒有 Veil Bookmark 的備份，可以直接建立新的保險�
 標籤|Tags|タグ
 移除標籤：{tag}|Remove tag: {tag}|タグを削除：{tag}
 輸入後按逗號或 Enter|Type, then press comma or Enter|入力してカンマか Enter
+Google Drive 上的保險庫已被更換。請上鎖後用新的主密碼重新開啟。|The vault in Google Drive was replaced. Lock, then open it again with its master password.|Google Drive の保管庫が置き換えられました。ロックしてから、その保管庫のマスターパスワードで開き直してください。
+Google Drive 上還沒有 Veil Bookmark 保險庫。請先在電腦的擴充功能「同步與備份」連接 Google Drive。|There is no Veil Bookmark vault in Google Drive yet. First connect Google Drive in the Chrome extension under Sync & backup.|Google Drive にまだ Veil Bookmark の保管庫がありません。先にパソコンの拡張機能の「同期とバックアップ」で Google Drive に接続してください。
+Google 連線已過期，修改尚未上傳。點這裡重新連線。|Your Google connection expired and changes haven't been uploaded. Tap to reconnect.|Google との接続が期限切れのため、変更はまだアップロードされていません。タップして再接続してください。
+主密碼不會離開這支手機。閒置 15 分鐘或離開 5 分鐘後自動上鎖。|Your master password never leaves this phone. Locks after 15 minutes idle or 5 minutes away.|マスターパスワードはこのスマートフォンから送信されません。15 分間操作がないか、5 分間離れると自動でロックします。
+使用 Google 帳號連接 Drive|Connect Drive with Google|Google アカウントで Drive に接続
+全部|All|すべて
+只使用 Google Drive 的隱藏應用程式資料夾，存放加密後的資料；不會讀取你的其他檔案。|Uses only Google Drive's hidden app folder to store encrypted data; your other files are never read.|Google Drive の非表示のアプリフォルダだけを使って暗号化データを保存します。ほかのファイルは読み取りません。
+可以關閉這個分頁，回到 Veil Bookmark。|You can close this tab and return to Veil Bookmark.|このタブを閉じて Veil Bookmark に戻ってください。
+同步中…|Syncing…|同期中…
+同步與設定|Sync & settings|同期と設定
+在手機上開啟你的書籤|Your bookmarks on your phone|スマートフォンでブックマークを開く
+尚未同步|Not synced yet|まだ同期していません
+尚未連接 Google，只顯示這支手機上次同步的資料。|Not connected to Google; showing this phone's last synced data.|Google に未接続のため、このスマートフォンで最後に同期したデータを表示しています。
+尚未連接 Google：會開啟這支手機上次同步的資料。|Not connected to Google: this opens the data last synced on this phone.|Google に未接続：このスマートフォンで最後に同期したデータを開きます。
+已刪除書籤|Bookmark deleted|ブックマークを削除しました
+已加密收藏|Saved and encrypted|暗号化して保存しました
+已同步|Synced|同期済み
+已更新書籤|Bookmark updated|ブックマークを更新しました
+已複製網址|URL copied|URL をコピーしました
+已連接 Google|Connected to Google|Google に接続しました
+已連接 Google Drive|Connected to Google Drive|Google Drive に接続済み
+手機版|Mobile|モバイル版
+手機版尚未完成 Google 設定，暫時無法連接 Drive。|The mobile version's Google setup isn't finished yet, so Drive can't be connected.|モバイル版の Google 設定が未完了のため、Drive に接続できません。
+手機版尚未設定 Google 用戶端|The mobile version has no Google client configured|モバイル版の Google クライアントが設定されていません
+搜尋名稱、網址、標籤或備註|Search names, URLs, tags or memos|名前・URL・タグ・メモを検索
+新增書籤|Add bookmark|ブックマークを追加
+有修改尚未上傳到 Google Drive。|Some changes haven't been uploaded to Google Drive.|まだ Google Drive にアップロードされていない変更があります。
+清除這支手機上的資料並登出|Remove data from this phone and sign out|このスマートフォンのデータを削除してログアウト
+無法複製，請長按網址手動複製|Couldn't copy. Long-press the link to copy it.|コピーできませんでした。リンクを長押ししてコピーしてください。
+確定刪除？會同步到所有裝置|Delete? This syncs to all devices|削除しますか？すべてのデバイスに同期されます
+確定清除並登出？|Remove and sign out?|削除してログアウトしますか？
+等待上傳|Waiting to upload|アップロード待ち
+複製網址|Copy URL|URL をコピー
+解密中…|Decrypting…|復号中…
+解鎖後即可收藏分享過來的網頁。|Unlock to save the page you shared.|ロックを解除すると、共有したページを保存できます。
+記事請在電腦的筆記本中撰寫；手機版可以閱讀。|Write notes in the notebook on your computer; you can read them here.|メモはパソコンのノートブックで書いてください。ここでは閲覧できます。
+語言|Language|言語
+請先在電腦上用最新版的擴充功能同步一次，再用手機開啟。|Sync once with the latest extension on your computer, then open it on your phone.|先にパソコンで最新版の拡張機能を使って一度同期してから、スマートフォンで開いてください。
+請先連接 Google Drive|Connect Google Drive first|先に Google Drive に接続してください
+這則記事含有錄音或手繪，請在電腦的筆記本中檢視。|This note has audio or drawings; view it in the notebook on your computer.|このメモには録音または手書きがあります。パソコンのノートブックで表示してください。
+這支手機|This phone|このスマートフォン
+這支手機保留一份加密副本，沒有網路時也能開啟。清除後不影響電腦與 Google Drive 上的資料。|This phone keeps an encrypted copy so it opens offline. Removing it doesn't affect your computer or Google Drive.|このスマートフォンには暗号化されたコピーが保存され、オフラインでも開けます。削除してもパソコンや Google Drive のデータには影響しません。
+連接你在電腦上同步書籤的 Google 帳號，再輸入主密碼。資料只在這支手機上解密。|Connect the Google account you sync with on your computer, then enter your master password. Data is decrypted only on this phone.|パソコンで同期している Google アカウントに接続してから、マスターパスワードを入力してください。データはこのスマートフォン上でのみ復号されます。
+重新連線 Google|Reconnect Google|Google に再接続
+開啟網頁 ↗|Open page ↗|ページを開く ↗
+需要處理|Needs attention|対応が必要
+點右下角的 ＋ 收藏第一個網址。|Tap ＋ at the bottom right to save your first link.|右下の ＋ をタップして最初のリンクを保存しましょう。

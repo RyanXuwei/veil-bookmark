@@ -2279,5 +2279,240 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja", string>> = {
   "zh-CN": "输入后按逗号或 Enter",
   "en": "Type, then press comma or Enter",
   "ja": "入力してカンマか Enter"
+ },
+ "Google Drive 上的保險庫已被更換。請上鎖後用新的主密碼重新開啟。": {
+  "zh-CN": "Google Drive 上的保险库已被更换。请上锁后用新的主密码重新打开。",
+  "en": "The vault in Google Drive was replaced. Lock, then open it again with its master password.",
+  "ja": "Google Drive の保管庫が置き換えられました。ロックしてから、その保管庫のマスターパスワードで開き直してください。"
+ },
+ "Google Drive 上還沒有 Veil Bookmark 保險庫。請先在電腦的擴充功能「同步與備份」連接 Google Drive。": {
+  "zh-CN": "Google Drive 上还没有 Veil Bookmark 保险库。请先在电脑的扩充功能「同步与备份」连接 Google Drive。",
+  "en": "There is no Veil Bookmark vault in Google Drive yet. First connect Google Drive in the Chrome extension under Sync & backup.",
+  "ja": "Google Drive にまだ Veil Bookmark の保管庫がありません。先にパソコンの拡張機能の「同期とバックアップ」で Google Drive に接続してください。"
+ },
+ "Google 連線已過期，修改尚未上傳。點這裡重新連線。": {
+  "zh-CN": "Google 连接已过期，修改尚未上传。点这里重新连接。",
+  "en": "Your Google connection expired and changes haven't been uploaded. Tap to reconnect.",
+  "ja": "Google との接続が期限切れのため、変更はまだアップロードされていません。タップして再接続してください。"
+ },
+ "主密碼不會離開這支手機。閒置 15 分鐘或離開 5 分鐘後自動上鎖。": {
+  "zh-CN": "主密码不会离开这支手机。闲置 15 分钟或离开 5 分钟后自动上锁。",
+  "en": "Your master password never leaves this phone. Locks after 15 minutes idle or 5 minutes away.",
+  "ja": "マスターパスワードはこのスマートフォンから送信されません。15 分間操作がないか、5 分間離れると自動でロックします。"
+ },
+ "使用 Google 帳號連接 Drive": {
+  "zh-CN": "使用 Google 帐号连接 Drive",
+  "en": "Connect Drive with Google",
+  "ja": "Google アカウントで Drive に接続"
+ },
+ "全部": {
+  "zh-CN": "全部",
+  "en": "All",
+  "ja": "すべて"
+ },
+ "只使用 Google Drive 的隱藏應用程式資料夾，存放加密後的資料；不會讀取你的其他檔案。": {
+  "zh-CN": "只使用 Google Drive 的隐藏应用程序文件夹，存放加密后的数据；不会读取你的其他文件。",
+  "en": "Uses only Google Drive's hidden app folder to store encrypted data; your other files are never read.",
+  "ja": "Google Drive の非表示のアプリフォルダだけを使って暗号化データを保存します。ほかのファイルは読み取りません。"
+ },
+ "可以關閉這個分頁，回到 Veil Bookmark。": {
+  "zh-CN": "可以关闭这个分页，回到 Veil Bookmark。",
+  "en": "You can close this tab and return to Veil Bookmark.",
+  "ja": "このタブを閉じて Veil Bookmark に戻ってください。"
+ },
+ "同步中…": {
+  "zh-CN": "同步中…",
+  "en": "Syncing…",
+  "ja": "同期中…"
+ },
+ "同步與設定": {
+  "zh-CN": "同步与设置",
+  "en": "Sync & settings",
+  "ja": "同期と設定"
+ },
+ "在手機上開啟你的書籤": {
+  "zh-CN": "在手机上打开你的书签",
+  "en": "Your bookmarks on your phone",
+  "ja": "スマートフォンでブックマークを開く"
+ },
+ "尚未同步": {
+  "zh-CN": "尚未同步",
+  "en": "Not synced yet",
+  "ja": "まだ同期していません"
+ },
+ "尚未連接 Google，只顯示這支手機上次同步的資料。": {
+  "zh-CN": "尚未连接 Google，只显示这支手机上次同步的数据。",
+  "en": "Not connected to Google; showing this phone's last synced data.",
+  "ja": "Google に未接続のため、このスマートフォンで最後に同期したデータを表示しています。"
+ },
+ "尚未連接 Google：會開啟這支手機上次同步的資料。": {
+  "zh-CN": "尚未连接 Google：会打开这支手机上次同步的数据。",
+  "en": "Not connected to Google: this opens the data last synced on this phone.",
+  "ja": "Google に未接続：このスマートフォンで最後に同期したデータを開きます。"
+ },
+ "已刪除書籤": {
+  "zh-CN": "已删除书签",
+  "en": "Bookmark deleted",
+  "ja": "ブックマークを削除しました"
+ },
+ "已加密收藏": {
+  "zh-CN": "已加密收藏",
+  "en": "Saved and encrypted",
+  "ja": "暗号化して保存しました"
+ },
+ "已同步": {
+  "zh-CN": "已同步",
+  "en": "Synced",
+  "ja": "同期済み"
+ },
+ "已更新書籤": {
+  "zh-CN": "已更新书签",
+  "en": "Bookmark updated",
+  "ja": "ブックマークを更新しました"
+ },
+ "已複製網址": {
+  "zh-CN": "已拷贝网址",
+  "en": "URL copied",
+  "ja": "URL をコピーしました"
+ },
+ "已連接 Google": {
+  "zh-CN": "已连接 Google",
+  "en": "Connected to Google",
+  "ja": "Google に接続しました"
+ },
+ "已連接 Google Drive": {
+  "zh-CN": "已连接 Google Drive",
+  "en": "Connected to Google Drive",
+  "ja": "Google Drive に接続済み"
+ },
+ "手機版": {
+  "zh-CN": "手机版",
+  "en": "Mobile",
+  "ja": "モバイル版"
+ },
+ "手機版尚未完成 Google 設定，暫時無法連接 Drive。": {
+  "zh-CN": "手机版尚未完成 Google 设置，暂时无法连接 Drive。",
+  "en": "The mobile version's Google setup isn't finished yet, so Drive can't be connected.",
+  "ja": "モバイル版の Google 設定が未完了のため、Drive に接続できません。"
+ },
+ "手機版尚未設定 Google 用戶端": {
+  "zh-CN": "手机版尚未设置 Google 用户端",
+  "en": "The mobile version has no Google client configured",
+  "ja": "モバイル版の Google クライアントが設定されていません"
+ },
+ "搜尋名稱、網址、標籤或備註": {
+  "zh-CN": "搜索名称、网址、标签或备注",
+  "en": "Search names, URLs, tags or memos",
+  "ja": "名前・URL・タグ・メモを検索"
+ },
+ "新增書籤": {
+  "zh-CN": "添加书签",
+  "en": "Add bookmark",
+  "ja": "ブックマークを追加"
+ },
+ "有修改尚未上傳到 Google Drive。": {
+  "zh-CN": "有修改尚未上传到 Google Drive。",
+  "en": "Some changes haven't been uploaded to Google Drive.",
+  "ja": "まだ Google Drive にアップロードされていない変更があります。"
+ },
+ "清除這支手機上的資料並登出": {
+  "zh-CN": "清除这支手机上的数据并注销",
+  "en": "Remove data from this phone and sign out",
+  "ja": "このスマートフォンのデータを削除してログアウト"
+ },
+ "無法複製，請長按網址手動複製": {
+  "zh-CN": "无法拷贝，请长按网址手动拷贝",
+  "en": "Couldn't copy. Long-press the link to copy it.",
+  "ja": "コピーできませんでした。リンクを長押ししてコピーしてください。"
+ },
+ "確定刪除？會同步到所有裝置": {
+  "zh-CN": "确定删除？会同步到所有设备",
+  "en": "Delete? This syncs to all devices",
+  "ja": "削除しますか？すべてのデバイスに同期されます"
+ },
+ "確定清除並登出？": {
+  "zh-CN": "确定清除并注销？",
+  "en": "Remove and sign out?",
+  "ja": "削除してログアウトしますか？"
+ },
+ "等待上傳": {
+  "zh-CN": "等待上传",
+  "en": "Waiting to upload",
+  "ja": "アップロード待ち"
+ },
+ "複製網址": {
+  "zh-CN": "拷贝网址",
+  "en": "Copy URL",
+  "ja": "URL をコピー"
+ },
+ "解密中…": {
+  "zh-CN": "解密中…",
+  "en": "Decrypting…",
+  "ja": "復号中…"
+ },
+ "解鎖後即可收藏分享過來的網頁。": {
+  "zh-CN": "解锁后即可收藏分享过来的网页。",
+  "en": "Unlock to save the page you shared.",
+  "ja": "ロックを解除すると、共有したページを保存できます。"
+ },
+ "記事請在電腦的筆記本中撰寫；手機版可以閱讀。": {
+  "zh-CN": "记事请在电脑的笔记本中撰写；手机版可以阅读。",
+  "en": "Write notes in the notebook on your computer; you can read them here.",
+  "ja": "メモはパソコンのノートブックで書いてください。ここでは閲覧できます。"
+ },
+ "語言": {
+  "zh-CN": "语言",
+  "en": "Language",
+  "ja": "言語"
+ },
+ "請先在電腦上用最新版的擴充功能同步一次，再用手機開啟。": {
+  "zh-CN": "请先在电脑上用最新版的扩充功能同步一次，再用手机打开。",
+  "en": "Sync once with the latest extension on your computer, then open it on your phone.",
+  "ja": "先にパソコンで最新版の拡張機能を使って一度同期してから、スマートフォンで開いてください。"
+ },
+ "請先連接 Google Drive": {
+  "zh-CN": "请先连接 Google Drive",
+  "en": "Connect Google Drive first",
+  "ja": "先に Google Drive に接続してください"
+ },
+ "這則記事含有錄音或手繪，請在電腦的筆記本中檢視。": {
+  "zh-CN": "这则记事含有录音或手绘，请在电脑的笔记本中查看。",
+  "en": "This note has audio or drawings; view it in the notebook on your computer.",
+  "ja": "このメモには録音または手書きがあります。パソコンのノートブックで表示してください。"
+ },
+ "這支手機": {
+  "zh-CN": "这支手机",
+  "en": "This phone",
+  "ja": "このスマートフォン"
+ },
+ "這支手機保留一份加密副本，沒有網路時也能開啟。清除後不影響電腦與 Google Drive 上的資料。": {
+  "zh-CN": "这支手机保留一份加密副本，没有网络时也能打开。清除后不影响电脑与 Google Drive 上的数据。",
+  "en": "This phone keeps an encrypted copy so it opens offline. Removing it doesn't affect your computer or Google Drive.",
+  "ja": "このスマートフォンには暗号化されたコピーが保存され、オフラインでも開けます。削除してもパソコンや Google Drive のデータには影響しません。"
+ },
+ "連接你在電腦上同步書籤的 Google 帳號，再輸入主密碼。資料只在這支手機上解密。": {
+  "zh-CN": "连接你在电脑上同步书签的 Google 帐号，再输入主密码。数据只在这支手机上解密。",
+  "en": "Connect the Google account you sync with on your computer, then enter your master password. Data is decrypted only on this phone.",
+  "ja": "パソコンで同期している Google アカウントに接続してから、マスターパスワードを入力してください。データはこのスマートフォン上でのみ復号されます。"
+ },
+ "重新連線 Google": {
+  "zh-CN": "重新连接 Google",
+  "en": "Reconnect Google",
+  "ja": "Google に再接続"
+ },
+ "開啟網頁 ↗": {
+  "zh-CN": "打开网页 ↗",
+  "en": "Open page ↗",
+  "ja": "ページを開く ↗"
+ },
+ "需要處理": {
+  "zh-CN": "需要处理",
+  "en": "Needs attention",
+  "ja": "対応が必要"
+ },
+ "點右下角的 ＋ 收藏第一個網址。": {
+  "zh-CN": "点右下角的 ＋ 收藏第一个网址。",
+  "en": "Tap ＋ at the bottom right to save your first link.",
+  "ja": "右下の ＋ をタップして最初のリンクを保存しましょう。"
  }
 };

@@ -18,6 +18,10 @@ for (const f of [
   "src/sortable.tsx",
   "src/drive-conflict.tsx",
   "src/tag-input.tsx",
+  "src/entry-ops.ts",
+  "web/main.tsx",
+  "web/google.ts",
+  "web/vault.ts",
 ]) {
   const s = readFileSync(f, "utf8");
   const re =
@@ -31,7 +35,7 @@ for (const f of [
 }
 // The notebook passes labels as props (label="…") and constants, and the Drive
 // conflict panel returns notices; check every CJK string literal there.
-for (const f of ["src/notebook.tsx", "src/drive-conflict.tsx"])
+for (const f of ["src/notebook.tsx", "src/drive-conflict.tsx", "web/main.tsx", "web/vault.ts"])
   for (const m of readFileSync(f, "utf8").matchAll(
     /"([^"\n]*[\u3400-\u9fff][^"\n]*)"/g,
   ))

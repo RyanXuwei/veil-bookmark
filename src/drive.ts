@@ -8,7 +8,8 @@ export const STORAGE_URL = "https://one.google.com/storage";
 export const CLIENT_ID_RE = /^[\w-]+\.apps\.googleusercontent\.com$/;
 type CachedToken = { clientId: string; token: string; expires: number };
 function manifestClientId() {
-  return chrome.runtime.getManifest().oauth2?.client_id;
+  // Undefined outside the extension (the mobile web app).
+  return globalThis.chrome?.runtime?.getManifest?.()?.oauth2?.client_id;
 }
 export async function userClientId() {
   const { oauthClientId } = await chrome.storage.local.get<{
@@ -115,9 +116,11 @@ async function request(
     signal: AbortSignal.timeout(timeout),
   });
   if (r.status === 401) {
-    await chrome.storage.session.remove("driveToken");
-    if (manifestClientId())
-      await chrome.identity.removeCachedAuthToken({ token: t });
+    if (globalThis.chrome?.storage?.session) {
+      await chrome.storage.session.remove("driveToken");
+      if (manifestClientId())
+        await chrome.identity.removeCachedAuthToken({ token: t });
+    }
     throw Error("Google 授權已失效，請重新連線");
   }
   if (allow404 && r.status === 404) return null;
@@ -130,7 +133,9 @@ async function request(
 }
 /** Lists Veil Bookmark snapshots in the app-data folder without reading them. */
 export async function listSnapshots(interactive: boolean) {
-  const t = await token(interactive);
+  return listSnapshotsWith(await token(interactive));
+}
+export async function listSnapshotsWith(t: string) {
   const files: { id: string }[] = [];
   let page = "";
   do {
@@ -150,7 +155,11 @@ export async function listSnapshots(interactive: boolean) {
   return { t, ids: files.map((f) => f.id) };
 }
 export async function readRemote(interactive: boolean) {
-  const { t, ids: listed } = await listSnapshots(interactive);
+  return readRemoteWith(await token(interactive));
+}
+/** Downloads every snapshot with an existing access token. */
+export async function readRemoteWith(t: string) {
+  const { ids: listed } = await listSnapshotsWith(t);
   const envelopes: Envelope[] = [];
   const ids: string[] = [];
   for (const id of listed) {

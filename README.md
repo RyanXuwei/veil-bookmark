@@ -54,6 +54,18 @@ Made by Ryan Hsu · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei
 - 已使用 Drive 同步的其他電腦，同步後也會改用新的主密碼。
 - 從舊版升級的保險庫還沒有救援金鑰，請到「安全性 → 救援金鑰」建立。
 
+## 手機版（網頁）
+
+不能安裝擴充功能的手機，可以用瀏覽器開啟手機版：<https://ryanxuwei.github.io/veil-bookmark/app/>
+
+1. 先在電腦的擴充功能「同步與備份」連接 Google Drive。
+2. 在手機開啟上面的網址，按「使用 Google 帳號連接 Drive」，選擇同一個 Google 帳號。
+3. 輸入主密碼即可瀏覽、搜尋、新增、編輯與刪除書籤；修改會同步回電腦。記事可以閱讀（含圖片），撰寫請用電腦的筆記本。
+
+- 可以「加到主畫面」當成 App 使用；Android 可從其他 App「分享」網址到 Veil Bookmark 直接收藏。
+- 主密碼只在手機上使用；手機保留一份加密副本，沒有網路時也能開啟。閒置 15 分鐘或離開 5 分鐘後自動上鎖。
+- Google 連線約 1 小時後過期，之後的修改會先存在手機，重新連線後再上傳。
+
 ## Google Drive 同步（選用）
 
 已內建 Google 授權，不需要建立 Google Cloud 專案或輸入任何金鑰：

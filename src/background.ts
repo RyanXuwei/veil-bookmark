@@ -44,6 +44,8 @@ import {
   upload,
   userClientId,
 } from "./drive";
+import { mergeSnapshots, VaultMismatch } from "./sync-core";
+import { deleteEntry, upsertEntry } from "./entry-ops";
 const TIMEOUT = 15 * 60 * 1000;
 type Session = {
   key: string; // data key (DEK), raw base64
@@ -216,48 +218,28 @@ async function sync(interactive = false) {
   const e = await local();
   if (!e) throw Error("請先建立或還原保險庫");
   let keys = await localKeys();
-  let v = await decrypt(e, dek);
   const { t, envelopes, ids } = await readRemote(interactive);
-  const remoteVaults: Vault[] = [];
-  let stale = false;
-  for (const remote of envelopes) {
-    if (remote.id !== s.id) throw await conflict();
-    let rv: Vault;
-    if (remote.version === 1) {
-      // Legacy snapshot from before key slots: readable with the old password key.
-      if (!s.legacy || remote.salt !== s.legacy.salt) throw await conflict();
-      rv = await decrypt(remote, await importKey(s.legacy.kek));
-      stale = true;
-    } else {
-      try {
-        await verifySlots(dek, s.id, remote.keys);
-        rv = await decrypt(remote, dek);
-      } catch {
-        throw await conflict();
-      }
-      // The newest key slots win, e.g. after a password reset on another device.
-      if (remote.keys.updated > keys.updated) keys = remote.keys;
-      if (remote.keys.updated !== keys.updated) stale = true;
-    }
-    remoteVaults.push(rv);
-    v = merge(v, rv);
+  let merged;
+  try {
+    merged = await mergeSnapshots({
+      v: await decrypt(e, dek),
+      dek,
+      keys,
+      envelopes,
+      ...(s.legacy && {
+        legacy: { salt: s.legacy.salt, kek: await importKey(s.legacy.kek) },
+      }),
+    });
+  } catch (err) {
+    if (err instanceof VaultMismatch) throw await conflict();
+    throw err;
   }
-  if (envelopes.some((r) => r.version === 3 && r.keys.updated < keys.updated))
-    stale = true;
+  const v = merged.v;
+  keys = merged.keys;
   await session();
   const snapshot = await seal(v, dek, keys);
   await chrome.storage.local.set({ vault: snapshot });
-  const canonical = JSON.stringify(merge(v, v));
-  let remoteUnion: Vault = emptyVault(v.id);
-  for (const rv of remoteVaults) remoteUnion = merge(remoteUnion, rv);
-  // Upload when Drive is missing changes or newer keys, or consolidate several
-  // snapshots into one so Drive keeps a single current copy.
-  if (
-    !envelopes.length ||
-    envelopes.length > 1 ||
-    stale ||
-    JSON.stringify(remoteUnion) !== canonical
-  ) {
+  if (merged.upload) {
     await upload(t, snapshot);
     await removeSnapshots(t, ids);
   }
@@ -653,42 +635,11 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     return;
   }
   if (m.type === "UPSERT") {
-    const old = v.entries.find((x) => x.id === m.entry.id);
-    const x = m.entry;
-    const entry: Entry = {
-      id: old?.id || crypto.randomUUID(),
-      title: String(x.title || "")
-        .trim()
-        .slice(0, 300),
-      url: safeUrl(String(x.url)),
-      folder: String(x.folder || "")
-        .trim()
-        .slice(0, 100),
-      tags: String(x.tags || "")
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
-        .slice(0, 30),
-      notes: String(x.notes || "").slice(0, 5000),
-      ...(old?.order !== undefined && old.folder === cleanFolderName(x.folder)
-        ? { order: old.order }
-        : {}),
-      updated: Math.max(Date.now(), (old?.updated || 0) + 1),
-      revision: crypto.randomUUID(),
-      deleted: false,
-    };
-    if (!entry.title) throw Error("請填寫書籤名稱");
-    v.entries = v.entries.filter((x) => x.id !== entry.id).concat(entry);
+    upsertEntry(v, m.entry || {});
     await save(v, s);
     await touch(s);
   } else if (m.type === "DELETE") {
-    const x = v.entries.find((x) => x.id === m.id);
-    if (x) {
-      x.deleted = true;
-      x.updated = Math.max(Date.now(), x.updated + 1);
-      x.revision = crypto.randomUUID();
-      await save(v, s);
-    }
+    if (deleteEntry(v, m.id)) await save(v, s);
     await touch(s);
   } else if (m.type === "MEMO_UPSERT") {
     const x = m.memo || {};

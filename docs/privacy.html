@@ -15,7 +15,7 @@
     <main>
       <article id="zh" lang="zh-Hant">
         <h1>隱私權政策</h1>
-        <p class="meta">生效日期：2026-11-17（最後更新）　適用版本：0.2.0 起</p>
+        <p class="meta">生效日期：2026-11-17（最後更新：新增手機版）　適用版本：0.2.0 起</p>
 
         <h2>摘要</h2>
         <p>
@@ -50,6 +50,17 @@
           Veil Bookmark 對從 Google API 取得之資訊的使用與傳輸，遵守
           <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API 服務使用者資料政策</a>，包括「有限使用」（Limited Use）規定。我們不會將 Google 使用者資料用於廣告、不會轉讓或販售，也不會由任何人閱讀。
         </p>
+
+        <h2>手機版網頁</h2>
+        <p>
+          手機版（<code>https://ryanxuwei.github.io/veil-bookmark/app/</code>）是放在 GitHub Pages 的靜態網頁，供無法安裝擴充功能的手機使用。它以同一個 <code>drive.appdata</code> 權限讀寫同一份加密快照，主密碼只在手機的瀏覽器中使用，解密後的資料不會傳到任何伺服器。
+        </p>
+        <ul>
+          <li>Google 存取權杖（約 1 小時有效）只保存在目前分頁（sessionStorage），關閉分頁即消失。</li>
+          <li>手機會在瀏覽器的 IndexedDB 保留一份<strong>加密</strong>副本，供離線開啟；可在「同步與設定」清除，不影響 Drive 與電腦上的資料。</li>
+          <li>不載入任何外部程式碼、字型、分析或廣告；開啟書籤時不傳送來源網址（no-referrer）。</li>
+          <li>網頁由 GitHub 託管，GitHub 可能依其政策記錄連線資訊（例如 IP 位址），但看不到你的書籤內容。</li>
+        </ul>
 
         <h2>分享與第三方</h2>
         <p>不與任何人分享資料。擴充功能沒有分析、追蹤或廣告程式，也不載入外部網站圖示。</p>
@@ -135,6 +146,19 @@
           including the Limited Use requirements. Google user data is not used for advertising, is not transferred or sold, and is not read by
           any human.
         </p>
+
+        <h2>Mobile web version</h2>
+        <p>
+          The mobile version (<code>https://ryanxuwei.github.io/veil-bookmark/app/</code>) is a static page on GitHub Pages for phones that
+          cannot install the extension. It reads and writes the same encrypted snapshots with the same <code>drive.appdata</code> permission.
+          Your master password is used only in your phone's browser, and decrypted data is never sent to any server.
+        </p>
+        <ul>
+          <li>The Google access token (valid for about one hour) is kept only in the current tab (sessionStorage) and disappears when the tab closes.</li>
+          <li>The phone keeps an <strong>encrypted</strong> copy in the browser's IndexedDB so it opens offline. You can remove it under Sync &amp; settings; Drive and your computer are not affected.</li>
+          <li>No external code, fonts, analytics or ads are loaded; opening a bookmark sends no referrer.</li>
+          <li>The page is hosted by GitHub, which may log connection details such as IP addresses under its own policy, but cannot see your bookmarks.</li>
+        </ul>
 
         <h2>Sharing and third parties</h2>
         <p>No data is shared with anyone. The extension contains no analytics, tracking or advertising code and does not load external site icons.</p>
