@@ -1,5 +1,9 @@
 # 版本紀錄
 
+## 1.8.3 · 2026-11-18
+
+- 自動語言：第一次開啟時依系統的整個語言清單挑第一個支援的語言（例如系統是法文、第二語言日文，就顯示日文），原本只看第一個語言。手動選過的語言照舊會記住。手機版與擴充功能都適用。
+
 ## 1.8.2 · 2026-11-18
 
 - 分享預覽：手機版（https://veil-bookmark.bitingbox.win/）與首頁（https://ryanxuwei.github.io/veil-bookmark/）加上 Open Graph 與 Twitter Card 資訊。在 LINE、Facebook、X、Slack 等分享連結時，會顯示 1200×630 的品牌預覽圖、標題「Veil Bookmark｜只有你打得開的私密書籤」與一句話介紹。預覽圖放在同網域（`og-image.png`），以 `scripts/make-og-image.mjs` 產生。

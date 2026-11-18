@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.8.2
+# 測試報告 · Veil Bookmark 1.8.3
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -285,3 +285,8 @@
 
 - 部署後以一般瀏覽器與分享爬蟲的 User-Agent 讀取兩個網址：HTML 含 og:title／og:description／og:image（絕對網址）等標籤，`og-image.png` 回傳 200、image/png、1200×630。
 - `web-e2e`、`web-accounts-e2e`、`moved-e2e` 通過。
+
+## 1.8.3 自動語言
+
+- 單元測試 `tests/i18n-detect.test.ts`：zh-TW/HK/MO/Hant→繁中、zh-CN/SG/Hans→簡中、ja、ko、en 各變體、不支援語言→英文、語言清單取第一個支援的。
+- 手機版建置後以瀏覽器語系 ja-JP、ko-KR、zh-HK、zh-CN、en-US、fr-FR+ja-JP 開啟，顯示語言分別為日、韓、繁中、簡中、英、日。

@@ -9,14 +9,22 @@ export const LANGS = [
 ] as const;
 export type Lang = (typeof LANGS)[number]["code"];
 
-let current: Lang = detect(navigator.language);
+let current: Lang = detect(preferred());
 
-export function detect(browser: string): Lang {
-  const l = browser.toLowerCase();
-  if (l.startsWith("zh")) return /hans|cn|sg/.test(l) ? "zh-CN" : "zh-TW";
-  if (l.startsWith("ja")) return "ja";
-  if (l.startsWith("ko")) return "ko";
-  if (l.startsWith("en")) return "en";
+// The system's language list, most preferred first.
+export function preferred(): readonly string[] {
+  return navigator.languages?.length ? navigator.languages : [navigator.language];
+}
+
+// The first language on the list that the app has; English otherwise.
+export function detect(browser: string | readonly string[]): Lang {
+  for (const tag of typeof browser === "string" ? [browser] : browser) {
+    const l = (tag || "").toLowerCase();
+    if (l.startsWith("zh")) return /hans|cn|sg|my/.test(l) ? "zh-CN" : "zh-TW";
+    if (l.startsWith("ja")) return "ja";
+    if (l.startsWith("ko")) return "ko";
+    if (l.startsWith("en")) return "en";
+  }
   return "en";
 }
 export function lang() {

@@ -10,6 +10,7 @@ import type { Entry, Memo, MemoImage } from "../src/crypto";
 import {
   LANGS,
   detect,
+  preferred,
   lang,
   setLang,
   t,
@@ -109,7 +110,7 @@ function initLang() {
   setLang(
     LANGS.some((x) => x.code === saved)
       ? (saved as Lang)
-      : detect(navigator.language),
+      : detect(preferred()),
   );
 }
 
