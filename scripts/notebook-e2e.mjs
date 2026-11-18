@@ -193,6 +193,21 @@ try {
   await nb.locator(".nbNav button", { hasText: "專案會議紀錄" }).click();
   await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
 
+  // Reading without typing keeps the vault unlocked: scrolling or moving
+  // the pointer pushes the 15-minute lock back (at most every 30 s).
+  const expires = () =>
+    worker.evaluate(async () => (await chrome.storage.session.get("session")).session.expires);
+  const before = await expires();
+  await nb.waitForTimeout(31_000);
+  await nb.mouse.move(400, 400);
+  await nb.mouse.wheel(0, 300);
+  let after = before;
+  for (let i = 0; i < 40 && after === before; i++) {
+    await nb.waitForTimeout(100);
+    after = await expires();
+  }
+  assert(after > before + 25_000, "reading activity extends the lock timer");
+
   // Delete the open note (the same confirmation dialog as the popup).
   await nb.getByRole("tab", { name: "檢視" }).click();
   await nb.getByRole("button", { name: "刪除記事" }).click();
@@ -202,7 +217,7 @@ try {
     () => document.querySelectorAll(".nbNav li").length === 1,
   );
   console.log(
-    "PASS notebook: ribbon formatting, autosave encrypted, sanitising, reload, multi-note, status bar, zoom, popup preview, i18n, narrow layout, lock wipe, unlock, delete",
+    "PASS notebook: ribbon formatting, autosave encrypted, sanitising, reload, multi-note, status bar, zoom, popup preview, i18n, narrow layout, lock wipe, unlock, reading keeps it unlocked, delete",
   );
 } finally {
   await context.close();

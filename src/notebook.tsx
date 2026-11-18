@@ -317,10 +317,17 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     updateCounts();
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => void save(), 1200);
-    if (Date.now() - lastTouch.current > 30000) {
-      lastTouch.current = Date.now();
-      void rpc("TOUCH").catch(() => refresh());
-    }
+    activity();
+  }
+  // Reading counts as use too: typing, clicks, scrolling and moving the
+  // pointer keep the 15-minute lock away (at most one TOUCH per 30 s).
+  const unlockedRef = useRef(false);
+  unlockedRef.current = unlocked;
+  function activity() {
+    if (!unlockedRef.current || document.hidden) return;
+    if (Date.now() - lastTouch.current <= 30000) return;
+    lastTouch.current = Date.now();
+    void rpc("TOUCH").catch(() => refresh());
   }
 
   // Initial load + react to locking from anywhere.
@@ -345,7 +352,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     window.addEventListener("beforeunload", beforeUnload);
     const onSel = () => refreshActive();
     document.addEventListener("selectionchange", onSel);
+    const active = ["pointerdown", "pointermove", "keydown", "wheel", "scroll"];
+    for (const e of active)
+      window.addEventListener(e, activity, { capture: true, passive: true });
     return () => {
+      for (const e of active)
+        window.removeEventListener(e, activity, { capture: true });
       epoch.current++;
       window.clearTimeout(timer.current);
       chrome.storage.onChanged.removeListener(onStorage);
