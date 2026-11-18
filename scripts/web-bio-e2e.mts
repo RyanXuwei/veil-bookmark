@@ -27,8 +27,7 @@ const types: Record<string, string> = {
 };
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url!, "http://x").pathname);
-  if (!path.startsWith("/veil-bookmark/")) return res.writeHead(404).end();
-  let file = resolve(root, "docs", path.slice("/veil-bookmark/".length));
+  let file = resolve(root, "web-dist", "." + path);
   if (path.endsWith("/")) file = resolve(file, "index.html");
   try {
     const body = await readFile(file);
@@ -43,7 +42,7 @@ const server = createServer(async (req, res) => {
 await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
 const port = (server.address() as { port: number }).port;
 // WebAuthn needs a domain (not an IP) as the site ID.
-const APP = `http://localhost:${port}/veil-bookmark/app/`;
+const APP = `http://localhost:${port}/`;
 
 const dek = await newDataKey();
 const id = crypto.randomUUID();
@@ -74,7 +73,7 @@ await context.addInitScript(()=>{
  localStorage.setItem("veilAccount:test-account",JSON.stringify({id:"test-account",email:"test@example.com",token:"synthetic-token",expires:Date.now()+3600000}));
 });
 
-await context.route("**/app/config.json", (r) =>
+await context.route("**/config.json", (r) =>
   r.fulfill({ json: { clientId: "test-client.apps.googleusercontent.com" } }),
 );
 await context.route("https://www.googleapis.com/**", async (route) => {
@@ -273,7 +272,7 @@ try {
   await other.addInitScript(() =>
     sessionStorage.setItem("veilActiveAccount", "test-account"),
   );
-  await other.route("**/app/config.json", (r) =>
+  await other.route("**/config.json", (r) =>
     r.fulfill({ json: { clientId: "test-client.apps.googleusercontent.com" } }),
   );
   await other.route("https://www.googleapis.com/**", (route) => {

@@ -1,4 +1,4 @@
-// Mobile web app (docs/app) on a phone-sized screen against a simulated Google
+// Mobile web app (web-dist) on a phone-sized screen against a simulated Google
 // Drive: unlock with the master password, browse and edit bookmarks, read
 // notes, sync both ways in the extension's snapshot format, work offline from
 // the phone's encrypted copy, sign-in URL, share target and auto-lock.
@@ -23,7 +23,7 @@ const root = resolve(import.meta.dirname, "..");
 const shot = process.argv[2];
 const PASSWORD = "phone-test-1234";
 
-// ---- Static server: docs/ served at /veil-bookmark/ like GitHub Pages ------
+// ---- Static server: web-dist/ served at the root like Cloudflare Pages ------
 const types: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript",
@@ -34,8 +34,7 @@ const types: Record<string, string> = {
 };
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url!, "http://x").pathname);
-  if (!path.startsWith("/veil-bookmark/")) return res.writeHead(404).end();
-  let file = resolve(root, "docs", path.slice("/veil-bookmark/".length));
+  let file = resolve(root, "web-dist", "." + path);
   if (path.endsWith("/")) file = resolve(file, "index.html");
   try {
     const body = await readFile(file);
@@ -49,7 +48,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
 const port = (server.address() as { port: number }).port;
-const APP = `http://127.0.0.1:${port}/veil-bookmark/app/`;
+const APP = `http://127.0.0.1:${port}/`;
 
 // ---- A vault as the extension would have uploaded it -----------------------
 const dek = await newDataKey();
@@ -242,7 +241,7 @@ await context.addInitScript(() => {
     }),
   );
 });
-await context.route("**/app/config.json", (r) =>
+await context.route("**/config.json", (r) =>
   r.fulfill({ json: { clientId: "test-client.apps.googleusercontent.com" } }),
 );
 await context.route("https://accounts.google.com/**", (r) => {
@@ -816,7 +815,7 @@ try {
 
   // ---- Not configured -------------------------------------------------------
   const bare = await context.newPage();
-  await bare.route("**/app/config.json", (r) =>
+  await bare.route("**/config.json", (r) =>
     r.fulfill({ json: { clientId: "" } }),
   );
   await bare.goto(APP);
