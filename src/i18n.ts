@@ -32,6 +32,7 @@ export function lang() {
 }
 export function setLang(l: Lang) {
   current = l;
+  if (typeof document === "undefined") return; // the background worker
   document.documentElement.lang =
     l === "zh-TW" ? "zh-Hant" : l === "zh-CN" ? "zh-Hans" : l;
   document.title = t("Veil Bookmark · 私藏好去處");

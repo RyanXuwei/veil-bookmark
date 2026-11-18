@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.10.0
+# 測試報告 · Veil Bookmark 1.11.0
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -305,3 +305,9 @@
 
 - 新增 `scripts/web-share-e2e.mts`（Pixel 7 尺寸、安裝 service worker，模擬 Android 以 multipart POST 分享）：選取文字＋圖片在上鎖時分享 → 解鎖前 localStorage、sessionStorage、IndexedDB、Cache Storage 都找不到分享的文字，網址列也沒有 → 解鎖後存成記事（標題、文字、來源連結、圖片）並同步到 Drive；只分享網址 → 開啟新增書籤；分享內容遺失 → 顯示提示；iPhone 捷徑的 `?text=` → 記事。
 - `web-e2e`（網址加短說明仍為書籤）等其餘手機版測試與單元測試通過。
+
+## 1.11.0 右鍵加入記事本
+
+- 新增 `scripts/clip-e2e.mjs`（載入擴充功能）：兩個右鍵選單項目已建立；選取文字 → 記事（純文字跳脫、附回原網頁連結、標題用網頁標題）；允許跨網域讀取的圖片存進記事、不允許的改存連結；上鎖時只放在 `chrome.storage.session`，`chrome.storage.local` 找不到明文，解鎖後加密存入並清掉暫存；圖示徽章顯示 1／✓。
+- 單元測試、`notebook-e2e`、`popup-e2e`、`about-e2e`、手機版測試通過。
+- 右鍵選單本身是 Chrome 原生選單，自動化無法點擊，測試直接呼叫選單的處理函式。

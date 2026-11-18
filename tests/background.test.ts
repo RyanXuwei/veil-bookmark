@@ -54,12 +54,23 @@ const store = (data: Record<string, any>) => ({
       })),
     onMessage: event("message"),
     onStartup: event("startup"),
+    onInstalled: event("installed"),
   },
+  contextMenus: {
+    removeAll: async () => {},
+    create: () => {},
+    onClicked: event("menu"),
+  },
+  i18n: { getMessage: () => "" },
   extension: {
     inIncognitoContext: true,
     isAllowedIncognitoAccess: async () => true,
   },
-  storage: { local: store(local), session: store(session) },
+  storage: {
+    local: store(local),
+    session: store(session),
+    onChanged: event("storage"),
+  },
   alarms: {
     get: async (n: string) => alarms[n],
     create: async (n: string, v: any) => {
@@ -70,7 +81,13 @@ const store = (data: Record<string, any>) => ({
     },
     onAlarm: event("alarm"),
   },
-  action: { onClicked: event("action") },
+  action: {
+    onClicked: event("action"),
+    setBadgeText: async () => {},
+    setBadgeBackgroundColor: async () => {},
+    setTitle: async () => {},
+    openPopup: async () => {},
+  },
   idle: { setDetectionInterval: () => {}, onStateChanged: event("idle") },
   windows: {
     onCreated: event("created"),

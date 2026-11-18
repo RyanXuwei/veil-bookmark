@@ -36,6 +36,8 @@ import {
   folderId,
 } from "./crypto";
 import { deleteMemo, upsertMemo } from "./memo-ops";
+import { clipNote, fetchPicture, type Clip } from "./clip";
+import { loadLang, t } from "./i18n";
 import { folderTree, joinPath, parentOf, within } from "./folders";
 import {
   clearClientId,
@@ -753,6 +755,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const v = o.sealed === e ? await readVault(o.dek) : o.v;
     if (o.sealed !== e) await writeVault(v, o.dek, o.sealed.keys); // v1 → v3
     await startSession({ ...o, v }, generation);
+    await applyClips(v);
     void serialized(pruneMedia).catch(() => {});
     await requestSync(0);
     return v;
@@ -1164,6 +1167,7 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
   });
   chrome.runtime.onStartup.addListener(() => {
     void lock();
+    void menus();
   });
   chrome.alarms.onAlarm.addListener((a) => {
     if (a.name === "veilmark-lock") {
@@ -1184,6 +1188,94 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
   });
 }
 void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+
+// ---- Right-click "Add to Veil notes" -----------------------------------------
+// Selected text or a picture becomes a note. While the vault is locked the
+// note waits in chrome.storage.session (memory only, never written to disk,
+// gone when Chrome closes) for up to 30 minutes and is saved encrypted as
+// soon as the vault is unlocked.
+const CLIP_TTL = 30 * 60_000;
+type Pending = { at: number; clip: Clip };
+async function menus() {
+  await loadLang();
+  await chrome.contextMenus.removeAll();
+  chrome.contextMenus.create({
+    id: "veil-note-text",
+    title: t("加入 Veil 記事本"),
+    contexts: ["selection"],
+  });
+  chrome.contextMenus.create({
+    id: "veil-note-image",
+    title: t("圖片加入 Veil 記事本"),
+    contexts: ["image"],
+  });
+}
+chrome.runtime.onInstalled.addListener(() => void menus());
+chrome.storage.onChanged.addListener((c, area) => {
+  if (area === "local" && c.uiLang) void menus();
+});
+function badge(text: string, title: string) {
+  void chrome.action.setBadgeBackgroundColor({ color: "#335a49" });
+  void chrome.action.setBadgeText({ text });
+  void chrome.action.setTitle({ title });
+  if (text === "✓")
+    setTimeout(() => {
+      void chrome.action.setBadgeText({ text: "" });
+      void chrome.action.setTitle({ title: chrome.i18n.getMessage("actionTitle") });
+    }, 2500);
+}
+/** Saves notes clipped while locked (called once the vault is open). */
+async function applyClips(v: Vault) {
+  const { clips = [] } = await chrome.storage.session.get<{ clips?: Pending[] }>("clips");
+  await chrome.storage.session.remove("clips");
+  const fresh = clips.filter((c) => Date.now() - c.at < CLIP_TTL);
+  void chrome.action.setBadgeText({ text: "" });
+  if (!fresh.length) return;
+  for (const c of fresh) upsertMemo(v, c.clip);
+  await save(v, await session(), undefined, "memos");
+  badge("✓", t("已加入記事本"));
+}
+chrome.contextMenus.onClicked.addListener((info, tab) => void onClip(info, tab));
+// Also reachable from the extension's own tests (the menu cannot be clicked
+// by automation); other pages cannot reach the service worker's globals.
+(globalThis as any).veilOnClip = (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) =>
+  onClip(info, tab);
+async function onClip(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
+  if (info.menuItemId !== "veil-note-text" && info.menuItemId !== "veil-note-image")
+    return;
+  await (async () => {
+    await loadLang();
+    const image = info.menuItemId === "veil-note-image";
+    const picture = image && info.srcUrl ? await fetchPicture(info.srcUrl) : null;
+    const clip = clipNote({
+      text: image ? "" : info.selectionText || "",
+      pageTitle: tab?.title || "",
+      pageUrl: info.pageUrl || tab?.url || "",
+      picture,
+      pictureUrl: image ? info.srcUrl : "",
+    });
+    try {
+      await serialized(async () => {
+        const s = await session();
+        const v = await readVault(await keyOf(s), true);
+        upsertMemo(v, clip);
+        await save(v, s, undefined, "memos");
+        await touch(s);
+      });
+      void requestSync();
+      badge("✓", t("已加入記事本"));
+    } catch {
+      // Locked: keep it in memory until the vault is unlocked.
+      const { clips = [] } = await chrome.storage.session.get<{ clips?: Pending[] }>("clips");
+      const keep = [...clips.filter((c) => Date.now() - c.at < CLIP_TTL), { at: Date.now(), clip }].slice(-20);
+      await chrome.storage.session.set({ clips: keep });
+      badge(String(keep.length), t("解鎖後會把選取的內容加入記事本"));
+      try {
+        await chrome.action.openPopup();
+      } catch {}
+    }
+  })();
+}
 void chrome.alarms.get("veilmark-sync").then((alarm) => {
   if (!alarm)
     return chrome.alarms.create("veilmark-sync", { periodInMinutes: 5 });

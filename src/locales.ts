@@ -3533,5 +3533,35 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "The shared content did not arrive. Please share it again.",
   "ja": "共有した内容を受け取れませんでした。もう一度共有してください。",
   "ko": "공유한 내용을 받지 못했습니다. 다시 공유해 주세요."
+ },
+ "加入 Veil 記事本": {
+  "zh-CN": "加入 Veil 记事本",
+  "en": "Add to Veil notes",
+  "ja": "Veil メモ帳に追加",
+  "ko": "Veil 메모장에 추가"
+ },
+ "圖片加入 Veil 記事本": {
+  "zh-CN": "图片加入 Veil 记事本",
+  "en": "Add image to Veil notes",
+  "ja": "画像を Veil メモ帳に追加",
+  "ko": "이미지를 Veil 메모장에 추가"
+ },
+ "解鎖後會把選取的內容加入記事本": {
+  "zh-CN": "解锁后会把选取的内容加入记事本",
+  "en": "Unlock to add the selection to your notes",
+  "ja": "ロックを解除すると選択した内容がメモ帳に追加されます",
+  "ko": "잠금을 해제하면 선택한 내용이 메모장에 추가됩니다"
+ },
+ "圖片連結": {
+  "zh-CN": "图片链接",
+  "en": "Image link",
+  "ja": "画像のリンク",
+  "ko": "이미지 링크"
+ },
+ "網頁圖片": {
+  "zh-CN": "网页图片",
+  "en": "Web image",
+  "ja": "Web の画像",
+  "ko": "웹 이미지"
  }
 };
