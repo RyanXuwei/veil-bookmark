@@ -738,6 +738,29 @@ try {
   await bare.getByText("手機版尚未完成 Google 設定").waitFor();
   await bare.close();
 
+  // ---- Idle lock: any use of the page counts, even scrolling in a sheet ----
+  await page.getByRole("button", { name: "上鎖" }).waitFor();
+  await page.getByRole("button", { name: "上鎖" }).click();
+  await page.getByRole("heading", { name: "歡迎回來" }).waitFor();
+  await page.clock.install();
+  await page.getByLabel("主密碼").fill(PASSWORD);
+  await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
+  await page.getByRole("button", { name: "上鎖" }).waitFor();
+  await page.locator(".syncDot").click();
+  const sheet = page.locator(".sheetBody");
+  await sheet.waitFor();
+  await page.clock.fastForward("14:00");
+  const box = (await sheet.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + 40);
+  await page.mouse.wheel(0, 200); // scrolling inside the sheet
+  await page.clock.fastForward("14:00");
+  assert.equal(await page.getByRole("heading", { name: "歡迎回來" }).count(), 0, "still unlocked");
+  await page.getByRole("button", { name: "關閉" }).click();
+  await page.clock.fastForward("16:00"); // no use for 16 minutes
+  await page.getByRole("heading", { name: "歡迎回來" }).waitFor();
+  await page.getByLabel("主密碼").fill(PASSWORD);
+  await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
+
   // ---- Clear this phone ------------------------------------------------------
   await page.getByRole("button", { name: "上鎖" }).waitFor();
   await page.locator(".syncDot").click();
@@ -748,7 +771,7 @@ try {
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
   assert.equal(remote.size, 1, "clearing the phone leaves Drive alone");
   console.log(
-    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), import .docx/.md/Big5 .txt (old .doc refused), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, Google connection kept across reloads and tabs, silent renewal (accepted, refused without a loop), unconfigured, clear phone",
+    "PASS web app: unlock, folders/search, add/edit/delete synced as extension snapshots, two-way sync, notes reader with pictures, note editing (bold, list, paper color, new, delete; picture kept), import .docx/.md/Big5 .txt (old .doc refused), desktop Chrome redirect, offline copy, reconnect upload, share target, sign-in URL and state check, Google connection kept across reloads and tabs, silent renewal (accepted, refused without a loop), idle lock (scrolling in a sheet counts), unconfigured, clear phone",
   );
 } finally {
   await browser.close();

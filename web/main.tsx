@@ -182,13 +182,24 @@ function App({ shared }: { shared: Draft | null }) {
       else active();
     };
     const timer = setInterval(check, 30_000);
-    for (const e of ["pointerdown", "keydown", "scroll"])
-      addEventListener(e, active, { passive: true });
+    // Any use of the page counts: taps, typing, scrolling anywhere (also
+    // inside sheets, the reader and the note editor, hence capture).
+    const events = [
+      "pointerdown",
+      "pointermove",
+      "touchstart",
+      "touchmove",
+      "keydown",
+      "input",
+      "wheel",
+      "scroll",
+    ];
+    for (const e of events)
+      addEventListener(e, active, { passive: true, capture: true });
     document.addEventListener("visibilitychange", visibility);
     return () => {
       clearInterval(timer);
-      for (const e of ["pointerdown", "keydown", "scroll"])
-        removeEventListener(e, active);
+      for (const e of events) removeEventListener(e, active, { capture: true });
       document.removeEventListener("visibilitychange", visibility);
     };
   }, [!!v]);
