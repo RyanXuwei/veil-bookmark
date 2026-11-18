@@ -395,8 +395,13 @@ try {
     }
   });
   await send("Page.reload");
-  await wait(() => document.querySelectorAll(".quickFolder").length === 2);
-  await evaluate(() => document.querySelector(".quickFolder summary").click());
+  // This popup is an incognito window: the incognito-only folder comes first.
+  await wait(() => document.querySelectorAll(".quickFolder").length === 3);
+  assert.equal(
+    await evaluate(() => document.querySelector(".quickFolder strong").textContent),
+    "🕶 無痕專用",
+  );
+  await evaluate(() => document.querySelectorAll(".quickFolder summary")[1].click());
   await screenshot("13-incognito-bookmarks.png");
   const dimensions = await evaluate(() => ({
     w: innerWidth,
@@ -471,7 +476,7 @@ try {
   await fill("input[type=password]", "1234");
   await click("解鎖保險庫 →");
   await wait(() => document.querySelector(".quickList"));
-  await evaluate(() => document.querySelector(".quickFolder summary").click());
+  await evaluate(() => document.querySelectorAll(".quickFolder summary")[1].click());
   await evaluate(async (url) => {
     const r = await chrome.runtime.sendMessage({ type: "LIST" });
     const entry = r.data.entries.find(

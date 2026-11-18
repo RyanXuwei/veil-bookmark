@@ -38,7 +38,14 @@ import {
 import { deleteMemo, upsertMemo } from "./memo-ops";
 import { clipNote, fetchPicture, type Clip } from "./clip";
 import { loadLang, t } from "./i18n";
-import { folderTree, joinPath, parentOf, within } from "./folders";
+import {
+  folderTree,
+  isPrivate,
+  joinPath,
+  parentOf,
+  PRIVATE_FOLDER,
+  within,
+} from "./folders";
 import {
   clearClientId,
   clearTokens,
@@ -1048,6 +1055,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const from = cleanFolderName(m.from);
     const to = cleanFolderName(m.to);
     if (!to) throw Error("請輸入資料夾名稱");
+    if (kind === "entry" && (from === PRIVATE_FOLDER || to === PRIVATE_FOLDER))
+      throw Error("無痕專用資料夾不能改名、移動或刪除");
     // Renaming, or moving to another parent ("to" is the new full path).
     renameTree(v, kind, from, to);
     // Optional new order of the siblings at the destination.
@@ -1064,6 +1073,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     // up one level (to "Unfiled" for a top-level folder).
     const kind = folderKind(m.kind);
     const name = cleanFolderName(m.name);
+    if (kind === "entry" && name === PRIVATE_FOLDER)
+      throw Error("無痕專用資料夾不能改名、移動或刪除");
     const up = parentOf(name);
     const live = liveFolders(v, kind);
     for (const p of live.filter((p) => within(p, name) && p !== name)) {
@@ -1084,7 +1095,10 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     if (!x) throw Error("書籤不存在");
     const url = safeUrl(x.url);
     // A bookmark saved in an incognito window opens in one from anywhere.
-    if (m.incognito || (x.incognito && !sourceWindow.incognito))
+    if (
+      m.incognito ||
+      ((x.incognito || isPrivate(x.folder)) && !sourceWindow.incognito)
+    )
       await chrome.windows.create({ url, incognito: true });
     else if (Number.isInteger(m.targetTabId)) {
       const tab = await chrome.tabs.get(m.targetTabId);

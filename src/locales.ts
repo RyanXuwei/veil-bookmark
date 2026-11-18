@@ -3569,5 +3569,17 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Always open in an incognito window",
   "ja": "常にシークレットウィンドウで開く",
   "ko": "항상 시크릿 창에서 열기"
+ },
+ "🕶 無痕專用": {
+  "zh-CN": "🕶 无痕专用",
+  "en": "🕶 Incognito only",
+  "ja": "🕶 シークレット専用",
+  "ko": "🕶 시크릿 전용"
+ },
+ "無痕專用資料夾不能改名、移動或刪除": {
+  "zh-CN": "无痕专用文件夹不能改名、移动或删除",
+  "en": "The incognito-only folder cannot be renamed, moved or deleted.",
+  "ja": "シークレット専用フォルダーは名前の変更、移動、削除ができません。",
+  "ko": "시크릿 전용 폴더는 이름 변경, 이동, 삭제를 할 수 없습니다."
  }
 };

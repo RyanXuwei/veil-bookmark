@@ -11,7 +11,10 @@ import {
   parentOf,
   pathLabel,
   within,
+  PRIVATE_FOLDER,
 } from "./folders";
+const folderLabel = (p: string) =>
+  p === PRIVATE_FOLDER ? t(PRIVATE_FOLDER) : baseName(p);
 import { ConfirmDelete } from "./confirm";
 
 type Orderable = { id: string; folder?: string; order?: number };
@@ -320,7 +323,7 @@ export function FolderTree<T extends Orderable>({
             />
           ) : (
             <>
-              <strong title={pathLabel(f)}>{baseName(f)}</strong>
+              <strong title={pathLabel(f)}>{folderLabel(f)}</strong>
               <small>{count}</small>
               <button
                 type="button"
@@ -374,7 +377,7 @@ export function FolderTree<T extends Orderable>({
                   .filter((p) => !within(p, f))
                   .map((p) => (
                     <option key={p} value={p}>
-                      {"  ".repeat(depthOf(p)) + baseName(p)}
+                      {"  ".repeat(depthOf(p)) + folderLabel(p)}
                     </option>
                   ))}
               </select>

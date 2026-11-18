@@ -5,6 +5,12 @@ import type { Folder, FolderKind } from "./crypto";
 
 export const SEP = "/";
 
+/** The incognito-only bookmark folder: shown only in incognito windows (and
+ *  never on the phone); bookmarks in it always open in an incognito window. */
+export const PRIVATE_FOLDER = "🕶 無痕專用";
+export const isPrivate = (path: string | undefined) =>
+  !!path && (path === PRIVATE_FOLDER || path.startsWith(PRIVATE_FOLDER + "/"));
+
 export const parentOf = (path: string) =>
   path.includes(SEP) ? path.slice(0, path.lastIndexOf(SEP)) : "";
 export const baseName = (path: string) =>

@@ -1,5 +1,5 @@
 import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
-import { pathLabel, within } from "./folders";
+import { pathLabel, within, isPrivate, PRIVATE_FOLDER } from "./folders";
 import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -299,6 +299,7 @@ function App() {
         title: capture.title || capture.url,
         url: capture.url,
         incognito: !!status?.incognito,
+        folder: status?.incognito ? PRIVATE_FOLDER : "",
       });
       await chrome.storage.session.remove("capture");
     });
@@ -501,8 +502,34 @@ function App() {
       ⚠ {t(syncHint)}
     </button>
   );
-  const entries = vault?.entries.filter((x) => !x.deleted) || [];
-  const folders = folderNames("entry", vault?.folders, entries);
+  // The incognito-only folder exists only in incognito windows.
+  const privateView = !!status?.incognito;
+  const entries =
+    vault?.entries.filter(
+      (x) => !x.deleted && (privateView || !isPrivate(x.folder)),
+    ) || [];
+  const folders = folderNames(
+    "entry",
+    privateView
+      ? [
+          {
+            id: "entry:" + PRIVATE_FOLDER,
+            kind: "entry",
+            name: PRIVATE_FOLDER,
+            order: -1,
+            updated: 0,
+            revision: "",
+            deleted: false,
+          },
+          ...(vault?.folders || []).filter(
+            (f) => !(f.kind === "entry" && f.name === PRIVATE_FOLDER),
+          ),
+        ]
+      : (vault?.folders || []).filter(
+          (f) => f.kind !== "entry" || !isPrivate(f.name),
+        ),
+    entries,
+  );
   const byPosition = ordered(entries, (a, b) => a.title.localeCompare(b.title));
   const visible = entries
     .filter(
@@ -917,7 +944,11 @@ function App() {
                   title={t("手動新增網址")}
                   aria-label={t("手動新增書籤")}
                   onClick={() =>
-                    setEditor({ ...empty, incognito: !!status?.incognito })
+                    setEditor({
+                      ...empty,
+                      incognito: !!status?.incognito,
+                      folder: status?.incognito ? PRIVATE_FOLDER : "",
+                    })
                   }
                 >
                   {t("手動新增")}

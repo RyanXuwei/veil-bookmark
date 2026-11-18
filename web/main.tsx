@@ -28,7 +28,14 @@ import {
   sanitizeHtml,
 } from "../src/sanitize";
 import { folderNames, ordered } from "../src/sortable";
-import { baseName, depthOf, parentOf, pathLabel, within } from "../src/folders";
+import {
+  baseName,
+  depthOf,
+  isPrivate,
+  parentOf,
+  pathLabel,
+  within,
+} from "../src/folders";
 import { IMPORT_ACCEPT, importFile } from "../src/import-doc";
 import { TagInput } from "../src/tag-input";
 import {
@@ -693,10 +700,16 @@ function Library({
     return () => clearTimeout(id);
   }, [toast]);
   if (!v) return null;
-  const entries = v.entries.filter((x) => !x.deleted);
+  // The incognito-only folder is shown only in the extension's incognito
+  // windows, never on the phone.
+  const entries = v.entries.filter((x) => !x.deleted && !isPrivate(x.folder));
   const memos = v.memos.filter((x) => !x.deleted);
   const q = query.trim().toLowerCase();
-  const folders = folderNames("entry", v.folders, entries);
+  const folders = folderNames(
+    "entry",
+    (v.folders || []).filter((f) => f.kind !== "entry" || !isPrivate(f.name)),
+    entries,
+  );
   const hasUnfiled = entries.some((x) => !x.folder);
   const shown = ordered(
     entries.filter(

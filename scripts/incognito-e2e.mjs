@@ -88,8 +88,49 @@ try {
   // New bookmarks from a normal window start unchecked.
   await popup.getByRole("button", { name: "手動新增書籤" }).click();
   assert.equal(await popup.getByRole("checkbox", { name: "一律用無痕視窗開啟" }).isChecked(), false);
+
+  // ---- Incognito-only folder ----------------------------------------------
+  const PRIVATE = "🕶 無痕專用";
+  await rpc("UPSERT", { entry: { title: "隱藏網站", url: "https://example.net/hidden", folder: PRIVATE } });
+  await rpc("UPSERT", { entry: { title: "隱藏子項", url: "https://example.net/sub", folder: PRIVATE + "/工作" } });
+  await popup.reload();
+  await popup.locator(".quickRow", { hasText: "一般網站" }).waitFor();
+  const body = await popup.locator("body").innerText();
+  assert(!body.includes("隱藏網站") && !body.includes("無痕專用"), "not shown in a normal window");
+  await popup.getByRole("textbox", { name: "搜尋書籤" }).fill("隱藏");
+  await popup.getByText("沒有符合的書籤").waitFor();
+  // Opened from a normal window (e.g. a link elsewhere): incognito window.
+  const hid = (await rpc("LIST")).entries.find((x) => x.title === "隱藏網站").id;
+  await worker.evaluate(() => (globalThis.__created = []));
+  await rpc("OPEN", { id: hid, incognito: false, targetTabId: tab.id });
+  assert.deepEqual(await worker.evaluate(() => globalThis.__created), [
+    { url: "https://example.net/hidden", incognito: true },
+  ]);
+  await assert.rejects(rpc("FOLDER_DELETE", { kind: "entry", name: PRIVATE }), /無痕專用資料夾不能/);
+  await assert.rejects(rpc("FOLDER_RENAME", { kind: "entry", from: PRIVATE, to: "公開" }), /無痕專用資料夾不能/);
+
+  // The popup as an incognito window sees it (STATUS reports incognito).
+  const inc = await context.newPage();
+  await inc.addInitScript(() => {
+    const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+    chrome.runtime.sendMessage = async (m, ...rest) => {
+      const r = await send(m, ...rest);
+      if (m?.type === "STATUS" && r?.ok) r.data.incognito = true;
+      return r;
+    };
+  });
+  await inc.setViewportSize({ width: 380, height: 640 });
+  await inc.goto(`${base}?popup`);
+  const folderRow = inc.locator("strong", { hasText: "無痕專用" });
+  await folderRow.waitFor();
+  await folderRow.click();
+  await inc.locator(".quickRow", { hasText: "隱藏網站" }).waitFor();
+  if (process.argv[2]) await inc.screenshot({ path: resolve(process.argv[2], "incognito-folder.png") });
+  await inc.getByRole("button", { name: "手動新增書籤" }).click();
+  assert.equal(await inc.getByRole("combobox", { name: "資料夾" }).inputValue(), PRIVATE, "new bookmarks go to the incognito folder");
+  assert(await inc.getByRole("checkbox", { name: "一律用無痕視窗開啟" }).isChecked());
   console.log(
-    "PASS incognito bookmarks: marked in the list, opened in an incognito window from a normal window (normal tab untouched), editor toggle, new bookmarks in a normal window unmarked",
+    "PASS incognito bookmarks: marked in the list, opened in an incognito window from a normal window (normal tab untouched), editor toggle, new bookmarks in a normal window unmarked; incognito-only folder hidden (list, search) in normal windows, its bookmarks open incognito, folder cannot be renamed/deleted, shown in incognito with new bookmarks filed there",
   );
 } finally {
   await context.close();
