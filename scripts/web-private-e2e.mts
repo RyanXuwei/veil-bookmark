@@ -176,8 +176,41 @@ try {
   await unlock();
   assert.equal(await page.getByText("私密書籤").count(), 0, "hidden again after locking");
   assert.match((await chip.getAttribute("class")) || "", /(^| )off( |$)/);
+
+  // Empty folder: still shown; bookmarks added inside it are filed there.
+  await chip.click();
+  await page.getByRole("button", { name: "開啟", exact: true }).click();
+  await page.getByRole("button", { name: "更多操作：私密書籤" }).click();
+  await page.getByRole("button", { name: "刪除", exact: true }).click();
+  await page.getByRole("button", { name: "確定刪除？會同步到所有裝置" }).click();
+  await page.getByText("無痕專用資料夾還是空的").waitFor();
+  await page.reload();
+  await unlock();
+  await chip.waitFor(); // shown although the folder is empty
+  await chip.click();
+  await page.getByRole("button", { name: "開啟", exact: true }).click();
+  await page.getByText("無痕專用資料夾還是空的").waitFor();
+  await page.getByRole("button", { name: "新增書籤" }).click();
+  await page.getByLabel("名稱").fill("手機加的私密");
+  await page.getByLabel("網址").fill("https://example.com/from-phone");
+  await page.getByRole("button", { name: "加密儲存 →" }).click();
+  await page.getByText("手機加的私密").waitFor();
+  for (let i = 0; ; i++) {
+    const v = await current().catch(() => null);
+    const e = v?.entries.find((x) => x.title === "手機加的私密");
+    if (e) {
+      assert.equal(e.folder, "🕶 無痕專用", "filed in the incognito-only folder");
+      break;
+    }
+    if (i > 50) throw Error("not synced");
+    await page.waitForTimeout(200);
+  }
+  // Locked again: hidden; the normal list does not show it.
+  await page.reload();
+  await unlock();
+  assert.equal(await page.getByText("手機加的私密").count(), 0);
   console.log(
-    "PASS phone incognito folder: grey and hidden (list and search) until opened, dialog with 取消/開啟, opening lists its bookmarks, hidden again after locking",
+    "PASS phone incognito folder: grey and hidden (list and search) until opened, dialog with 取消/開啟, opening lists its bookmarks, hidden again after locking; shown when empty, bookmarks added on the phone are filed in it",
   );
 } finally {
   await browser.close();

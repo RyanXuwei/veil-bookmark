@@ -3605,5 +3605,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Markdown preview",
   "ja": "Markdown プレビュー",
   "ko": "Markdown 미리보기"
+ },
+ "無痕專用資料夾還是空的": {
+  "zh-CN": "无痕专用文件夹还是空的",
+  "en": "The incognito-only folder is empty",
+  "ja": "シークレット専用フォルダーは空です",
+  "ko": "시크릿 전용 폴더가 비어 있습니다"
  }
 };

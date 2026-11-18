@@ -706,13 +706,10 @@ function Library({
     return () => clearTimeout(id);
   }, [toast]);
   if (!v) return null;
-  // The incognito-only folder's bookmarks are listed only after the user
-  // opens it (see showPrivate).
-  const hasPrivate =
-    v.entries.some((x) => !x.deleted && isPrivate(x.folder)) ||
-    (v.folders || []).some(
-      (f) => f.kind === "entry" && !f.deleted && isPrivate(f.name),
-    );
+  // The incognito-only folder is always offered (also empty, so bookmarks can
+  // be added to it here); its bookmarks are listed only after the user opens
+  // it (see showPrivate).
+  const hasPrivate = true;
   const entries = v.entries.filter(
     (x) => !x.deleted && (showPrivate || !isPrivate(x.folder)),
   );
@@ -902,7 +899,13 @@ function Library({
             ))}
             {!shown.length && (
               <div className="empty">
-                <p>{q ? t("沒有符合的書籤") : t("還沒有私人書籤")}</p>
+                <p>
+                  {q
+                    ? t("沒有符合的書籤")
+                    : folder === PRIVATE_FOLDER
+                      ? t("無痕專用資料夾還是空的")
+                      : t("還沒有私人書籤")}
+                </p>
                 <small>
                   {q
                     ? t("試試其他關鍵字")
