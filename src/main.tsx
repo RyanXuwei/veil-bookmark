@@ -1373,7 +1373,7 @@ else
   );
 import "./popup.css";
 
-const MOBILE_URL = "https://ryanxuwei.github.io/veil-bookmark/app/";
+const MOBILE_URL = "https://veil-bookmark.bitingbox.win/";
 /** QR code that opens the mobile web app on a phone. */
 function MobileSection({
   driveOn,

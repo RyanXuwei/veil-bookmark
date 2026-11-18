@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.7.2
+# 測試報告 · Veil Bookmark 1.8.0
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -267,3 +267,11 @@
 
 - `web-accounts-e2e` 改為先點標題列的帳戶按鈕再操作選單，其餘流程（兩分頁各自帳戶、空 Drive 隔離、離線修改保留、新增帳戶、同帳戶並行寫入、身分不符拒絕、移除單一帳戶）照舊通過；新增選單截圖。
 - `web-e2e`、`web-bio-e2e`、單元測試 28 組通過。擴充功能沒有變更。
+
+## 1.8.0 手機版獨立網址
+
+- 手機版測試（`web-e2e`、`web-bio-e2e`、`web-accounts-e2e`）改為從 `web-dist` 根目錄提供，全部通過。
+- 實際部署後從外部檢查 https://veil-bookmark.bitingbox.win/ ：網頁、`config.json`、manifest、service worker 皆 200；回應含 CSP、X-Frame-Options、nosniff、no-referrer、Permissions-Policy；`config.json` 不快取。
+- 乾淨環境安裝（空的 npm 快取）`npm ci` 通過，Cloudflare 建置成功。
+- 「已搬家」頁：以瀏覽器載入驗證權杖被清除、按鈕只清除 `veil` 開頭的儲存與 IndexedDB、不影響其他鍵。
+- 擴充功能 `popup-e2e` 的「手機版」面板：連結與以 OpenCV 解碼 QR code 皆為新網址。

@@ -580,7 +580,7 @@ try {
     await evaluate(() =>
       document
         .querySelector(".mobileQr a")
-        .href.startsWith("https://ryanxuwei.github.io/veil-bookmark/app/"),
+        .href.startsWith("https://veil-bookmark.bitingbox.win/"),
     ),
   );
   await screenshot("31-mobile-qr.png");

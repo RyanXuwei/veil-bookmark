@@ -2,27 +2,50 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <meta name="theme-color" content="#f4f6f0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Veil Bookmark" />
     <meta name="robots" content="noindex" />
-    <title>Veil Bookmark</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon-192.png" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
-    <script type="module" crossorigin src="./assets/index-pX8HqM6d.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BLRoR02c.css">
+    <title>Veil Bookmark 手機版已搬家</title>
+    <link rel="icon" href="icon-192.png" />
+    <style>
+      :root { color-scheme: light dark; --green:#335a49; --bg:#f4f6f0; --card:#fff; --ink:#243b38; --muted:#5d6b63; --line:#dce4d8; }
+      @media (prefers-color-scheme: dark) { :root { --bg:#161c19; --card:#1f2723; --ink:#e8ece6; --muted:#a8b3ac; --line:#34413a; --green:#8cc2a6; } }
+      * { box-sizing: border-box; }
+      body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","PingFang TC",sans-serif; }
+      main { max-width:520px; margin:0 auto; padding:32px 20px 48px; }
+      img { width:56px; height:56px; border-radius:14px; }
+      h1 { font-size:22px; margin:14px 0 6px; }
+      p { margin:8px 0; }
+      .muted { color:var(--muted); font-size:14px; }
+      .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin:18px 0; }
+      a.go, button { display:block; width:100%; margin-top:12px; padding:13px 16px; border-radius:12px; border:1px solid var(--green); background:var(--green); color:#fff; font:inherit; font-weight:600; text-align:center; text-decoration:none; cursor:pointer; }
+      button.clear { background:transparent; color:var(--ink); border-color:var(--line); font-weight:400; }
+      code { word-break:break-all; }
+      .done { color:var(--green); font-weight:600; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <main>
+      <img src="icon-192.png" alt="" />
+      <h1>Veil Bookmark 手機版已搬到新網址</h1>
+      <p>為了讓手機版有獨立、更安全的網址，它已經搬家了。請改用新網址，並重新連接 Google、重新啟用 Face ID／指紋。你的書籤與記事都在 Google Drive 裡，不會遺失。</p>
+      <div class="card">
+        <p><code>https://veil-bookmark.bitingbox.win/</code></p>
+        <a class="go" href="https://veil-bookmark.bitingbox.win/">前往新網址</a>
+        <p class="muted">加到主畫面的捷徑也請用新網址重新加入一次。</p>
+      </div>
+      <div class="card">
+        <p><strong>清除這個舊網址上的資料</strong></p>
+        <p class="muted">Google 連線權杖已自動清除。按下面的按鈕，會再清除這個網址上這支手機的加密副本、Face ID／指紋設定與離線檔案。只有<strong>在這個舊網址上做的、還沒同步到 Google Drive 的修改</strong>會因此遺失；已同步的都在 Drive 裡。</p>
+        <button class="clear" id="clear" type="button">清除舊網址上的資料</button>
+        <p id="result" class="done" role="status"></p>
+      </div>
+      <p class="muted">Veil Bookmark mobile moved to a new address (above). Sign in with Google again there; your data is in your Google Drive. The button above removes this old address's local copy.</p>
+    </main>
+    <script src="moved.js"></script>
   </body>
 </html>

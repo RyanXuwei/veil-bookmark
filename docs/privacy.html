@@ -15,7 +15,7 @@
     <main>
       <article id="zh" lang="zh-Hant">
         <h1>隱私權政策</h1>
-        <p class="meta">生效日期：2026-11-17（最後更新：手機版可撰寫記事、Google 連線會保留）　適用版本：0.2.0 起</p>
+        <p class="meta">生效日期：2026-11-17（最後更新：手機版搬到獨立網址）　適用版本：0.2.0 起</p>
 
         <h2>摘要</h2>
         <p>
@@ -54,7 +54,7 @@
         <h2>手機版網頁</h2>
 <p>1.7.0 起可保存多個 Google 帳戶。透過相同 drive.appdata 權限的 Drive about API 取得帳戶識別碼、電子郵件與顯示名稱，用於顯示及核對工作區。帳戶資料與短期存取權杖保存在本機瀏覽器，加密副本與生物辨識設定依帳戶分開保存；分頁各自選擇帳戶。移除帳戶只清除該帳戶的本機資料，不刪除 Drive 資料，也不登出其他 Google 服務。</p>
         <p>
-          手機版（<code>https://ryanxuwei.github.io/veil-bookmark/app/</code>）是放在 GitHub Pages 的靜態網頁，供無法安裝擴充功能的手機使用。它以同一個 <code>drive.appdata</code> 權限讀寫同一份加密快照，主密碼只在手機的瀏覽器中使用，解密後的資料不會傳到任何伺服器。
+          手機版（<code>https://veil-bookmark.bitingbox.win/</code>）是由 Cloudflare 託管的靜態網頁（獨立網址，不與其他網頁共用），供無法安裝擴充功能的手機使用。它以同一個 <code>drive.appdata</code> 權限讀寫同一份加密快照，主密碼只在手機的瀏覽器中使用，解密後的資料不會傳到任何伺服器。
         </p>
         <ul>
           <li>Google 存取權杖（約 1 小時有效，只能存取 Drive 的隱藏應用程式資料夾）保存在這支手機的瀏覽器中直到過期，重新整理或重新開啟時不必再次連線；過期後會向 Google 重新取得，不需要再按一次。在「同步與設定」清除資料並登出時會一併刪除。</li>
@@ -62,7 +62,7 @@
           <li>選用的生物辨識解鎖（Face ID／指紋）：手機建立一把「通行金鑰」，由手機的生物辨識保護；它產生的密鑰把保險庫的資料金鑰加密後存在這支手機。主密碼與生物特徵都不會被儲存或傳送；可隨時在設定中停用。</li>
           <li>在手機上撰寫記事時，只有你選擇插入的照片會被讀取；照片在手機上重新編碼（只保留像素，移除拍攝位置等中繼資料）後與記事一起加密。</li>
           <li>不載入任何外部程式碼、字型、分析或廣告；開啟書籤時不傳送來源網址（no-referrer）。</li>
-          <li>網頁由 GitHub 託管，GitHub 可能依其政策記錄連線資訊（例如 IP 位址），但看不到你的書籤內容。</li>
+          <li>網頁由 Cloudflare 託管，Cloudflare 可能依其政策記錄連線資訊（例如 IP 位址），但看不到你的書籤內容。</li>
         </ul>
 
         <h2>分享與第三方</h2>
@@ -153,7 +153,7 @@
         <h2>Mobile web version</h2>
 <p>From 1.7.0, multiple Google accounts can be kept locally. Drive about, using the same drive.appdata scope, supplies the account identifier, email and display name to label and verify workspaces. Account details and short-lived access tokens stay in the browser; encrypted copies and biometric settings are isolated per account. Tabs select accounts independently. Removing an account deletes only its local data, not Drive data or Google service sessions.</p>
         <p>
-          The mobile version (<code>https://ryanxuwei.github.io/veil-bookmark/app/</code>) is a static page on GitHub Pages for phones that
+          The mobile version (<code>https://veil-bookmark.bitingbox.win/</code>) is a static page hosted by Cloudflare at its own address (shared with no other pages) for phones that
           cannot install the extension. It reads and writes the same encrypted snapshots with the same <code>drive.appdata</code> permission.
           Your master password is used only in your phone's browser, and decrypted data is never sent to any server.
         </p>
@@ -163,7 +163,7 @@
           <li>Optional biometric unlock (Face ID / fingerprint): the phone creates a passkey protected by its biometrics; a secret it produces encrypts the vault's data key, which stays on this phone. Neither your master password nor your biometric data is stored or sent anywhere. You can turn it off in settings at any time.</li>
           <li>When you write notes on the phone, only the photos you choose to insert are read; they are re-encoded on the phone (pixels only, without metadata such as location) and encrypted with the note.</li>
           <li>No external code, fonts, analytics or ads are loaded; opening a bookmark sends no referrer.</li>
-          <li>The page is hosted by GitHub, which may log connection details such as IP addresses under its own policy, but cannot see your bookmarks.</li>
+          <li>The page is hosted by Cloudflare, which may log connection details such as IP addresses under its own policy, but cannot see your bookmarks.</li>
         </ul>
 
         <h2>Sharing and third parties</h2>

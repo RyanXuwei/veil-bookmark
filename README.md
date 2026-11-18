@@ -11,7 +11,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 <a href="https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg"><img src="https://img.shields.io/badge/%E5%8A%A0%E5%88%B0_Chrome-%E5%85%8D%E8%B2%BB%E5%AE%89%E8%A3%9D-335a49?style=for-the-badge&logo=googlechrome&logoColor=white" alt="加到 Chrome：免費安裝" height="44"></a>
 &nbsp;
-<a href="https://ryanxuwei.github.io/veil-bookmark/app/"><img src="https://img.shields.io/badge/%E6%89%8B%E6%A9%9F%E7%89%88-%E7%9B%B4%E6%8E%A5%E9%96%8B%E5%95%9F-6f9b7b?style=for-the-badge" alt="手機版：直接開啟" height="44"></a>
+<a href="https://veil-bookmark.bitingbox.win/"><img src="https://img.shields.io/badge/%E6%89%8B%E6%A9%9F%E7%89%88-%E7%9B%B4%E6%8E%A5%E9%96%8B%E5%95%9F-6f9b7b?style=for-the-badge" alt="手機版：直接開啟" height="44"></a>
 
 **[👉 到 Chrome 線上應用程式商店安裝](https://chromewebstore.google.com/detail/chpabfajilpjflfmnkopjjcnoaaliefg)**
 
@@ -37,14 +37,14 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 ## 手機掃一下，帶著走
 
-<a href="https://ryanxuwei.github.io/veil-bookmark/app/"><img src="public/mobile-qr.svg" width="200" alt="手機版 QR code"></a>
+<a href="https://veil-bookmark.bitingbox.win/"><img src="public/mobile-qr.svg" width="200" alt="手機版 QR code"></a>
 
-用手機相機掃描，或直接開啟 <https://ryanxuwei.github.io/veil-bookmark/app/><br>
+用手機相機掃描，或直接開啟 <https://veil-bookmark.bitingbox.win/><br>
 先在電腦的擴充功能「同步與備份」連接 Google Drive，手機上連同一個 Google 帳號、輸入主密碼就能用。
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.7.2
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.8.0
 
 ## 功能
 
@@ -106,7 +106,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[�
 
 ## 手機版（網頁）
 
-不能安裝擴充功能的手機，可以用瀏覽器開啟手機版：<https://ryanxuwei.github.io/veil-bookmark/app/>。在擴充功能按「手機版」會顯示 QR code，用手機相機掃描即可開啟。
+不能安裝擴充功能的手機，可以用瀏覽器開啟手機版：<https://veil-bookmark.bitingbox.win/>。在擴充功能按「手機版」會顯示 QR code，用手機相機掃描即可開啟。
 
 1. 先在電腦的擴充功能「同步與備份」連接 Google Drive。
 2. 在手機開啟上面的網址，按「使用 Google 帳號連接 Drive」，選擇同一個 Google 帳號。
