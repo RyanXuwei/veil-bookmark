@@ -28,6 +28,12 @@ export function ToolIcon({ name }: { name: string }) {
       </>
     ),
     play: <path d="m8 5 11 7-11 7z" />,
+    markdown: (
+      <>
+        <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
+        <path d="M6 15V9l2.5 3L11 9v6M16 9v6M13.5 12.5 16 15l2.5-2.5" />
+      </>
+    ),
     stop: <rect x="5" y="5" width="14" height="14" rx="1" />,
     paragraph: <path d="M13 4v16M17 4v16M20 4h-9.5a4 4 0 0 0 0 8H13" />,
     h1: <path d="M4 6v12M12 6v12M4 12h8M17 10.5l3-2.5v10" />,

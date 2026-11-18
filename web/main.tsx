@@ -72,6 +72,7 @@ import {
   finishCreate,
 } from "./vault";
 import { AccountMenu } from "./account-menu";
+import { drawDiagrams, htmlText, markdownPreview } from "../src/md-preview";
 import { RecoveryKeyModal } from "../src/recovery";
 import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
@@ -1384,9 +1385,16 @@ function Reader({
   onEdit: () => void;
 }) {
   const body = useRef<HTMLDivElement>(null);
+  // Markdown / Mermaid preview of the note's text.
+  const [md, setMd] = useState(false);
   useLayoutEffect(() => {
     const el = body.current;
     if (!el) return;
+    if (md) {
+      el.innerHTML = markdownPreview(htmlText(memoHtml(memo)));
+      void drawDiagrams(el);
+      return;
+    }
     el.innerHTML = memoHtml(memo);
     showImages(el, new Map((memo.images || []).map((i) => [i.id, i])));
     // Links in notes open outside the app without a referrer.
@@ -1394,7 +1402,7 @@ function Reader({
       a.target = "_blank";
       a.rel = "noopener noreferrer";
     }
-  }, [memo]);
+  }, [memo, md]);
   const extras = (memo.recordings?.length || 0) + (memo.drawing?.length || 0);
   return (
     <div
@@ -1408,6 +1416,14 @@ function Reader({
           {t("← 返回")}
         </button>
         <span>{new Date(memo.updated).toLocaleString(lang())}</span>
+        <button
+          className={md ? "ghost mdToggle on" : "ghost mdToggle"}
+          aria-pressed={md}
+          aria-label={t("Markdown 預覽")}
+          onClick={() => setMd(!md)}
+        >
+          MD
+        </button>
         <button className="ghost strong" onClick={onEdit}>
           {t("編輯")}
         </button>
@@ -1422,7 +1438,7 @@ function Reader({
             {t("這則記事含有錄音或手繪，請在電腦的記事本中檢視。")}
           </p>
         )}
-        <div className="memoBody" ref={body} />
+        <div className={md ? "memoBody mdPreview" : "memoBody"} ref={body} />
       </article>
     </div>
   );

@@ -3599,5 +3599,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Open",
   "ja": "開く",
   "ko": "열기"
+ },
+ "Markdown 預覽": {
+  "zh-CN": "Markdown 预览",
+  "en": "Markdown preview",
+  "ja": "Markdown プレビュー",
+  "ko": "Markdown 미리보기"
  }
 };

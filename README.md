@@ -44,7 +44,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.13.1
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.14.0
 
 ## 功能
 
@@ -54,6 +54,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[�
 - **多層資料夾與拖曳排序**：書籤與記事都能建立多層資料夾（資料夾的「⋯ › 新增子資料夾」），項目和資料夾都能拖曳排序、拖進或拖出資料夾；把資料夾拖到另一個資料夾的中間就會放進去（鍵盤可用 Alt + ↑／↓）。資料夾與記事都有「⋯」選單，可重新命名、移動或刪除；刪除資料夾時，裡面的項目與子資料夾會移到上一層，不會被刪除。
 - **加密記事本**：類似 Word 的網頁記事本，有功能區（內文／標題／引文／程式碼樣式、粗體、色彩、清單、對齊、連結）、A4 頁面、字數與縮放；自動加密儲存，可列印或另存 PDF（「檢視 › 列印／另存 PDF」，存 PDF 時在列印視窗的目的地選「另存為 PDF」）。儲存失敗會保留草稿，切換文件前會先等候儲存完成。從浮框的「記事本」分頁開啟。
 - **右鍵加入記事本**：在任何網頁選取文字按右鍵「加入 Veil 記事本」，或在圖片上按右鍵「圖片加入 Veil 記事本」，就會存成一則記事，附上網頁標題與回到原網頁的連結。上鎖時會先開啟 Veil 請你解鎖，內容在解鎖前只暫放在 Chrome 記憶體。
+- **Markdown 與 Mermaid 預覽**：用 Markdown 語法寫記事，在「檢視 › Markdown 預覽」（手機版閱讀畫面的「MD」）切換成排版好的樣子；```mermaid 區塊會畫成流程圖、時序圖等圖表。
 - **匯入文件**：在記事本頁按「匯入」，選擇文字檔（.txt，UTF-8 或 Big5）、Markdown（.md）、網頁（.html）或 Word（.docx），每個檔案會成為一則新記事；Word 的標題、粗體、清單、連結與圖片都會保留，表格會轉成一行一列的文字。舊版 .doc 請先在 Word 另存為 .docx。匯入完全在你的電腦上進行，不會上傳檔案。
 - **一致的刪除確認**：書籤、記事與資料夾的刪除都會先跳出同一個確認視窗，說明刪除會同步到所有裝置。
 - **一般與無痕都能用**：點書籤會在目前的瀏覽模式開啟，也可以另開無痕視窗。在無痕視窗收藏的書籤會標上「無痕」，之後在一般視窗點它也會自動用無痕視窗開啟（編輯書籤可取消）。

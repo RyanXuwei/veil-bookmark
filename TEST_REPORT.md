@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.13.1
+# 測試報告 · Veil Bookmark 1.14.0
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -329,3 +329,9 @@
 
 - 新增 `scripts/web-private-e2e.mts`：資料夾按鈕預設灰色，清單與搜尋看不到其中書籤；點擊出現說明視窗，「取消」維持隱藏，「開啟」列出書籤並選取該資料夾；重新整理（上鎖）再解鎖後又隱藏。
 - `web-e2e`、`web-accounts-e2e`、`web-share-e2e`、`web-setup-e2e`、單元測試通過。
+
+## 1.14.0 Markdown／Mermaid 預覽
+
+- 新增 `scripts/markdown-e2e.mjs`（擴充功能記事本）：輸入 Markdown 後切換預覽，檢查標題、粗體、行內程式碼、連結、清單、待辦、表格靠右對齊、Mermaid 圖表畫出、錯誤圖表顯示錯誤、`<script>` 當文字、切回後內容與可編輯狀態不變、沒有 CSP 或頁面錯誤。
+- 新增 `scripts/web-markdown-e2e.mts`（手機版閱讀畫面）：MD 按鈕切換預覽、標題、待辦、表格、Mermaid 圖表、切回原文、沒有 CSP 錯誤。
+- 其餘擴充功能與手機版測試、單元測試通過；`npm ci` 在全新目錄與空快取下成功。

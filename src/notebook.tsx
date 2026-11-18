@@ -3,6 +3,7 @@ import "./notebook.css";
 import { cleanDrawing, type Memo, type DrawingStroke } from "./crypto";
 import { ToolIcon } from "./tool-icon";
 import { DrawingLayer } from "./drawing";
+import { drawDiagrams, editorText, markdownPreview } from "./md-preview";
 import { Recorder, AudioSticker } from "./recorder";
 import {
   cleanImages,
@@ -65,6 +66,13 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [folderRecords, setFolderRecords] = useState<Folder[]>([]);
   const [askDelete, setAskDelete] = useState(false);
   const [current, setCurrent] = useState<string>("");
+  // Markdown / Mermaid preview of the note (read-only, toggled in View).
+  const [mdHtml, setMdHtml] = useState<string | null>(null);
+  const preview = useRef<HTMLDivElement>(null);
+  useEffect(() => setMdHtml(null), [current]);
+  useEffect(() => {
+    if (mdHtml !== null && preview.current) void drawDiagrams(preview.current);
+  }, [mdHtml]);
   const [title, setTitle] = useState("");
   const [paperColor, setPaperColor] = useState(DEFAULT_PAPER);
   const paper = useRef(DEFAULT_PAPER);
@@ -1002,6 +1010,18 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                   on={navOpen}
                   onClick={() => setNavOpen(!navOpen)}
                 />
+                <BigBtn
+                  label="Markdown 預覽"
+                  icon="markdown"
+                  on={mdHtml !== null}
+                  onClick={() =>
+                    setMdHtml(
+                      mdHtml !== null || !editor.current
+                        ? null
+                        : markdownPreview(editorText(editor.current)),
+                    )
+                  }
+                />
                 <BigBtn label="100%" icon="zoom" onClick={() => setZoom(100)} />
                 <BigBtn
                   label="頁寬"
@@ -1213,9 +1233,18 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             }
           >
             <div className="nbBinding" aria-hidden="true" />
+            {mdHtml !== null && (
+              <div
+                ref={preview}
+                className="nbEditor mdPreview"
+                aria-label={t("Markdown 預覽")}
+                dangerouslySetInnerHTML={{ __html: mdHtml }}
+              />
+            )}
             <div
               ref={editor}
               className="nbEditor"
+              hidden={mdHtml !== null}
               contentEditable={!switching && drawMode === "text"}
               suppressContentEditableWarning
               spellCheck
@@ -1291,6 +1320,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                 }
               }}
             />
+            {mdHtml === null && (
             <DrawingLayer
               strokes={drawing}
               mode={switching ? "text" : drawMode}
@@ -1298,7 +1328,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               width={penWidth}
               onChange={drawChanged}
             />
-            <div className="nbAudioLayer">
+            )}
+            <div className="nbAudioLayer" hidden={mdHtml !== null}>
               {recordings.map((r) => (
                 <AudioSticker
                   key={r.id}
