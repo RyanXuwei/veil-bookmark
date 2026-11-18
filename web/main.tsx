@@ -225,7 +225,6 @@ function App({ shared }: { shared: Draft | null }) {
   };
   return (
     <>
-      <AccountMenu />
       {v ? (
         <Library
           shared={pendingShare}
@@ -287,6 +286,7 @@ function Unlock({
       <header className="brand">
         <img src="./icon-192.png" alt="" />
         <span>Veil Bookmark</span>
+        <AccountMenu />
       </header>
       <section className="welcomeCard">
         <p className="eyebrow">PRIVATE BY DESIGN</p>
@@ -519,6 +519,7 @@ function Library({
           <img src="./icon-192.png" alt="" />
           <span>Veil Bookmark</span>
         </div>
+        <AccountMenu />
         <button
           className={`syncDot ${s.error ? "bad" : s.pending ? "wait" : "ok"}`}
           aria-label={t("同步與設定")}

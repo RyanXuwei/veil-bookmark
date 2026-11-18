@@ -19,6 +19,16 @@ import {
   type Vault,
 } from "../src/crypto";
 
+// The account controls sit in a small menu behind the header's round button.
+async function accountMenu(p: any) {
+  if (!(await p.locator(".accountPanel").count()))
+    await p.locator(".accountChip").click();
+  return p.locator(".accountPanel");
+}
+async function accountSelect(p: any) {
+  return (await accountMenu(p)).getByLabel("切換帳戶");
+}
+
 const root = resolve(import.meta.dirname, "..");
 const shot = process.argv[2];
 const PASSWORD = "phone-test-1234";
@@ -159,6 +169,12 @@ async function pageFor(id: string) {
   return p;
 }
 async function open(p: any, title: string) {
+  // Switching reloads the page (closing the menu); otherwise close it.
+  const panel = p.locator(".accountPanel");
+  if (await panel.count()) {
+    await p.keyboard.press("Escape").catch(() => {});
+    await panel.waitFor({ state: "detached" });
+  }
   await p.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
   await p.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await p.getByText(title, { exact: true }).waitFor();
@@ -212,8 +228,8 @@ try {
   await b.locator(".syncDot", { hasText: "已同步" }).waitFor();
   assert.equal(await a.getByText("Only B", { exact: true }).count(), 0);
   assert.equal(await b.getByText("Only A", { exact: true }).count(), 0);
-  assert.equal(await a.getByLabel("切換帳戶").inputValue(), "A");
-  assert.equal(await b.getByLabel("切換帳戶").inputValue(), "B");
+  assert.equal(await (await accountSelect(a)).inputValue(), "A");
+  assert.equal(await (await accountSelect(b)).inputValue(), "B");
   // Offline work remains with A after switching the tab to B and back.
   await a.evaluate(() => {
     const k = "veilAccount:A",
@@ -229,26 +245,26 @@ try {
     .fill("https://example.com/offline");
   await a.getByRole("button", { name: "加密儲存 →", exact: true }).click();
   await a.getByText("Offline A", { exact: true }).waitFor();
-  await a.getByLabel("切換帳戶").selectOption("B");
+  await (await accountSelect(a)).selectOption("B");
   await a.getByLabel("主密碼", { exact: true }).waitFor();
   assert.equal(await a.getByText("Offline A", { exact: true }).count(), 0);
   await open(a, "Only B");
-  await a.getByLabel("切換帳戶").selectOption("A");
+  await (await accountSelect(a)).selectOption("A");
   await open(a, "Offline A");
   assert.equal(posts.B, 0);
   assert.equal((await readCache(a, "A")).a.id, "vault-A");
   assert.equal((await readCache(a, "B")).a.id, "vault-B");
   // Add C through the real popup/callback flow; no A/B payload is sent to C.
-  await a.getByRole("button", { name: "新增帳戶", exact: true }).click();
+  await (await accountMenu(a)).getByRole("button", { name: /新增帳戶$/ }).click();
   await a.waitForFunction(
     () => sessionStorage.getItem("veilActiveAccount") === "C",
   );
   await a.getByLabel("主密碼", { exact: true }).waitFor();
   assert.equal(posts.C, 0);
   assert.equal(await readCache(a, "C"), undefined);
-  assert.equal(await b.getByLabel("切換帳戶").inputValue(), "B");
+  assert.equal(await (await accountSelect(b)).inputValue(), "B");
   // Same-account concurrent edits merge against the latest local encrypted copy.
-  await a.getByLabel("切換帳戶").selectOption("B");
+  await (await accountSelect(a)).selectOption("B");
   await open(a, "Only B");
   async function add(p: any, title: string) {
     await p.getByRole("button", { name: "新增書籤", exact: true }).click();
@@ -277,7 +293,7 @@ try {
     );
   });
   mismatch = true;
-  await a.getByLabel("切換帳戶").selectOption("A");
+  await (await accountSelect(a)).selectOption("A");
   await a.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
   await a.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await a.getByRole("alert").filter({ hasText: "工作區不符" }).waitFor();
@@ -312,15 +328,18 @@ try {
   await open(legacy, "Offline A");
   assert.equal((await readCache(legacy, "A")).a.id, "vault-A");
   // Removing B removes B alone, including on another tab displaying B.
-  await b.getByRole("button", { name: "移除此帳戶", exact: true }).click();
+  await (await accountMenu(b)).getByRole("button", { name: /移除此帳戶$/ }).click();
   await b.getByRole("button", { name: "確定移除此帳戶", exact: true }).click();
   await b.waitForFunction(() => !localStorage.getItem("veilAccount:B"));
   assert.equal(await readCache(b, "B"), undefined);
   assert((await readCache(legacy, "A")).a.id === "vault-A");
   await legacy.screenshot({
-    path: resolve(root, "../previews/mobile-accounts-1.7.0.png"),
+    path: resolve(root, "../previews/mobile-accounts.png"),
     fullPage: true,
   });
+  await accountMenu(legacy);
+  await legacy.screenshot({ path: resolve(root, "../previews/mobile-accounts-menu.png") });
+  await legacy.keyboard.press("Escape");
   const beforeB=posts.B;
   const unmatched=await context.newPage();await unmatched.goto(APP);
   await unmatched.evaluate(()=>{
@@ -328,7 +347,7 @@ try {
     localStorage.setItem('veilGoogleToken',JSON.stringify({token:'token-B',expires:Date.now()+3600000}));
   });await unmatched.reload();
   await unmatched.getByLabel('主密碼',{exact:true}).waitFor();
-  assert.equal(await unmatched.getByLabel('切換帳戶').inputValue(),'legacy');
+  assert.equal(await (await accountSelect(unmatched)).inputValue(),'legacy');
   await open(unmatched,'Offline A');assert.equal(posts.B,beforeB);assert.equal(await readCache(unmatched,'B'),undefined);
   console.log(
     "PASS mobile accounts: separate tabs/caches, empty Drive isolation, offline edit retention, OAuth add-account popup, same-account concurrent writers, server identity mismatch fails closed.",
