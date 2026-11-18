@@ -3497,5 +3497,17 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "There is already a vault in Google Drive. Enter your master password to open it.",
   "ja": "Google ドライブにはすでに保管庫があります。マスターパスワードを入力して開いてください。",
   "ko": "Google 드라이브에 이미 보관함이 있습니다. 마스터 비밀번호를 입력해 여세요."
+ },
+ "請記住主密碼，它不會被備份。建立後會給你一組救援金鑰，忘記密碼時用它救回資料。": {
+  "zh-CN": "请记住主密码，它不会被备份。创建后会给你一组救援密钥，忘记密码时用它救回数据。",
+  "en": "Remember your master password; it is not backed up anywhere. You will get a recovery key after creating the vault: it is how you get your data back if you forget the password.",
+  "ja": "マスターパスワードは忘れないでください。どこにもバックアップされません。作成後に救援キーが表示され、パスワードを忘れたときはこれでデータを取り戻せます。",
+  "ko": "마스터 비밀번호를 꼭 기억하세요. 어디에도 백업되지 않습니다. 보관함을 만든 뒤 구조 키가 표시되며, 비밀번호를 잊었을 때 이 키로 데이터를 되찾을 수 있습니다."
+ },
+ "我已保存，開始使用 →": {
+  "zh-CN": "我已保存，开始使用 →",
+  "en": "Saved. Start using it →",
+  "ja": "保存しました。使い始める →",
+  "ko": "저장했습니다. 시작하기 →"
  }
 };

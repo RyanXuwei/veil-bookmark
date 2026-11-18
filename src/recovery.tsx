@@ -5,11 +5,14 @@ import { t } from "./i18n";
 export function RecoveryKeyModal({
   code,
   onDone,
+  quick = false,
 }: {
   code: string;
   onDone: () => void;
+  // One button instead of a checkbox + button (the phone's first setup).
+  quick?: boolean;
 }) {
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(quick);
   const [copied, setCopied] = useState(false);
   function download() {
     const body = [
@@ -78,16 +81,18 @@ export function RecoveryKeyModal({
             "取得這組金鑰的人可以重設你的密碼並開啟資料。不要和主密碼放在一起，也不要存在這台電腦。",
           )}
         </p>
-        <label className="ackRow">
-          <input
-            type="checkbox"
-            checked={saved}
-            onChange={(e) => setSaved(e.target.checked)}
-          />
-          <span>{t("我已將救援金鑰保存在安全的地方")}</span>
-        </label>
+        {!quick && (
+          <label className="ackRow">
+            <input
+              type="checkbox"
+              checked={saved}
+              onChange={(e) => setSaved(e.target.checked)}
+            />
+            <span>{t("我已將救援金鑰保存在安全的地方")}</span>
+          </label>
+        )}
         <button className="primary full" disabled={!saved} onClick={onDone}>
-          {t("完成")}
+          {quick ? t("我已保存，開始使用 →") : t("完成")}
         </button>
       </section>
     </div>

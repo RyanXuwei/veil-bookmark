@@ -270,7 +270,6 @@ function Unlock({
   // A new user: Drive has no vault yet, so offer to create one here.
   const [setup, setSetup] = useState(false);
   const [confirm, setConfirm] = useState("");
-  const [ack, setAck] = useState(false);
   const [recovery, setRecovery] = useState("");
   const canOpen = (signedIn || cache) && !setup;
   useEffect(() => {
@@ -290,7 +289,6 @@ function Unlock({
   async function create() {
     setError("");
     if (password !== confirm) return setError("兩次密碼不一致");
-    if (!ack) return setError("請先確認已了解主密碼無法救援");
     setBusy(true);
     try {
       setRecovery(await createVault(password));
@@ -424,29 +422,15 @@ function Unlock({
                 onChange={(e) => setConfirm(e.target.value)}
               />
             </label>
-            <div className="pwWarning" role="note">
-              <strong>⚠ {t("請務必記住主密碼")}</strong>
-              <p>
-                {t(
-                  "主密碼不會在任何地方備份。建立後會顯示一組救援金鑰，是忘記密碼時唯一的救援方式；主密碼與救援金鑰都遺失時，所有書籤與記事將永久無法開啟。",
-                )}
-              </p>
-              <label className="ackRow">
-                <input
-                  type="checkbox"
-                  checked={ack}
-                  onChange={(e) => setAck(e.target.checked)}
-                />
-                <span>
-                  {t(
-                    "我了解主密碼與救援金鑰都遺失後無法救援，並會自行妥善保管。",
-                  )}
-                </span>
-              </label>
-            </div>
+            <p className="pwWarning" role="note">
+              ⚠{" "}
+              {t(
+                "請記住主密碼，它不會被備份。建立後會給你一組救援金鑰，忘記密碼時用它救回資料。",
+              )}
+            </p>
             <button
               className="primary full"
-              disabled={busy || !password || !confirm || !ack}
+              disabled={busy || !password || !confirm}
             >
               {busy ? t("處理中…") : t("建立保險庫 →")}
             </button>
@@ -454,6 +438,7 @@ function Unlock({
         )}
         {recovery && (
           <RecoveryKeyModal
+            quick
             code={recovery}
             onDone={() => {
               setRecovery("");

@@ -131,8 +131,7 @@ try {
   const create = page.getByRole("button", { name: "建立保險庫 →" });
   await page.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
   await page.getByLabel("再次輸入密碼").fill(PASSWORD + "x");
-  assert(await create.isDisabled(), "needs the acknowledgement first");
-  await page.getByRole("checkbox").check();
+  assert.equal(await page.getByRole("checkbox").count(), 0, "no checkbox to tick");
   await create.click();
   await page.getByRole("alert").filter({ hasText: "兩次密碼不一致" }).waitFor();
   assert.equal(remote.size, 0, "nothing uploaded on a mismatch");
@@ -155,10 +154,9 @@ try {
     (await decrypt(env, dek)).id,
     "the recovery key opens the same vault",
   );
-  const done = page.getByRole("button", { name: "完成" });
-  assert(await done.isDisabled(), "must confirm the key was saved");
-  await page.getByText("我已將救援金鑰保存在安全的地方").click();
-  await done.click();
+  // One button closes it (no checkbox on the phone's first setup).
+  assert.equal(await page.getByRole("checkbox").count(), 0);
+  await page.getByRole("button", { name: "我已保存，開始使用 →" }).click();
 
   // 3) Opened: add a bookmark, it syncs to Drive (still one snapshot).
   await page.getByRole("button", { name: "新增書籤" }).click();
@@ -195,7 +193,7 @@ try {
   only();
   await other.close();
   console.log(
-    "PASS new user without the extension: empty Drive offers to create a vault, mismatch/ack checks, recovery key shown once and opens the vault, uploaded in the extension's format, new bookmark syncs, reload unlocks, a second phone unlocks instead of creating another vault",
+    "PASS new user without the extension: empty Drive offers to create a vault, password mismatch check, no checkboxes (one button each step), recovery key shown once and opens the vault, uploaded in the extension's format, new bookmark syncs, reload unlocks, a second phone unlocks instead of creating another vault",
   );
 } finally {
   await browser.close();
