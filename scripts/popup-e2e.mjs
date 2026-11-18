@@ -79,7 +79,7 @@ try {
     id,
   );
   const wake = await context.newPage();
-  await wake.goto(`chrome-extension://${id}/index.html`);
+  await wake.goto(`chrome-extension://${id}/index.html?notes`);
   for (let i = 0; i < 50; i++) {
     let found;
     for (const candidate of context.serviceWorkers())
@@ -410,7 +410,7 @@ try {
   );
   assert.equal(
     (await cdp.send("Target.getTargets")).targetInfos.filter((t) =>
-      t.url.endsWith("/index.html"),
+      t.url.includes("/index.html?notes"),
     ).length,
     1,
   );

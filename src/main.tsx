@@ -1,5 +1,5 @@
 import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
-import { baseName, depthOf, pathLabel, within } from "./folders";
+import { pathLabel, within } from "./folders";
 import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -984,171 +984,7 @@ function App() {
             </span>
           </div>
         </main>
-      ) : (
-        <div className="workspace">
-          <aside>
-            <div className="eyebrow">{t("你的空間")}</div>
-            <button
-              className={folder === ALL ? "nav active" : "nav"}
-              onClick={() => setFolder(ALL)}
-            >
-              {t("▤ 全部書籤")} <span>{entries.length}</span>
-            </button>
-            <div className="eyebrow folderLabel">{t("資料夾")}</div>
-            {folders.map((f) => (
-              <button
-                key={f}
-                className={folder === f ? "nav active" : "nav"}
-                style={{ paddingLeft: 14 + depthOf(f) * 16 }}
-                title={pathLabel(f)}
-                onClick={() => setFolder(f)}
-              >
-                ▱ {baseName(f)}
-                <span>{entries.filter((x) => within(x.folder, f)).length}</span>
-              </button>
-            ))}
-            {!folders.length && (
-              <p className="muted small">
-                {t("新增書籤時，輸入資料夾名稱即可分類。")}
-              </p>
-            )}
-            <div className="sideBottom">
-              <div className="syncDot">{t("● 本機加密保護")}</div>
-              {syncHintButton}
-              <button className="nav" onClick={() => setPanel("security")}>
-                {t("🔒 安全性")}
-              </button>
-              <button className="nav" onClick={() => setPanel("settings")}>
-                {t("⚙ 同步與備份")}
-              </button>
-              <button className="nav" onClick={() => setPanel("mobile")}>
-                {t("📱 手機版")}
-              </button>
-            </div>
-          </aside>
-          <main className="library">
-            <div className="eyebrow">COLLECT WHAT MATTERS</div>
-            <div className="libraryTitle">
-              <div>
-                <h1>{folder === ALL ? t("全部書籤") : pathLabel(folder)}</h1>
-                <p className="muted">{t("讓每一個好去處，都有自己的位置。")}</p>
-              </div>
-              <button
-                className="primary"
-                onClick={() =>
-                  setEditor({
-                    ...empty,
-                    folder: folder === ALL ? "" : folder,
-                  })
-                }
-              >
-                {t("＋ 新增書籤")}
-              </button>
-            </div>
-            <div className="toolbar">
-              <input
-                aria-label={t("搜尋書籤")}
-                className="search"
-                placeholder={t("⌕ 搜尋名稱、網址、標籤或筆記")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <button onClick={addCurrent}>{t("收藏剛才的網頁")}</button>
-            </div>
-            <div className="listMeta">
-              <span>{t("{count} 個收藏", { count: visible.length })}</span>
-              <span>{t("依最近更新排序 ↓")}</span>
-            </div>
-            {visible.length ? (
-              <div className="grid">
-                {visible.map((x) => (
-                  <article className="bookmark card" key={x.id}>
-                    <div className="bookmarkTop">
-                      <div className="siteIcon">
-                        {x.title.slice(0, 1).toUpperCase()}
-                      </div>
-                      <span className="folderChip">
-                        {x.folder ? pathLabel(x.folder) : t("未分類")}
-                      </span>
-                    </div>
-                    <h2>{x.title}</h2>
-                    <p className="domain" title={x.url}>
-                      {new URL(x.url).hostname}
-                    </p>
-                    {x.notes && <p className="notes">{x.notes}</p>}
-                    <div className="tags">
-                      {x.tags.map((t, i) => (
-                        <span key={i}>#{t}</span>
-                      ))}
-                    </div>
-                    <div className="bookmarkActions">
-                      <button
-                        className="open"
-                        disabled={busy}
-                        onClick={() =>
-                          run(async () => {
-                            await rpc("OPEN", { id: x.id });
-                          })
-                        }
-                      >
-                        {t("開啟 ↗")}
-                      </button>
-                      <button
-                        title={t("無痕開啟")}
-                        disabled={busy}
-                        onClick={() =>
-                          run(async () => {
-                            await rpc("OPEN", { id: x.id, incognito: true });
-                          })
-                        }
-                      >
-                        {t("無痕")}
-                      </button>
-                      <button
-                        title={t("編輯")}
-                        onClick={() =>
-                          setEditor({ ...x, tags: x.tags.join(", ") })
-                        }
-                      >
-                        {t("編輯")}
-                      </button>
-                      <button
-                        title={t("刪除")}
-                        aria-label={t("刪除")}
-                        onClick={() => setDeleting(x)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="empty">
-                <div>◇</div>
-                <h2>
-                  {query
-                    ? t("沒有符合的收藏")
-                    : t("把第一個好去處，留在這裡。")}
-                </h2>
-                <p className="muted">
-                  {query
-                    ? t("試試其他關鍵字。")
-                    : t("新增網址，或從 Chrome 工具列收藏正在看的網頁。")}
-                </p>
-                {!query && (
-                  <button onClick={() => setEditor({ ...empty })}>
-                    {t("＋ 新增第一個書籤")}
-                  </button>
-                )}
-              </div>
-            )}
-            <div className="libraryNote">
-              {t("◇ 收藏不會加入 Chrome 書籤列，也不載入外部網站圖示。")}
-            </div>
-          </main>
-        </div>
-      )}
+      ) : null}
       {footer}
       {editor && (
         <div className="overlay">
@@ -1510,15 +1346,18 @@ function App() {
     </div>
   );
 }
-void loadLang().then(() =>
+// The old full-page bookmark view is gone; an extension tab without a
+// known page opens the notebook instead.
+if (!isPopup && !isNotes && !isSetup) location.replace("index.html?notes");
+else void loadLang().then(() =>
   createRoot(document.getElementById("root")!).render(
     isNotes ? (
       <NotebookPage rpc={rpc} />
     ) : isSetup ? (
       <SetupPage rpc={rpc} />
-    ) : (
+    ) : isPopup ? (
       <App />
-    ),
+    ) : null,
   ),
 );
 import "./popup.css";

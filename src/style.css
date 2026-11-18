@@ -79,15 +79,6 @@ header {
   height: 42px;
   border-radius: 13px 13px 17px 4px;
 }
-.beta {
-  font-size: 9px;
-  letter-spacing: 1.4px;
-  border: 1px solid #cedbcf;
-  border-radius: 4px;
-  padding: 3px 5px;
-  margin-top: 4px;
-  font-weight: 500;
-}
 .headerRight {
   display: flex;
   align-items: center;
@@ -343,11 +334,6 @@ footer {
 footer a {
   color: #6c8069;
 }
-.workspace {
-  display: flex;
-  flex: 1;
-  min-height: calc(100vh - 150px);
-}
 aside {
   width: 237px;
   flex-shrink: 0;
@@ -356,60 +342,6 @@ aside {
   background: #f1f4ed;
   display: flex;
   flex-direction: column;
-}
-.nav {
-  background: transparent;
-  border: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-.nav span {
-  margin-left: auto;
-  color: #84957e;
-  font-size: 11px;
-}
-.nav.active {
-  background: #e0e9da;
-  color: #385b3b;
-}
-.folderLabel {
-  margin: 33px 12px 0;
-}
-.sideBottom {
-  margin-top: auto;
-  padding-top: 50px;
-}
-.syncDot {
-  font-size: 10px;
-  color: #839b7b;
-  padding-left: 12px;
-}
-.library {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 43px 50px;
-}
-.library h1 {
-  font-size: 30px;
-  margin: 12px 0 2px;
-}
-.libraryTitle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-}
-.libraryTitle p {
-  margin: 0;
-  font-size: 12px;
 }
 .toolbar {
   display: flex;
@@ -425,70 +357,6 @@ aside {
 .toolbar button {
   white-space: nowrap;
   font-size: 12px;
-}
-.listMeta {
-  display: flex;
-  justify-content: space-between;
-  color: #94a08d;
-  font-size: 11px;
-  margin: 24px 0 16px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
-  gap: 18px;
-}
-.bookmark {
-  padding: 22px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.15s;
-}
-.bookmark:hover {
-  transform: translateY(-2px);
-}
-.bookmarkTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.siteIcon {
-  width: 39px;
-  height: 39px;
-  background: #edf1e8;
-  color: #6d865d;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  font-family: Georgia, serif;
-  font-size: 23px;
-}
-.folderChip {
-  background: #f4f5ee;
-  color: #8b947b;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 10px;
-  max-width: 65%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bookmark h2 {
-  font-size: 17px;
-  overflow-wrap: anywhere;
-  line-height: 1.5;
-  margin-bottom: 0;
-}
-.domain {
-  font-size: 11px;
-  color: #93a08e;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin: 4px 0 10px;
 }
 .notes {
   font-size: 12px;
@@ -509,23 +377,6 @@ aside {
   font-size: 10px;
   color: #819475;
   overflow-wrap: anywhere;
-}
-.bookmarkActions {
-  display: flex;
-  border-top: 1px solid #edf0e8;
-  gap: 4px;
-  margin-top: auto;
-  padding-top: 12px;
-}
-.bookmarkActions button {
-  font-size: 11px;
-  border: 0;
-  background: none;
-  padding: 5px 6px;
-}
-.bookmarkActions .open {
-  margin-right: auto;
-  color: #4a7045;
 }
 .empty {
   min-height: 320px;
@@ -548,12 +399,6 @@ aside {
 }
 .empty p {
   font-size: 12px;
-}
-.libraryNote {
-  font-size: 10px;
-  color: #9aa691;
-  text-align: center;
-  margin-top: 36px;
 }
 .overlay {
   position: fixed;
@@ -634,14 +479,8 @@ hr {
   .welcome {
     gap: 45px;
   }
-  .library {
-    padding: 35px 25px;
-  }
   aside {
     width: 190px;
-  }
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 @media (max-width: 720px) {
@@ -652,9 +491,6 @@ hr {
   .wordmark {
     font-size: 18px;
     gap: 7px;
-  }
-  .wordmark .beta {
-    display: none;
   }
   .wordmark .mark {
     width: 31px;
@@ -686,9 +522,6 @@ hr {
   .unlock {
     padding: 25px;
   }
-  .workspace {
-    display: block;
-  }
   aside {
     width: 100%;
     padding: 18px 20px;
@@ -701,38 +534,8 @@ hr {
     overflow: auto;
   }
   aside > .eyebrow,
-  aside > .small,
-  .folderLabel,
-  .syncDot {
+  aside > .small {
     display: none;
-  }
-  .nav {
-    width: auto;
-    white-space: nowrap;
-    margin: 0;
-    padding: 8px 12px;
-  }
-  .nav span {
-    margin-left: 4px;
-  }
-  .sideBottom {
-    padding: 0;
-    margin: 0 0 0 auto;
-  }
-  .library {
-    padding: 28px 20px;
-  }
-  .library h1 {
-    font-size: 25px;
-  }
-  .libraryTitle {
-    align-items: flex-start;
-  }
-  .libraryTitle .primary {
-    font-size: 11px;
-    padding: 10px;
-    white-space: nowrap;
-    margin-top: 10px;
   }
   .toolbar {
     flex-wrap: wrap;
@@ -740,9 +543,6 @@ hr {
   }
   .toolbar input {
     flex-basis: 100%;
-  }
-  .grid {
-    grid-template-columns: 1fr;
   }
   .modal {
     padding: 24px;
@@ -780,7 +580,9 @@ hr {
   font-weight: 600;
 }
 
-.overlay.overlayTop{z-index:60}
+.overlay.overlayTop {
+  z-index: 60;
+}
 /* Bookmark editor: tags as chips with a quick-pick list. */
 .tagInput {
   position: relative;
@@ -948,4 +750,9 @@ hr {
 .modal.confirmDelete .row {
   justify-content: flex-end;
   margin-top: 18px;
+}
+
+/* The hidden attribute always wins (e.g. the import file picker). */
+[hidden] {
+  display: none !important;
 }
