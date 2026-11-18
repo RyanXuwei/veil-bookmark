@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { DRIVE_FULL, STORAGE_URL } from "./drive";
 import { TagInput } from "./tag-input";
 import { VERSION } from "./version";
+import { BobaSupport } from "./boba-support";
 import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
 import { SetupPage } from "./setup";
@@ -1342,6 +1343,7 @@ function App() {
                 >
                   {t("隱私權政策")}
                 </a>
+                <BobaSupport />
                 <p className="copyright">
                   © {CREDITS.copyrightYear} {CREDITS.copyrightHolder}. All
                   rights reserved.
@@ -1357,17 +1359,18 @@ function App() {
 // The old full-page bookmark view is gone; an extension tab without a
 // known page opens the notebook instead.
 if (!isPopup && !isNotes && !isSetup) location.replace("index.html?notes");
-else void loadLang().then(() =>
-  createRoot(document.getElementById("root")!).render(
-    isNotes ? (
-      <NotebookPage rpc={rpc} />
-    ) : isSetup ? (
-      <SetupPage rpc={rpc} />
-    ) : isPopup ? (
-      <App />
-    ) : null,
-  ),
-);
+else
+  void loadLang().then(() =>
+    createRoot(document.getElementById("root")!).render(
+      isNotes ? (
+        <NotebookPage rpc={rpc} />
+      ) : isSetup ? (
+        <SetupPage rpc={rpc} />
+      ) : isPopup ? (
+        <App />
+      ) : null,
+    ),
+  );
 import "./popup.css";
 
 const MOBILE_URL = "https://ryanxuwei.github.io/veil-bookmark/app/";
@@ -1396,7 +1399,9 @@ function MobileSection({
         </p>
       ) : (
         <p className="small note">
-          {t("手機版透過 Google Drive 讀取資料，請先在「同步與備份」連接 Google Drive。")}{" "}
+          {t(
+            "手機版透過 Google Drive 讀取資料，請先在「同步與備份」連接 Google Drive。",
+          )}{" "}
           <button className="linkButton" onClick={onDrive}>
             {t("前往同步與備份")}
           </button>

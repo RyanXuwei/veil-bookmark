@@ -44,7 +44,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.7.0
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.7.1
 
 ## 功能
 
@@ -197,3 +197,5 @@ npm run build
 在頁面上方按「新增帳戶」連接另一個 Google Drive，再從「切換帳戶」選單切換。每個帳戶的加密副本與 Face ID／指紋設定分開保存，切換時會上鎖，需用該帳戶的主密碼或生物辨識解鎖。兩個分頁可各自選擇不同帳戶；每個帳戶仍需先由電腦插件建立並同步保險庫。
 
 離線修改會保留在原帳戶，不會跟著切換到別的 Drive。「移除此帳戶」僅移除選定帳戶的本機資料與解鎖設定，但尚未同步的修改會遺失，請先確認同步完成。舊版未能確認帳戶歸屬的資料會保留為「升級前的本機副本（離線）」，不會自動上傳。
+
+如果 Veil Bookmark 對你有幫助，歡迎 [Give me a Boba!](https://bitingbox.bobaboba.me)。

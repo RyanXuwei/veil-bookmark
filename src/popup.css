@@ -368,7 +368,7 @@ html[data-surface="popup"] {
 [data-surface="popup"] .modal h3 {
   font-size: 14px;
 }
-[data-surface="popup"] .modal .about img {
+[data-surface="popup"] .modal .about .studioLogo {
   width: 115px;
   height: 125px;
   margin-top: 16px;

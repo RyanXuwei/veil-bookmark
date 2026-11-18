@@ -59,6 +59,7 @@ try {
     [
       "https://github.com/RyanXuwei",
       "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
+      "https://bitingbox.bobaboba.me/",
     ],
   );
   await page.screenshot({ path: resolve(shots, "22-about-zh-TW.png") });

@@ -63,6 +63,7 @@ import { AccountMenu } from "./account-menu";
 import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
 import { VERSION } from "../src/version";
+import { BobaSupport } from "../src/boba-support";
 import "./app.css";
 
 const GITHUB = "https://github.com/RyanXuwei/veil-bookmark";
@@ -1715,6 +1716,9 @@ function Credits() {
       <a href={GITHUB} target="_blank" rel="noopener noreferrer">
         GitHub
       </a>
+      <div>
+        <BobaSupport />
+      </div>
     </footer>
   );
 }
