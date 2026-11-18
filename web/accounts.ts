@@ -8,8 +8,19 @@ export type Account = {
   expires: number;
 };
 const PREFIX = "veilAccount:";
-export const activeAccount = () =>
-  sessionStorage.getItem("veilActiveAccount") || "legacy";
+// The account used last on this phone, so a reopened app or a new tab starts
+// with it instead of the offline copy (each tab can still switch on its own).
+const LAST = "veilLastAccount";
+export function activeAccount() {
+  const chosen = sessionStorage.getItem("veilActiveAccount");
+  if (chosen) return chosen;
+  const last = localStorage.getItem(LAST);
+  if (last && localStorage.getItem(PREFIX + last)) {
+    sessionStorage.setItem("veilActiveAccount", last);
+    return last;
+  }
+  return "legacy";
+}
 export const workspaceKey = (key: string, id = activeAccount()) =>
   id === "legacy" ? key : `${key}:${id}`;
 export function accounts(): Account[] {
@@ -28,12 +39,16 @@ export const account = (id = activeAccount()) =>
   accounts().find((a) => a.id === id);
 export function selectAccount(id: string) {
   sessionStorage.setItem("veilActiveAccount", id);
+  if (id === "legacy") localStorage.removeItem(LAST);
+  else localStorage.setItem(LAST, id);
 }
 export function storeAccount(a: Account) {
   localStorage.setItem(PREFIX + a.id, JSON.stringify(a));
 }
 export function removeAccount() {
-  localStorage.removeItem(PREFIX + activeAccount());
+  const id = activeAccount();
+  localStorage.removeItem(PREFIX + id);
+  if (localStorage.getItem(LAST) === id) localStorage.removeItem(LAST);
 }
 export async function identify(
   t: string,

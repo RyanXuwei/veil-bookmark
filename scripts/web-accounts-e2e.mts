@@ -141,14 +141,19 @@ await context.route("https://www.googleapis.com/**", async (route) => {
     json: { files: [...remote[a].keys()].map((id) => ({ id })) },
   });
 });
+const silent: string[] = [];
 await context.route("https://accounts.google.com/**", async (route) => {
   const url = new URL(route.request().url());
-  assert.equal(url.searchParams.get("prompt"), "select_account");
+  // Silent renewal: no prompt, for the account the app remembered.
+  const quiet = url.searchParams.get("prompt") === "none";
+  if (quiet) silent.push(url.searchParams.get("login_hint") || "");
+  else assert.equal(url.searchParams.get("prompt"), "select_account");
+  const who = quiet ? (url.searchParams.get("login_hint") || "?")[0] : "C";
   const callback =
     APP +
     "#" +
     new URLSearchParams({
-      access_token: "token-C",
+      access_token: "token-" + who,
       expires_in: "3600",
       scope: "https://www.googleapis.com/auth/drive.appdata",
       state: url.searchParams.get("state")!,
@@ -315,6 +320,7 @@ try {
     });
     db.close();
     sessionStorage.removeItem("veilActiveAccount");
+    localStorage.removeItem("veilLastAccount"); // a phone from before 1.7.0
     localStorage.setItem(
       "veilGoogleToken",
       JSON.stringify({ token: "token-A", expires: Date.now() + 3600000 }),
@@ -326,6 +332,37 @@ try {
   );
   await open(legacy, "Offline A");
   assert.equal((await readCache(legacy, "A")).a.id, "vault-A");
+  // Reopening the app (a new tab, no tab state) starts with the account
+  // used last, not the offline copy; an expired connection is renewed
+  // without a prompt for that same account.
+  if ((await (await accountSelect(a)).inputValue()) !== "A") {
+    await (await accountSelect(a)).selectOption("A");
+    await open(a, "Only A");
+  } else await a.keyboard.press("Escape");
+  const again = await context.newPage();
+  await again.goto(APP);
+  await again.locator('.accountChip[aria-label*="A@example.com"]').waitFor();
+  await open(again, "Only A");
+  await again.getByRole("button", { name: "上鎖" }).click();
+  await again.evaluate(() => {
+    const k = "veilAccount:A",
+      v = JSON.parse(localStorage.getItem(k)!);
+    v.expires = Date.now() - 1000; // the hour is over
+    localStorage.setItem(k, JSON.stringify(v));
+    for (const key of Object.keys(sessionStorage))
+      if (key.startsWith("veilSilentTried")) sessionStorage.removeItem(key);
+  });
+  await again.reload();
+  await again.waitForFunction(
+    () => JSON.parse(localStorage.getItem("veilAccount:A")!).expires > Date.now() + 30 * 60 * 1000,
+  );
+  assert.deepEqual(silent, ["A@example.com"], "renewed silently for A");
+  await again.getByLabel("主密碼", { exact: true }).waitFor();
+  assert.equal(
+    await again.evaluate(() => sessionStorage.getItem("veilActiveAccount")),
+    "A",
+  );
+  await again.close();
   // Removing B removes B alone, including on another tab displaying B.
   await (await accountMenu(b)).getByRole("button", { name: /移除此帳戶$/ }).click();
   await b.getByRole("button", { name: "確定移除此帳戶", exact: true }).click();
@@ -343,13 +380,14 @@ try {
   const unmatched=await context.newPage();await unmatched.goto(APP);
   await unmatched.evaluate(()=>{
     sessionStorage.removeItem('veilActiveAccount');
+    localStorage.removeItem('veilLastAccount'); // as before the upgrade
     localStorage.setItem('veilGoogleToken',JSON.stringify({token:'token-B',expires:Date.now()+3600000}));
   });await unmatched.reload();
   await unmatched.getByLabel('主密碼',{exact:true}).waitFor();
   assert.equal(await (await accountSelect(unmatched)).inputValue(),'legacy');
   await open(unmatched,'Offline A');assert.equal(posts.B,beforeB);assert.equal(await readCache(unmatched,'B'),undefined);
   console.log(
-    "PASS mobile accounts: separate tabs/caches, empty Drive isolation, offline edit retention, OAuth add-account popup, same-account concurrent writers, server identity mismatch fails closed.",
+    "PASS mobile accounts: separate tabs/caches, empty Drive isolation, offline edit retention, OAuth add-account popup, same-account concurrent writers, server identity mismatch fails closed, reopened app resumes the last account, expired connection renewed silently for it.",
   );
 } finally {
   await context.close();

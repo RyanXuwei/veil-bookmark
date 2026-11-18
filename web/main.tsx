@@ -266,6 +266,17 @@ function Unlock({
   useEffect(() => {
     void bio.status().then(setBioState);
   }, []);
+  // Locked screen (e.g. after the app was in the background): when the
+  // Google connection has expired, renew it without a prompt. Nothing is
+  // unlocked here, so leaving for Google and coming back loses nothing.
+  useEffect(() => {
+    const renew = () => {
+      if (!document.hidden && configured() && !token()) renewSilently();
+    };
+    renew();
+    document.addEventListener("visibilitychange", renew);
+    return () => document.removeEventListener("visibilitychange", renew);
+  }, []);
   async function submit(withBio = false) {
     setBusy(true);
     setError("");
