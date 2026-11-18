@@ -1,5 +1,10 @@
 # 版本紀錄
 
+## 1.8.2 · 2026-11-18
+
+- 分享預覽：手機版（https://veil-bookmark.bitingbox.win/）與首頁（https://ryanxuwei.github.io/veil-bookmark/）加上 Open Graph 與 Twitter Card 資訊。在 LINE、Facebook、X、Slack 等分享連結時，會顯示 1200×630 的品牌預覽圖、標題「Veil Bookmark｜只有你打得開的私密書籤」與一句話介紹。預覽圖放在同網域（`og-image.png`），以 `scripts/make-og-image.mjs` 產生。
+- 擴充功能沒有變更，版號隨手機版更新。
+
 ## 1.8.1 · 2026-11-18
 
 - 手機版：修正重新開啟後不會自動接回上次的 Google 帳戶。1.7.0 起「目前使用的帳戶」只記在單一分頁，關掉 App、iPhone 把頁面從記憶體移除、或另開分頁後，都會退回「升級前的本機副本」，看起來像 Google Drive 斷線，自動續約也因此不會執行。現在會記住這支手機上次使用的帳戶，新分頁與重新開啟時自動使用它；各分頁仍可各自切換。
