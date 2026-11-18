@@ -176,6 +176,33 @@ try {
   await nb.getByRole("button", { name: "解鎖保險庫 →" }).click();
   await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
 
+  // Import text files (UTF-8 with Windows line breaks, UTF-8 with BOM,
+  // Big5, UTF-16): the text is in the note, without empty lines at the end.
+  const txtFiles = [
+    ["文字檔.txt", Buffer.from("第一行文字\r\n第二行 English\r\n"), "第一行文字\n\n第二行 English"],
+    ["有BOM.txt", Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from("有BOM的檔案\n")]), "有BOM的檔案"],
+    ["舊檔Big5.txt", Buffer.from([0xa4, 0xa4, 0xa4, 0xe5, 0x0d, 0x0a, 0x41]), "中文\n\nA"],
+    ["Unicode.txt", Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from("UTF16 測試\r\n", "utf16le")]), "UTF16 測試"],
+  ];
+  for (const [name, buffer, expected] of txtFiles) {
+    await nb.locator('input[type=file][accept*=".docx"]').setInputFiles({ name, mimeType: "text/plain", buffer });
+    await nb.waitForFunction((t) => document.querySelector(".nbTitle").value === t, name.slice(0, -4));
+    await nb.waitForFunction((x) => document.querySelector(".nbEditor").innerText.trim() === x, expected);
+  }
+  // After reloading, the imported text is still there.
+  await nb.reload();
+  await nb.locator(".nbNav button", { hasText: "舊檔Big5" }).click();
+  await nb.waitForFunction(() => document.querySelector(".nbEditor").innerText.trim() === "中文\n\nA");
+  for (const [name] of txtFiles) {
+    await nb.locator(".nbNav button", { hasText: name.slice(0, -4) }).click();
+    await nb.getByRole("tab", { name: "檢視" }).click();
+    await nb.getByRole("button", { name: "刪除記事" }).click();
+    await nb.getByRole("alertdialog").getByRole("button", { name: "刪除", exact: true }).click();
+    await nb.waitForFunction((n) => ![...document.querySelectorAll(".nbNav li")].some((x) => x.textContent.includes(n)), name.slice(0, -4));
+  }
+  await nb.locator(".nbNav button", { hasText: "專案會議紀錄" }).click();
+  await nb.locator(".nbEditor h1").getByText("會議重點").waitFor();
+
   // Import a Markdown file: it becomes a new note and opens.
   await nb.locator('input[type=file][accept*=".docx"]').setInputFiles({
     name: "匯入測試.md",

@@ -383,6 +383,12 @@ export async function importFile(file: File): Promise<Imported & { skipped: numb
     return { title, html: sanitizeHtml(html), images: added, skipped: 0 };
   }
   if (ext === "txt" || ext === "text" || file.type.startsWith("text/"))
-    return { title, html: textToHtml(text), images: [], skipped: 0 };
+    return {
+      title,
+      // Windows line breaks, and no empty lines left at the end.
+      html: textToHtml(text.replace(/\r\n?/g, "\n").replace(/\s+$/, "")),
+      images: [],
+      skipped: 0,
+    };
   throw Error("不支援這種檔案，請選擇 .txt、.md、.html 或 .docx");
 }
