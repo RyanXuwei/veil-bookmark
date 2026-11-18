@@ -509,6 +509,9 @@ select:focus {
   color: var(--warn);
 }
 .action.danger {
+  /* .action (later in this file) would otherwise make it white on white */
+  background: var(--warn);
+  border-color: var(--warn);
   color: #fff;
 }
 .editor .primary {

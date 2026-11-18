@@ -1208,8 +1208,12 @@ function ActionList({
         <button
           className="action danger"
           onClick={async () => {
-            await removeEntry(x.id);
-            onDone("已刪除書籤");
+            try {
+              await removeEntry(x.id);
+              onDone("已刪除書籤");
+            } catch (e) {
+              onDone(tError((e as Error).message));
+            }
           }}
         >
           {t("確定刪除？會同步到所有裝置")}
@@ -1248,8 +1252,12 @@ function MemoActionList({
         <button
           className="action danger"
           onClick={async () => {
-            await removeMemo(m.id);
-            onDone("已刪除記事");
+            try {
+              await removeMemo(m.id);
+              onDone("已刪除記事");
+            } catch (e) {
+              onDone(tError((e as Error).message));
+            }
           }}
         >
           {t("確定刪除？會同步到所有裝置")}
