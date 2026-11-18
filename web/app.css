@@ -1025,3 +1025,23 @@ select:focus {
 .recoveryModal .ackRow {
   margin-bottom: 12px;
 }
+
+/* The incognito-only folder: grey until opened */
+.chips button.privChip.off {
+  background: #eceeea;
+  border-color: #d5dad3;
+  color: #8a948d;
+}
+.privNote {
+  margin: 0 0 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.privButtons {
+  display: flex;
+  gap: 10px;
+}
+.privButtons button {
+  flex: 1;
+}
+

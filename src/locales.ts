@@ -3581,5 +3581,23 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "The incognito-only folder cannot be renamed, moved or deleted.",
   "ja": "シークレット専用フォルダーは名前の変更、移動、削除ができません。",
   "ko": "시크릿 전용 폴더는 이름 변경, 이동, 삭제를 할 수 없습니다."
+ },
+ "開啟無痕專用資料夾？": {
+  "zh-CN": "打开无痕专用文件夹？",
+  "en": "Open the incognito-only folder?",
+  "ja": "シークレット専用フォルダーを開きますか？",
+  "ko": "시크릿 전용 폴더를 열까요?"
+ },
+ "手機版無法支援完整的無痕功能：網頁無法用無痕模式開啟書籤，也無法得知自己是否在無痕分頁。開啟後會在這支手機上列出這個資料夾的書籤，點開時用一般模式；上鎖或關閉 App 後會再次隱藏。": {
+  "zh-CN": "手机版无法支持完整的无痕功能：网页无法用无痕模式打开书签，也无法得知自己是否在无痕分页。打开后会在这支手机上列出这个文件夹的书签，点开时用一般模式；上锁或关闭 App 后会再次隐藏。",
+  "en": "The phone app cannot fully support incognito: a web page cannot open bookmarks in incognito mode or tell whether it is in an incognito tab. Opening shows this folder's bookmarks on this phone, and they open in normal mode. The folder is hidden again when the app locks or closes.",
+  "ja": "スマホ版ではシークレット機能を完全にはサポートできません。Web ページはブックマークをシークレットモードで開くことも、自分がシークレットタブにいるかを知ることもできません。開くとこのスマホでフォルダーのブックマークが表示され、通常モードで開きます。ロックするかアプリを閉じると再び非表示になります。",
+  "ko": "모바일 버전은 시크릿 기능을 완전히 지원할 수 없습니다. 웹 페이지는 북마크를 시크릿 모드로 열 수 없고, 시크릿 탭인지도 알 수 없습니다. 열면 이 휴대폰에서 폴더의 북마크가 표시되며 일반 모드로 열립니다. 잠그거나 앱을 닫으면 다시 숨겨집니다."
+ },
+ "開啟": {
+  "zh-CN": "打开",
+  "en": "Open",
+  "ja": "開く",
+  "ko": "열기"
  }
 };

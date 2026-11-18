@@ -32,6 +32,7 @@ import {
   baseName,
   depthOf,
   isPrivate,
+  PRIVATE_FOLDER,
   parentOf,
   pathLabel,
   within,
@@ -625,6 +626,10 @@ function Library({
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState(ALL);
+  // The incognito-only folder: grey until the user opens it (each time the
+  // app is unlocked); the phone cannot open bookmarks in incognito.
+  const [showPrivate, setShowPrivate] = useState(false);
+  const [askPrivate, setAskPrivate] = useState(false);
   const [editing, setEditing] = useState<Draft | null>(null);
   const [actions, setActions] = useState<Entry | null>(null);
   const [reading, setReading] = useState<Memo | null>(null);
@@ -700,14 +705,23 @@ function Library({
     return () => clearTimeout(id);
   }, [toast]);
   if (!v) return null;
-  // The incognito-only folder is shown only in the extension's incognito
-  // windows, never on the phone.
-  const entries = v.entries.filter((x) => !x.deleted && !isPrivate(x.folder));
+  // The incognito-only folder's bookmarks are listed only after the user
+  // opens it (see showPrivate).
+  const hasPrivate =
+    v.entries.some((x) => !x.deleted && isPrivate(x.folder)) ||
+    (v.folders || []).some(
+      (f) => f.kind === "entry" && !f.deleted && isPrivate(f.name),
+    );
+  const entries = v.entries.filter(
+    (x) => !x.deleted && (showPrivate || !isPrivate(x.folder)),
+  );
   const memos = v.memos.filter((x) => !x.deleted);
   const q = query.trim().toLowerCase();
   const folders = folderNames(
     "entry",
-    (v.folders || []).filter((f) => f.kind !== "entry" || !isPrivate(f.name)),
+    (v.folders || []).filter(
+      (f) => f.kind !== "entry" || showPrivate || !isPrivate(f.name),
+    ),
     entries,
   );
   const hasUnfiled = entries.some((x) => !x.folder);
@@ -823,11 +837,31 @@ function Library({
       </div>
       {view === "bookmarks" ? (
         <>
-          {(folders.length > 0 || hasUnfiled) && (
+          {(folders.length > 0 || hasUnfiled || hasPrivate) && (
             <div className="chips" role="toolbar" aria-label={t("資料夾")}>
+              <button
+                aria-pressed={folder === ALL}
+                onClick={() => setFolder(ALL)}
+              >
+                {t("全部")}
+              </button>
+              {hasPrivate && (
+                <button
+                  className={showPrivate ? "privChip" : "privChip off"}
+                  aria-pressed={showPrivate && folder === PRIVATE_FOLDER}
+                  onClick={() =>
+                    showPrivate
+                      ? setFolder(PRIVATE_FOLDER)
+                      : setAskPrivate(true)
+                  }
+                >
+                  {t(PRIVATE_FOLDER)}
+                </button>
+              )}
               {[
-                [ALL, t("全部")],
-                ...topFolders.map((f) => [f, f]),
+                ...topFolders
+                  .filter((f) => f !== PRIVATE_FOLDER)
+                  .map((f) => [f, f]),
                 ...(folders.length && hasUnfiled
                   ? [[UNFILED, t("未分類")]]
                   : []),
@@ -847,7 +881,11 @@ function Library({
               <section key={g.name ?? "*"}>
                 {g.name !== null && folders.length > 0 && (
                   <h2 className="groupTitle">
-                    {g.name ? pathLabel(g.name) : t("未分類")}
+                    {g.name
+                      ? pathLabel(
+                          g.name.replace(PRIVATE_FOLDER, t(PRIVATE_FOLDER)),
+                        )
+                      : t("未分類")}
                   </h2>
                 )}
                 <ul>
@@ -1043,6 +1081,33 @@ function Library({
             if (msg) setToast(msg);
           }}
         />
+      )}
+      {askPrivate && (
+        <Sheet
+          title={t("開啟無痕專用資料夾？")}
+          onClose={() => setAskPrivate(false)}
+        >
+          <p className="privNote">
+            {t(
+              "手機版無法支援完整的無痕功能：網頁無法用無痕模式開啟書籤，也無法得知自己是否在無痕分頁。開啟後會在這支手機上列出這個資料夾的書籤，點開時用一般模式；上鎖或關閉 App 後會再次隱藏。",
+            )}
+          </p>
+          <div className="privButtons">
+            <button className="secondary" onClick={() => setAskPrivate(false)}>
+              {t("取消")}
+            </button>
+            <button
+              className="primary"
+              onClick={() => {
+                setAskPrivate(false);
+                setShowPrivate(true);
+                setFolder(PRIVATE_FOLDER);
+              }}
+            >
+              {t("開啟")}
+            </button>
+          </div>
+        </Sheet>
       )}
       {settings && (
         <Settings

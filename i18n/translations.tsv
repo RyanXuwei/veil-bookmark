@@ -595,3 +595,6 @@ Google Drive 上已經有保險庫，請輸入主密碼開啟。|There is alread
 一律用無痕視窗開啟|Always open in an incognito window|常にシークレットウィンドウで開く|항상 시크릿 창에서 열기
 🕶 無痕專用|🕶 Incognito only|🕶 シークレット専用|🕶 시크릿 전용
 無痕專用資料夾不能改名、移動或刪除|The incognito-only folder cannot be renamed, moved or deleted.|シークレット専用フォルダーは名前の変更、移動、削除ができません。|시크릿 전용 폴더는 이름 변경, 이동, 삭제를 할 수 없습니다.
+開啟無痕專用資料夾？|Open the incognito-only folder?|シークレット専用フォルダーを開きますか？|시크릿 전용 폴더를 열까요?
+手機版無法支援完整的無痕功能：網頁無法用無痕模式開啟書籤，也無法得知自己是否在無痕分頁。開啟後會在這支手機上列出這個資料夾的書籤，點開時用一般模式；上鎖或關閉 App 後會再次隱藏。|The phone app cannot fully support incognito: a web page cannot open bookmarks in incognito mode or tell whether it is in an incognito tab. Opening shows this folder's bookmarks on this phone, and they open in normal mode. The folder is hidden again when the app locks or closes.|スマホ版ではシークレット機能を完全にはサポートできません。Web ページはブックマークをシークレットモードで開くことも、自分がシークレットタブにいるかを知ることもできません。開くとこのスマホでフォルダーのブックマークが表示され、通常モードで開きます。ロックするかアプリを閉じると再び非表示になります。|모바일 버전은 시크릿 기능을 완전히 지원할 수 없습니다. 웹 페이지는 북마크를 시크릿 모드로 열 수 없고, 시크릿 탭인지도 알 수 없습니다. 열면 이 휴대폰에서 폴더의 북마크가 표시되며 일반 모드로 열립니다. 잠그거나 앱을 닫으면 다시 숨겨집니다.
+開啟|Open|開く|열기
