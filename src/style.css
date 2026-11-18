@@ -457,17 +457,61 @@ hr {
 .inlineError {
   color: #a34f3d;
 }
+/* About: the BitingBox Studio layout shared with YuanYuan Cursor Pet. */
 .about {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding-top: 4px;
   text-align: center;
 }
-.about img {
-  width: 150px;
-  height: 170px;
+.about .studioLogo {
+  display: block;
+  width: 128px;
+  height: auto;
   object-fit: contain;
-  margin-top: 24px;
+  margin: 6px 0;
 }
-.about h3 {
-  margin-top: 22px;
+.about .product {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #243b38;
+}
+.about .credit {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7a72;
+}
+.about dl.credits {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  width: 100%;
+  margin: 6px 0 0;
+  font-size: 12px;
+  text-align: left;
+}
+.about dl.credits dt {
+  color: #8a978f;
+}
+.about dl.credits dd {
+  margin: 0;
+}
+.about .github {
+  padding: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #335a49;
+}
+.about .policy {
+  font-size: 12px;
+  color: #335a49;
+}
+.about .copyright {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #8a978f;
 }
 @media (min-width: 1500px) {
   .welcome {
@@ -562,22 +606,6 @@ hr {
   footer .text {
     font-size: 10px;
   }
-}
-.credits {
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: center;
-  gap: 4px 14px;
-  margin: 14px auto 10px;
-  font-size: 13px;
-  text-align: left;
-}
-.credits dt {
-  color: #6b766f;
-}
-.credits dd {
-  margin: 0;
-  font-weight: 600;
 }
 
 .overlay.overlayTop {

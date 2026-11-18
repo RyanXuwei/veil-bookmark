@@ -27,7 +27,7 @@ const CREDITS = {
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
   version: VERSION,
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-17",
+  lastUpdatedDate: "2026-11-18",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -1292,53 +1292,61 @@ function App() {
                 <Disclaimer />
               </>
             ) : (
-              <div className="about">
+              // Same layout as the studio's other extensions (YuanYuan
+              // Cursor Pet): studio logo, product, credit line, details.
+              <section className="about" aria-label={t("關於")}>
                 <img
-                  src="icons/128.png"
-                  alt={t("Veil Bookmark 書籤鎖孔圖示")}
+                  className="studioLogo"
+                  src="brand/BITINGBOX_no_square_border.svg"
+                  alt="BitingBox Studio"
+                  width="128"
+                  height="139"
                 />
-                <h3>{t("你的收藏，由你保管。")}</h3>
-                <p>
-                  Veil Bookmark {CREDITS.version} · {t("一般與無痕皆適用")} ·{" "}
-                  {t("Chrome 私密書籤")}
-                </p>
+                <p className="product">Veil Bookmark</p>
+                <p className="credit">Made by Ryan Hsu · BitingBox Studio</p>
                 <dl className="credits">
                   <dt>{t("製作者")}</dt>
                   <dd>{CREDITS.creator}</dd>
                   <dt>{t("工作室")}</dt>
                   <dd>{CREDITS.studio}</dd>
-                  <dt>{t("版本")}</dt>
-                  <dd>{CREDITS.version}</dd>
                   <dt>{t("程式製作年份")}</dt>
                   <dd>{CREDITS.productionDate.slice(0, 4)}</dd>
                   <dt>{t("程式製作日期")}</dt>
-                  <dd>{CREDITS.productionDate}</dd>
+                  <dd>
+                    <time dateTime={CREDITS.productionDate}>
+                      {CREDITS.productionDate}
+                    </time>
+                  </dd>
+                  <dt>{t("版本")}</dt>
+                  <dd>{CREDITS.version}</dd>
                   <dt>{t("最後更新日期")}</dt>
-                  <dd>{CREDITS.lastUpdatedDate}</dd>
+                  <dd>
+                    <time dateTime={CREDITS.lastUpdatedDate}>
+                      {CREDITS.lastUpdatedDate}
+                    </time>
+                  </dd>
                 </dl>
-                <p>
-                  <a
-                    href={CREDITS.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t("在 GitHub 查看 Ryan Hsu 的作品")} ↗
-                  </a>
-                  <br />
-                  <a
-                    href={CREDITS.privacy}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t("隱私權政策")} ↗
-                  </a>
-                </p>
-                <p className="small muted">
-                  Made by Ryan Hsu · BitingBox Studio
-                  <br />© {CREDITS.copyrightYear} {CREDITS.copyrightHolder}. All
+                <a
+                  className="github"
+                  href={CREDITS.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("在 GitHub 查看 Ryan Hsu 的作品")}
+                </a>
+                <a
+                  className="policy"
+                  href={CREDITS.privacy}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("隱私權政策")}
+                </a>
+                <p className="copyright">
+                  © {CREDITS.copyrightYear} {CREDITS.copyrightHolder}. All
                   rights reserved.
                 </p>
-              </div>
+              </section>
             )}
           </section>
         </div>
