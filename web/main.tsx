@@ -6,7 +6,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { createRoot } from "react-dom/client";
-import type { Entry, Memo, MemoImage } from "../src/crypto";
+import { safeUrl, type Entry, type Memo, type MemoImage } from "../src/crypto";
 import {
   LANGS,
   detect,
@@ -118,14 +118,108 @@ function initLang() {
   );
 }
 
-// A link shared to the app (Android "Share" → Veil Bookmark).
-function sharedLink() {
+// Shared to the app (Android "Share" → Veil Bookmark, or an iPhone Shortcut).
+// A link alone becomes a bookmark; selected text or pictures become a note.
+// Android posts to ./share: the service worker keeps it in memory only and
+// hands it to this page once (nothing is written to storage unencrypted).
+type SharedNote = { title: string; text: string; url: string; files: File[] };
+type Shared = {
+  link: { title: string; url: string } | null;
+  note: SharedNote | null;
+  lost?: boolean;
+};
+function classifyShare(
+  title: string,
+  text: string,
+  url: string,
+  files: File[],
+): Shared {
+  const link = url || text.match(/https?:\/\/\S+/)?.[0] || "";
+  const rest = (link ? text.replace(link, "") : text).trim();
+  // A page shared with a short caption ("Look at this <link>") is still a
+  // bookmark. Selected text (Chrome adds a #:~:text= link), pictures, text
+  // without a link, or a longer passage become a note.
+  const passage =
+    !link ||
+    link.includes("#:~:text=") ||
+    rest.length > 120 ||
+    rest.split("\n").length > 2;
+  if (files.length || (rest && passage))
+    return {
+      link: null,
+      note: { title: title.trim(), text: rest, url: link, files },
+    };
+  return {
+    link: link ? { title: title || rest, url: link } : null,
+    note: null,
+  };
+}
+type Posted = { title: string; text: string; url: string; files: File[] };
+function takeShare(id: string): Promise<Posted | null> {
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+  return new Promise((done) => {
+    setTimeout(() => done(null), 4000);
+    void navigator.serviceWorker.ready.then((reg) => {
+      const sw = navigator.serviceWorker.controller || reg.active;
+      if (!sw) return done(null);
+      const ch = new MessageChannel();
+      ch.port1.onmessage = (e) => done(e.data || null);
+      sw.postMessage({ type: "takeShare", id }, [ch.port2]);
+    });
+  });
+}
+async function readShare(): Promise<Shared> {
   const p = new URLSearchParams(location.search);
-  const text = p.get("text") || "";
-  const url = p.get("url") || text.match(/https?:\/\/\S+/)?.[0] || "";
-  if (!url) return null;
+  const id = p.get("share");
+  if (!id && !p.has("text") && !p.has("url") && !p.has("title"))
+    return { link: null, note: null };
   history.replaceState(null, "", location.pathname);
-  return { title: p.get("title") || "", url };
+  if (id) {
+    const x = await takeShare(id);
+    if (!x) return { link: null, note: null, lost: true };
+    return classifyShare(x.title || "", x.text || "", x.url || "", x.files || []);
+  }
+  return classifyShare(
+    p.get("title") || "",
+    p.get("text") || "",
+    p.get("url") || "",
+    [],
+  );
+}
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"]/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;",
+  );
+/** The note saved from shared text, pictures and the page's link. */
+async function noteFromShare(n: SharedNote) {
+  const images: MemoImage[] = [];
+  for (const f of n.files.slice(0, 10))
+    try {
+      images.push(await importImage(f));
+    } catch {}
+  let link = "";
+  try {
+    if (n.url) link = safeUrl(n.url);
+  } catch {}
+  if (!images.length && !n.text && !link) throw Error("無法讀取這張圖片");
+  const paras = n.text
+    .split(/\n{2,}/)
+    .filter((x) => x.trim())
+    .map((x) => `<p>${escapeHtml(x.trim()).replace(/\n/g, "<br>")}</p>`);
+  const pics = images.map((i) => `<p><img data-veil-img="${i.id}" alt=""></p>`);
+  const source = link
+    ? `<p><a href="${escapeHtml(link)}">${escapeHtml(n.title || host(link))}</a></p>`
+    : "";
+  const first = n.text
+    .split("\n")[0]
+    .replace(/^["“「]+|["”」]+$/g, "")
+    .trim();
+  return {
+    title: (n.title || first || t("分享的圖片")).slice(0, 80),
+    body: [...paras, ...pics, source].join(""),
+    format: "html",
+    images,
+  };
 }
 
 type Draft = {
@@ -157,18 +251,25 @@ const host = (url: string) => {
   }
 };
 
-function App({ shared }: { shared: Draft | null }) {
+function App({
+  shared,
+  note,
+}: {
+  shared: Draft | null;
+  note: SharedNote | null;
+}) {
   const { v, s } = useStore();
   const [ready, setReady] = useState(false);
   const [cache, setCache] = useState(false);
   const [error, setError] = useState("");
   const [, setLangTick] = useState(0);
   const [pendingShare, setPendingShare] = useState(shared);
+  const [pendingNote, setPendingNote] = useState(note);
   useEffect(() => {
     void (async () => {
       await loadConfig();
       // Connected before but the hour is over: get a new token unprompted.
-      if (!shared && renewSilently()) return;
+      if (!shared && !note && renewSilently()) return;
       setCache(await hasCache());
       setReady(true);
     })();
@@ -234,6 +335,8 @@ function App({ shared }: { shared: Draft | null }) {
         <Library
           shared={pendingShare}
           clearShared={() => setPendingShare(null)}
+          note={pendingNote}
+          clearNote={() => setPendingNote(null)}
           onLang={relang}
           onCleared={() => setCache(false)}
         />
@@ -242,7 +345,7 @@ function App({ shared }: { shared: Draft | null }) {
           cache={cache}
           error={error}
           setError={setError}
-          shared={!!pendingShare}
+          shared={pendingNote ? "note" : pendingShare ? "link" : ""}
           syncError={s.error}
         />
       )}
@@ -260,7 +363,7 @@ function Unlock({
   cache: boolean;
   error: string;
   setError: (e: string) => void;
-  shared: boolean;
+  shared: "" | "link" | "note";
   syncError: string;
 }) {
   const [password, setPassword] = useState("");
@@ -354,7 +457,11 @@ function Unlock({
               )}
         </p>
         {shared && (
-          <p className="note">{t("解鎖後即可收藏分享過來的網頁。")}</p>
+          <p className="note">
+            {shared === "note"
+              ? t("解鎖後會把分享的內容加入記事本。")
+              : t("解鎖後即可收藏分享過來的網頁。")}
+          </p>
         )}
         {error && (
           <p className="error" role="alert">
@@ -495,11 +602,15 @@ function Unlock({
 function Library({
   shared,
   clearShared,
+  note,
+  clearNote,
   onLang,
   onCleared,
 }: {
   shared: Draft | null;
   clearShared: () => void;
+  note: SharedNote | null;
+  clearNote: () => void;
   onLang: (l: Lang) => void;
   onCleared: () => void;
 }) {
@@ -561,6 +672,19 @@ function Library({
     if (shared) {
       setEditing({ ...emptyDraft, ...shared });
       clearShared();
+    }
+    if (note) {
+      clearNote();
+      setView("memos");
+      void (async () => {
+        try {
+          const saved = await saveMemo(await noteFromShare(note));
+          setWriting({ memo: saved });
+          setToast(t("已加入記事本"));
+        } catch (e) {
+          setImportError(tError((e as Error).message));
+        }
+      })();
     }
   }, []);
   useEffect(() => {
@@ -2068,22 +2192,28 @@ async function boot() {
         </main>,
       );
     else {
-      const shared = sharedLink();
+      const got = await readShare();
       root.render(
         <AppWithError
-          shared={shared && { ...emptyDraft, ...shared }}
-          initial={startError}
+          shared={got.link && { ...emptyDraft, ...got.link }}
+          note={got.note}
+          initial={
+            startError ||
+            (got.lost ? "分享的內容沒有收到，請再分享一次。" : "")
+          }
         />,
       );
     }
-    if ("serviceWorker" in navigator && location.protocol === "https:")
+    if ("serviceWorker" in navigator && window.isSecureContext)
       navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
   function AppWithError({
     shared,
+    note,
     initial,
   }: {
     shared: Draft | null;
+    note: SharedNote | null;
     initial: string;
   }) {
     const [shown, setShown] = useState(initial);
@@ -2094,7 +2224,7 @@ async function boot() {
             {tError(shown)}
           </div>
         )}
-        <App shared={shared} />
+        <App shared={shared} note={note} />
       </>
     );
   }

@@ -583,3 +583,7 @@ Google 帳戶與工作區不符，已停止同步|Account and workspace do not m
 Google Drive 上已經有保險庫，請輸入主密碼開啟。|There is already a vault in Google Drive. Enter your master password to open it.|Google ドライブにはすでに保管庫があります。マスターパスワードを入力して開いてください。|Google 드라이브에 이미 보관함이 있습니다. 마스터 비밀번호를 입력해 여세요.
 請記住主密碼，它不會被備份。建立後會給你一組救援金鑰，忘記密碼時用它救回資料。|Remember your master password; it is not backed up anywhere. You will get a recovery key after creating the vault: it is how you get your data back if you forget the password.|マスターパスワードは忘れないでください。どこにもバックアップされません。作成後に救援キーが表示され、パスワードを忘れたときはこれでデータを取り戻せます。|마스터 비밀번호를 꼭 기억하세요. 어디에도 백업되지 않습니다. 보관함을 만든 뒤 구조 키가 표시되며, 비밀번호를 잊었을 때 이 키로 데이터를 되찾을 수 있습니다.
 我已保存，開始使用 →|Saved. Start using it →|保存しました。使い始める →|저장했습니다. 시작하기 →
+解鎖後會把分享的內容加入記事本。|After you unlock, what you shared is added to your notes.|ロックを解除すると、共有した内容がメモ帳に追加されます。|잠금을 해제하면 공유한 내용이 메모장에 추가됩니다.
+已加入記事本|Added to your notes|メモ帳に追加しました|메모장에 추가했습니다
+分享的圖片|Shared picture|共有した画像|공유한 이미지
+分享的內容沒有收到，請再分享一次。|The shared content did not arrive. Please share it again.|共有した内容を受け取れませんでした。もう一度共有してください。|공유한 내용을 받지 못했습니다. 다시 공유해 주세요.

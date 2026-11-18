@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.9.1
+# 測試報告 · Veil Bookmark 1.10.0
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -300,3 +300,8 @@
 
 - `web-setup-e2e`：建立畫面與救援金鑰畫面都沒有勾選框，各一個按鈕即可完成；其餘檢查同 1.9.0。
 - `web-e2e`、`web-accounts-e2e`、單元測試通過。擴充功能的救援金鑰畫面程式預設不變（仍有勾選）。`password-change-e2e` 在這台電腦於上一版也同樣卡在第 53 行（與這次修改無關的環境問題），未能驗證。
+
+## 1.10.0 分享進記事本
+
+- 新增 `scripts/web-share-e2e.mts`（Pixel 7 尺寸、安裝 service worker，模擬 Android 以 multipart POST 分享）：選取文字＋圖片在上鎖時分享 → 解鎖前 localStorage、sessionStorage、IndexedDB、Cache Storage 都找不到分享的文字，網址列也沒有 → 解鎖後存成記事（標題、文字、來源連結、圖片）並同步到 Drive；只分享網址 → 開啟新增書籤；分享內容遺失 → 顯示提示；iPhone 捷徑的 `?text=` → 記事。
+- `web-e2e`（網址加短說明仍為書籤）等其餘手機版測試與單元測試通過。

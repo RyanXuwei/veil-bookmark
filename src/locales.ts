@@ -3509,5 +3509,29 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Saved. Start using it →",
   "ja": "保存しました。使い始める →",
   "ko": "저장했습니다. 시작하기 →"
+ },
+ "解鎖後會把分享的內容加入記事本。": {
+  "zh-CN": "解锁后会把分享的内容加入记事本。",
+  "en": "After you unlock, what you shared is added to your notes.",
+  "ja": "ロックを解除すると、共有した内容がメモ帳に追加されます。",
+  "ko": "잠금을 해제하면 공유한 내용이 메모장에 추가됩니다."
+ },
+ "已加入記事本": {
+  "zh-CN": "已加入记事本",
+  "en": "Added to your notes",
+  "ja": "メモ帳に追加しました",
+  "ko": "메모장에 추가했습니다"
+ },
+ "分享的圖片": {
+  "zh-CN": "分享的图片",
+  "en": "Shared picture",
+  "ja": "共有した画像",
+  "ko": "공유한 이미지"
+ },
+ "分享的內容沒有收到，請再分享一次。": {
+  "zh-CN": "分享的内容没有收到，请再分享一次。",
+  "en": "The shared content did not arrive. Please share it again.",
+  "ja": "共有した内容を受け取れませんでした。もう一度共有してください。",
+  "ko": "공유한 내용을 받지 못했습니다. 다시 공유해 주세요."
  }
 };
