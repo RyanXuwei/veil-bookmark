@@ -221,9 +221,9 @@ try {
   await open(a, "Only A");
   await a.locator(".syncDot", { hasText: "已同步" }).waitFor();
   const b = await pageFor("B");
-  await b.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
-  await b.getByRole("button", { name: "解鎖保險庫 →" }).click();
-  await b.getByRole("alert").filter({ hasText: "還沒有" }).waitFor();
+  // B's Drive is empty: B is offered a new vault (A's is not visible there).
+  await b.getByRole("heading", { name: "建立你的保險庫" }).waitFor();
+  assert.equal(await b.getByRole("button", { name: "解鎖保險庫 →" }).count(), 0);
   assert.equal(posts.B, 0);
   assert.equal(await readCache(b, "B"), undefined);
   remote.B.set("B", (globalThis as any).seedB);

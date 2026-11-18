@@ -455,7 +455,7 @@ Google Drive 中沒有 Veil Bookmark 的備份，可以直接建立新的保險�
 移除標籤：{tag}|Remove tag: {tag}|タグを削除：{tag}|태그 삭제: {tag}
 輸入後按逗號或 Enter|Type, then press comma or Enter|入力してカンマか Enter|입력 후 쉼표 또는 Enter
 Google Drive 上的保險庫已被更換。請上鎖後用新的主密碼重新開啟。|The vault in Google Drive was replaced. Lock, then open it again with its master password.|Google Drive の保管庫が置き換えられました。ロックしてから、その保管庫のマスターパスワードで開き直してください。|Google Drive의 보관함이 교체되었습니다. 잠근 뒤 새 마스터 비밀번호로 다시 여세요.
-Google Drive 上還沒有 Veil Bookmark 保險庫。請先在電腦的擴充功能「同步與備份」連接 Google Drive。|There is no Veil Bookmark vault in Google Drive yet. First connect Google Drive in the Chrome extension under Sync & backup.|Google Drive にまだ Veil Bookmark の保管庫がありません。先にパソコンの拡張機能の「同期とバックアップ」で Google Drive に接続してください。|Google Drive에 아직 Veil Bookmark 보관함이 없습니다. 먼저 컴퓨터의 확장 프로그램 '동기화 및 백업'에서 Google Drive를 연결하세요.
+Google Drive 上還沒有 Veil Bookmark 保險庫。請重新整理頁面後建立新的保險庫。|There is no Veil Bookmark vault in Google Drive yet. Reload the page to create a new vault.|Google ドライブにはまだ Veil Bookmark の保管庫がありません。ページを再読み込みして新しい保管庫を作成してください。|Google 드라이브에 아직 Veil Bookmark 보관함이 없습니다. 페이지를 새로 고친 후 새 보관함을 만드세요.
 Google 連線已過期，修改尚未上傳。點這裡重新連線。|Your Google connection expired and changes haven't been uploaded. Tap to reconnect.|Google との接続が期限切れのため、変更はまだアップロードされていません。タップして再接続してください。|Google 연결이 만료되어 변경 내용이 아직 업로드되지 않았습니다. 여기를 눌러 다시 연결하세요.
 主密碼不會離開這支手機。閒置 15 分鐘或離開 5 分鐘後自動上鎖。|Your master password never leaves this phone. Locks after 15 minutes idle or 5 minutes away.|マスターパスワードはこのスマートフォンから送信されません。15 分間操作がないか、5 分間離れると自動でロックします。|마스터 비밀번호는 이 휴대전화를 벗어나지 않습니다. 15분간 사용하지 않거나 5분간 자리를 비우면 자동으로 잠깁니다.
 使用 Google 帳號連接 Drive|Connect Drive with Google|Google アカウントで Drive に接続|Google 계정으로 Drive 연결
@@ -578,3 +578,6 @@ Google 帳戶與工作區不符，已停止同步|Account and workspace do not m
 移除此帳戶的本機資料並登出|Remove this account's local data and sign out|このアカウントのローカルデータを削除してログアウト|이 계정의 로컬 데이터를 삭제하고 로그아웃
 只移除此帳戶的本機副本與解鎖設定，未同步的修改會遺失；其他帳戶及 Drive 資料不受影響。|Only this account's local copy and unlock settings are removed. Unsynced edits will be lost. Other accounts and Drive data are not affected.|このアカウントのローカルコピーと解除設定のみ削除します。未同期の変更は失われます。他のアカウントと Drive データには影響しません。|이 계정의 로컬 사본과 잠금 해제 설정만 삭제됩니다. 동기화되지 않은 변경 사항은 사라집니다. 다른 계정과 Drive 데이터에는 영향이 없습니다.
 請先儲存並關閉編輯畫面，再切換帳戶|Save and close the editor before switching accounts.|保存して編集画面を閉じてからアカウントを切り替えてください|저장하고 편집 화면을 닫은 후 계정을 전환하세요
+建立你的保險庫|Create your vault|保管庫を作成|보관함 만들기
+這個 Google 帳號還沒有 Veil Bookmark 保險庫。設定主密碼就能開始使用，之後在電腦安裝擴充功能也能用同一組主密碼開啟。|This Google account has no Veil Bookmark vault yet. Set a master password to get started. If you install the extension on a computer later, it opens with the same master password.|この Google アカウントにはまだ Veil Bookmark の保管庫がありません。マスターパスワードを設定するとすぐに使えます。後でパソコンに拡張機能を入れても、同じマスターパスワードで開けます。|이 Google 계정에는 아직 Veil Bookmark 보관함이 없습니다. 마스터 비밀번호를 설정하면 바로 사용할 수 있으며, 나중에 컴퓨터에 확장 프로그램을 설치해도 같은 마스터 비밀번호로 열 수 있습니다.
+Google Drive 上已經有保險庫，請輸入主密碼開啟。|There is already a vault in Google Drive. Enter your master password to open it.|Google ドライブにはすでに保管庫があります。マスターパスワードを入力して開いてください。|Google 드라이브에 이미 보관함이 있습니다. 마스터 비밀번호를 입력해 여세요.

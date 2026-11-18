@@ -4,7 +4,12 @@
 // on the phone and uploaded to Drive like the extension does.
 import {
   decrypt,
+  emptyVault,
   merge,
+  newDataKey,
+  newRecoveryCode,
+  setPassword,
+  setRecovery,
   openWithPassword,
   seal,
   validateEnvelope,
@@ -123,7 +128,54 @@ function setSync(next: Partial<SyncState>) {
 let attempts = 0,
   nextAttempt = 0;
 const NOT_FOUND =
-  "Google Drive 上還沒有 Veil Bookmark 保險庫。請先在電腦的擴充功能「同步與備份」連接 Google Drive。";
+  "Google Drive 上還沒有 Veil Bookmark 保險庫。請重新整理頁面後建立新的保險庫。";
+
+/** True when the connected Google Drive has no vault yet and this phone has
+ *  no copy: the app offers to create one (no extension needed). */
+export async function needsSetup(): Promise<boolean> {
+  const t = token();
+  if (!t || !account() || (await hasCache())) return false;
+  if ((await identify(t)).id !== activeAccount()) return false;
+  return (await readRemoteWith(t)).envelopes.length === 0;
+}
+
+// A vault just created here: opened once its recovery key has been shown.
+let created: { v: Vault; dek: CryptoKey; keys: KeySlots } | null = null;
+
+/** Creates a new vault (same format as the extension's) and uploads it to
+ *  Google Drive. Returns the recovery key, shown once and never stored. */
+export async function createVault(password: string) {
+  if (password.length < 4) throw Error("主密碼至少 4 個字元");
+  return serialized(async () => {
+    const t = token();
+    if (!t || !account()) throw Error("請先連接 Google Drive");
+    if ((await identify(t)).id !== activeAccount())
+      throw Error("Google 帳戶與工作區不符，已停止同步");
+    // Checked again right before writing: never create a second vault.
+    if ((await hasCache()) || (await readRemoteWith(t)).envelopes.length)
+      throw Error(ALREADY);
+    const id = crypto.randomUUID();
+    const v = emptyVault(id);
+    const dek = await newDataKey();
+    const code = newRecoveryCode();
+    let keys = await setPassword(dek, id, password);
+    keys = await setRecovery(dek, id, code.bytes, keys);
+    await upload(t, await seal(v, dek, keys));
+    lastParts = null;
+    await cacheWrite(v, dek, keys);
+    created = { v, dek, keys };
+    return code.code;
+  });
+}
+const ALREADY = "Google Drive 上已經有保險庫，請輸入主密碼開啟。";
+
+/** Opens the vault created by createVault (after the recovery key). */
+export function finishCreate() {
+  if (!created) return;
+  open = created;
+  created = null;
+  setSync({ lastSync: Date.now(), pending: false, error: "" });
+}
 
 /** Opens the vault with the master password. */
 export async function unlock(password: string) {
@@ -217,6 +269,7 @@ async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
 
 export function lock() {
   open = null;
+  created = null;
   lastParts = null;
   clearTimeout(timer);
   emit();

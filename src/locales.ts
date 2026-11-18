@@ -2742,11 +2742,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "ja": "Google Drive の保管庫が置き換えられました。ロックしてから、その保管庫のマスターパスワードで開き直してください。",
   "ko": "Google Drive의 보관함이 교체되었습니다. 잠근 뒤 새 마스터 비밀번호로 다시 여세요."
  },
- "Google Drive 上還沒有 Veil Bookmark 保險庫。請先在電腦的擴充功能「同步與備份」連接 Google Drive。": {
-  "zh-CN": "Google Drive 上还没有 Veil Bookmark 保险库。请先在电脑的扩充功能「同步与备份」连接 Google Drive。",
-  "en": "There is no Veil Bookmark vault in Google Drive yet. First connect Google Drive in the Chrome extension under Sync & backup.",
-  "ja": "Google Drive にまだ Veil Bookmark の保管庫がありません。先にパソコンの拡張機能の「同期とバックアップ」で Google Drive に接続してください。",
-  "ko": "Google Drive에 아직 Veil Bookmark 보관함이 없습니다. 먼저 컴퓨터의 확장 프로그램 '동기화 및 백업'에서 Google Drive를 연결하세요."
+ "Google Drive 上還沒有 Veil Bookmark 保險庫。請重新整理頁面後建立新的保險庫。": {
+  "zh-CN": "Google Drive 上还没有 Veil Bookmark 保险库。请刷新页面后创建新的保险库。",
+  "en": "There is no Veil Bookmark vault in Google Drive yet. Reload the page to create a new vault.",
+  "ja": "Google ドライブにはまだ Veil Bookmark の保管庫がありません。ページを再読み込みして新しい保管庫を作成してください。",
+  "ko": "Google 드라이브에 아직 Veil Bookmark 보관함이 없습니다. 페이지를 새로 고친 후 새 보관함을 만드세요."
  },
  "Google 連線已過期，修改尚未上傳。點這裡重新連線。": {
   "zh-CN": "Google 连接已过期，修改尚未上传。点这里重新连接。",
@@ -3479,5 +3479,23 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Save and close the editor before switching accounts.",
   "ja": "保存して編集画面を閉じてからアカウントを切り替えてください",
   "ko": "저장하고 편집 화면을 닫은 후 계정을 전환하세요"
+ },
+ "建立你的保險庫": {
+  "zh-CN": "创建你的保险库",
+  "en": "Create your vault",
+  "ja": "保管庫を作成",
+  "ko": "보관함 만들기"
+ },
+ "這個 Google 帳號還沒有 Veil Bookmark 保險庫。設定主密碼就能開始使用，之後在電腦安裝擴充功能也能用同一組主密碼開啟。": {
+  "zh-CN": "这个 Google 帐号还没有 Veil Bookmark 保险库。设置主密码就能开始使用，之后在电脑安装扩充功能也能用同一组主密码打开。",
+  "en": "This Google account has no Veil Bookmark vault yet. Set a master password to get started. If you install the extension on a computer later, it opens with the same master password.",
+  "ja": "この Google アカウントにはまだ Veil Bookmark の保管庫がありません。マスターパスワードを設定するとすぐに使えます。後でパソコンに拡張機能を入れても、同じマスターパスワードで開けます。",
+  "ko": "이 Google 계정에는 아직 Veil Bookmark 보관함이 없습니다. 마스터 비밀번호를 설정하면 바로 사용할 수 있으며, 나중에 컴퓨터에 확장 프로그램을 설치해도 같은 마스터 비밀번호로 열 수 있습니다."
+ },
+ "Google Drive 上已經有保險庫，請輸入主密碼開啟。": {
+  "zh-CN": "Google Drive 上已经有保险库，请输入主密码打开。",
+  "en": "There is already a vault in Google Drive. Enter your master password to open it.",
+  "ja": "Google ドライブにはすでに保管庫があります。マスターパスワードを入力して開いてください。",
+  "ko": "Google 드라이브에 이미 보관함이 있습니다. 마스터 비밀번호를 입력해 여세요."
  }
 };

@@ -59,8 +59,12 @@ import {
   vault,
   enableBiometric,
   unlockBiometric,
+  needsSetup,
+  createVault,
+  finishCreate,
 } from "./vault";
 import { AccountMenu } from "./account-menu";
+import { RecoveryKeyModal } from "../src/recovery";
 import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
 import { VERSION } from "../src/version";
@@ -263,10 +267,41 @@ function Unlock({
   const [busy, setBusy] = useState(false);
   const [bioState, setBioState] = useState<bio.BioStatus>("off");
   const signedIn = !!token();
-  const canOpen = signedIn || cache;
+  // A new user: Drive has no vault yet, so offer to create one here.
+  const [setup, setSetup] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [ack, setAck] = useState(false);
+  const [recovery, setRecovery] = useState("");
+  const canOpen = (signedIn || cache) && !setup;
   useEffect(() => {
     void bio.status().then(setBioState);
   }, []);
+  useEffect(() => {
+    if (!signedIn || cache) return;
+    let live = true;
+    needsSetup().then(
+      (x) => live && setSetup(x),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [signedIn, cache]);
+  async function create() {
+    setError("");
+    if (password !== confirm) return setError("兩次密碼不一致");
+    if (!ack) return setError("請先確認已了解主密碼無法救援");
+    setBusy(true);
+    try {
+      setRecovery(await createVault(password));
+      setPassword("");
+      setConfirm("");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   // Locked screen (e.g. after the app was in the background): when the
   // Google connection has expired, renew it without a prompt. Nothing is
   // unlocked here, so leaving for Google and coming back loses nothing.
@@ -302,9 +337,19 @@ function Unlock({
       </header>
       <section className="welcomeCard">
         <p className="eyebrow">PRIVATE BY DESIGN</p>
-        <h1>{canOpen ? t("歡迎回來") : t("在手機上開啟你的書籤")}</h1>
+        <h1>
+          {setup
+            ? t("建立你的保險庫")
+            : canOpen
+              ? t("歡迎回來")
+              : t("在手機上開啟你的書籤")}
+        </h1>
         <p className="muted">
-          {canOpen
+          {setup
+            ? t(
+                "這個 Google 帳號還沒有 Veil Bookmark 保險庫。設定主密碼就能開始使用，之後在電腦安裝擴充功能也能用同一組主密碼開啟。",
+              )
+            : canOpen
             ? t("輸入主密碼，打開你的收藏。")
             : t(
                 "連接你在電腦上同步書籤的 Google 帳號，再輸入主密碼。資料只在這支手機上解密。",
@@ -349,6 +394,72 @@ function Unlock({
             </button>
             <p className="or">{t("或輸入主密碼")}</p>
           </>
+        )}
+        {setup && (
+          <form
+            className="setupForm"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void create();
+            }}
+          >
+            <label>
+              {t("主密碼")}
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={4}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+            <label>
+              {t("再次輸入密碼")}
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+            </label>
+            <div className="pwWarning" role="note">
+              <strong>⚠ {t("請務必記住主密碼")}</strong>
+              <p>
+                {t(
+                  "主密碼不會在任何地方備份。建立後會顯示一組救援金鑰，是忘記密碼時唯一的救援方式；主密碼與救援金鑰都遺失時，所有書籤與記事將永久無法開啟。",
+                )}
+              </p>
+              <label className="ackRow">
+                <input
+                  type="checkbox"
+                  checked={ack}
+                  onChange={(e) => setAck(e.target.checked)}
+                />
+                <span>
+                  {t(
+                    "我了解主密碼與救援金鑰都遺失後無法救援，並會自行妥善保管。",
+                  )}
+                </span>
+              </label>
+            </div>
+            <button
+              className="primary full"
+              disabled={busy || !password || !confirm || !ack}
+            >
+              {busy ? t("處理中…") : t("建立保險庫 →")}
+            </button>
+          </form>
+        )}
+        {recovery && (
+          <RecoveryKeyModal
+            code={recovery}
+            onDone={() => {
+              setRecovery("");
+              finishCreate();
+            }}
+          />
         )}
         {canOpen && bioState === "expired" && (
           <p className="note">

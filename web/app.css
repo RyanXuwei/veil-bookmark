@@ -933,3 +933,95 @@ select:focus {
 .accountPanel .error {
   margin: 0;
 }
+
+/* Creating a vault on the phone: master password warning and the one-time
+   recovery key (the same component as the extension). */
+.setupForm {
+  display: grid;
+  gap: 12px;
+}
+.pwWarning {
+  border: 1px solid #d9a441;
+  background: #fdf6e6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #5a4214;
+}
+.pwWarning p {
+  margin: 4px 0 8px;
+  line-height: 1.5;
+}
+.ackRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-weight: 600;
+}
+.ackRow input {
+  width: auto;
+  margin-top: 3px;
+  flex: none;
+}
+.overlay.overlayTop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #1f332a73;
+}
+.recoveryModal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 92dvh;
+  overflow: auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  box-shadow: 0 18px 50px #0b221840;
+}
+.recoveryModal h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.recoveryModal .row {
+  display: flex;
+  gap: 8px;
+}
+.recoveryModal .row button {
+  flex: 1;
+}
+.recoveryCode {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  justify-content: center;
+  gap: 4px 0;
+  font: 600 17px/1.6 ui-monospace, Consolas, monospace;
+  letter-spacing: 0.5px;
+  background: #f1eedc;
+  color: #22302a;
+  border: 1px dashed var(--green);
+  border-radius: 10px;
+  padding: 14px 10px;
+  margin: 12px 0;
+  user-select: all;
+}
+.recoveryCode i {
+  font-style: normal;
+  opacity: 0.45;
+  padding: 0 3px;
+}
+.recoveryWarn {
+  font-size: 12px;
+  color: #8a3b1f;
+  background: #fdf1ec;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 10px 0;
+}
+.recoveryModal .ackRow {
+  margin-bottom: 12px;
+}
