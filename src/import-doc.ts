@@ -18,9 +18,37 @@ const escape = (s: string) =>
     (c) => `&${{ "&": "amp", "<": "lt", ">": "gt", '"': "quot" }[c]};`,
   );
 
+// Frequent characters of Chinese and Japanese text, used to tell which legacy
+// encoding produced readable text.
+const COMMON = new Set("的一是不了人我在有他這这中大來来上國国個个到說说們们為为子和你地出道也時时年得就那要下以生會会自著着去之過过家學学對对可她裡里後后小麼么心多天而能好都然沒没日於于起還还發发成事只作當当想看文無无開开手十用主行方又如前所本見见經经頭头面公同三已老從从動动兩两長长知民樣样現现分將将外但身些與与高意進进把法此實实回二理美點点月明其種种聲声全工己話话兒儿者向情部正名定女問问力機机給给等幾几很業业最間间新什打便位因重被走電电四第門门相次東东政海口使教西再平真聽听世氣气信北少關关並并內内加化由卻却代軍军產产入先山五太水萬万市眼體体別别處处總总才場场師师書书比住員员九笑性通目華华報报立馬马命張张活難难神數数件安表原車车白應应路期叫死常提感金何更反合放做系計计或司利受光王果親亲界及今京務务制解各任至清物台象記记邊边共風风戰战接它許许八特覺觉望直服林題题建南度統统色字請请交愛爱讓让認认算論论百吃義义科怎元社術术結结六功指思非流每青管夫連连遠远資资隊队跟帶带花快條条院變变聯联言權权往展該该領领傳传近留紅红治決决周保達达辦办運运武半候七必城父強强步完革深區区即求品士轉转量空甚眾众技輕轻程告江語语英基派滿满式李息寫写呢識识極极令黃黄德收臉脸錢钱黨党倒未持取設设始版雙双歷历越史商千片容研像找友孩站廣广改議议形委早房音火際际則则首單单據据導导影失拿網网香似斯專专石若兵弟誰谁校讀读志飛飞觀观爭争究包組组造落視视濟济喜離离雖虽壞坏興兴具罪害仍呼帝存陸陆です。ます、した");
+/** How much a decoded text looks like real Chinese, Japanese or Korean. */
+function readability(s: string) {
+  let good = 0,
+    bad = 0,
+    cjk = 0;
+  for (const ch of s) {
+    const c = ch.codePointAt(0)!;
+    if (c < 0x80) continue;
+    cjk++;
+    if (COMMON.has(ch)) good += 2;
+    else if (c >= 0xac00 && c <= 0xd7a3) good += 2; // Hangul syllables
+    else if (c >= 0x3041 && c <= 0x30ff) good += 2; // Hiragana / Katakana
+    else if (c >= 0x3000 && c <= 0x303f) good += 1; // CJK punctuation
+    else if (c >= 0xff01 && c <= 0xff5e) good += 1; // full-width ASCII
+    else if (c >= 0x4e00 && c <= 0x9fff) good += 0.3; // other Han
+    else bad += 2; // half-width kana, symbols, rare blocks: likely wrong
+  }
+  return cjk ? (good - bad) / cjk : 0;
+}
+// Legacy encodings tried for files that are not UTF-8, in the order of the
+// usual encoding for each language's Windows / Mac files.
+const LEGACY = ["big5", "gb18030", "shift_jis", "euc-kr", "euc-jp"];
+
 /** Reads a text file whatever its encoding: UTF-8 (with or without BOM),
- *  UTF-16 with a BOM, or Big5 (common for older Traditional Chinese files). */
-export function decodeText(bytes: Uint8Array) {
+ *  UTF-16 with a BOM, or the older Chinese (Big5, GBK/GB18030), Japanese
+ *  (Shift_JIS, EUC-JP) and Korean (EUC-KR/UHC) encodings. A charset named
+ *  by an HTML file is used when it is one of these. */
+export function decodeText(bytes: Uint8Array, declared = "") {
   if (bytes[0] === 0xff && bytes[1] === 0xfe)
     return new TextDecoder("utf-16le").decode(bytes.subarray(2));
   if (bytes[0] === 0xfe && bytes[1] === 0xff)
@@ -30,10 +58,30 @@ export function decodeText(bytes: Uint8Array) {
       bytes,
     );
   } catch {}
-  try {
-    return new TextDecoder("big5", { fatal: true }).decode(bytes);
-  } catch {}
-  return new TextDecoder("utf-8").decode(bytes);
+  const named = declared.toLowerCase();
+  let best = "",
+    score = -Infinity;
+  for (const enc of [...(LEGACY.includes(named) || /^(gbk|gb2312|windows-949|ks_c_5601-1987|x-sjis|windows-31j)$/.test(named) ? [named] : []), ...LEGACY]) {
+    let text: string;
+    try {
+      text = new TextDecoder(enc, { fatal: true }).decode(bytes);
+    } catch {
+      continue;
+    }
+    // A declared charset that decodes cleanly wins.
+    if (enc === named) return text;
+    const s = readability(text);
+    if (s > score) {
+      best = text;
+      score = s;
+    }
+  }
+  return best || new TextDecoder("utf-8").decode(bytes);
+}
+/** The charset an HTML file declares in its first bytes, if any. */
+function htmlCharset(bytes: Uint8Array) {
+  const head = new TextDecoder("latin1").decode(bytes.subarray(0, 2048));
+  return /<meta[^>]+charset\s*=\s*["']?([\w-]+)/i.exec(head)?.[1] || "";
 }
 
 // ---- Markdown (the common subset) -------------------------------------------
@@ -374,7 +422,11 @@ export async function importFile(file: File): Promise<Imported & { skipped: numb
     const r = await docxToHtml(buf);
     return { title, html: sanitizeHtml(r.html), images: r.images, skipped: r.skipped };
   }
-  const text = decodeText(new Uint8Array(buf));
+  const bytes = new Uint8Array(buf);
+  const text = decodeText(
+    bytes,
+    ext === "html" || ext === "htm" ? htmlCharset(bytes) : "",
+  );
   if (ext === "md" || ext === "markdown")
     return { title, html: sanitizeHtml(markdownToHtml(text)), images: [], skipped: 0 };
   if (ext === "html" || ext === "htm") {

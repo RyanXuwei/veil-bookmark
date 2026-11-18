@@ -1,5 +1,20 @@
 /* Veil Bookmark mobile web app — portrait phone layout in the extension's
    palette. */
+/* CJK fonts follow the interface language, so Han characters take the
+   right regional forms; every script still has a fallback. */
+:root {
+  --cjk: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC";
+}
+:root:lang(zh-Hans) {
+  --cjk: "Microsoft YaHei", "PingFang SC", "Noto Sans SC";
+}
+:root:lang(ja) {
+  --cjk: "Yu Gothic UI", "Yu Gothic", Meiryo, "Hiragino Sans", "Noto Sans JP";
+}
+:root:lang(ko) {
+  --cjk: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR";
+}
+
 :root {
   --ink: #243b38;
   --muted: #6b7a72;
@@ -14,7 +29,9 @@
   --radius: 14px;
   color-scheme: light;
   font-family:
-    Inter, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei",
+    Inter, "Segoe UI", var(--cjk), "Microsoft JhengHei", "PingFang TC", "Noto Sans TC",
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Yu Gothic", "Hiragino Sans",
+    "Noto Sans JP", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR",
     system-ui, sans-serif;
   font-size: 15px;
   color: var(--ink);

@@ -1,3 +1,18 @@
+/* CJK fonts follow the interface language, so Han characters take the
+   right regional forms; every script still has a fallback. */
+:root {
+  --cjk: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC";
+}
+:root:lang(zh-Hans) {
+  --cjk: "Microsoft YaHei", "PingFang SC", "Noto Sans SC";
+}
+:root:lang(ja) {
+  --cjk: "Yu Gothic UI", "Yu Gothic", Meiryo, "Hiragino Sans", "Noto Sans JP";
+}
+:root:lang(ko) {
+  --cjk: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR";
+}
+
 /* Encrypted notebook — word-processor layout: title bar, ribbon, page canvas,
    status bar. Colours follow the Veil Bookmark green. */
 [data-surface="notes"],
@@ -19,7 +34,9 @@
   height: 100vh;
   color: var(--nb-ink);
   font-family:
-    "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", system-ui, sans-serif;
+    "Segoe UI", var(--cjk), "Microsoft JhengHei", "PingFang TC", "Noto Sans TC",
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Yu Gothic", "Hiragino Sans",
+    "Noto Sans JP", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
   font-size: 13px;
 }
 .nb button,
@@ -339,7 +356,9 @@
   min-height: 931px;
   outline: none;
   font-family:
-    Calibri, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+    Calibri, var(--cjk), "Microsoft JhengHei", "PingFang TC", "Noto Sans TC",
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Yu Gothic", "Hiragino Sans",
+    "Noto Sans JP", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   font-size: 11pt;
   line-height: 32px;
   color: var(--paper-ink, #30372d);

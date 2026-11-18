@@ -1,5 +1,22 @@
+/* CJK fonts follow the interface language, so Han characters take the
+   right regional forms; every script still has a fallback. */
 :root {
-  font-family: Inter, "Segoe UI", "Microsoft JhengHei", sans-serif;
+  --cjk: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC";
+}
+:root:lang(zh-Hans) {
+  --cjk: "Microsoft YaHei", "PingFang SC", "Noto Sans SC";
+}
+:root:lang(ja) {
+  --cjk: "Yu Gothic UI", "Yu Gothic", Meiryo, "Hiragino Sans", "Noto Sans JP";
+}
+:root:lang(ko) {
+  --cjk: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR";
+}
+
+:root {
+  font-family: Inter, "Segoe UI", var(--cjk), "Microsoft JhengHei", "PingFang TC", "Noto Sans TC",
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Yu Gothic", "Hiragino Sans",
+    "Noto Sans JP", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   color: #243b38;
   background: #f7f8f4;
   font-synthesis: none;

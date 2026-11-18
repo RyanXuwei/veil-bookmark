@@ -1,0 +1,53 @@
+{
+ "zh-TW": {
+  "enc": "big5",
+  "text": "今天的會議紀錄：我們討論了下個月的旅行計畫，大家都覺得應該先訂好住宿。請記得帶護照。",
+  "hex": "a4b5a4d1aabab77cc4b3acf6bffda147a7daadccb051bdd7a446a455add3a4ebaabaaec8a6e6ad70b565a141a46aae61b3a3c4b1b16fc0b3b8d3a5fdad71a66ea6edb14aa143bdd0b04fb16fb161c540b7d3a143"
+ },
+ "zh-CN": {
+  "enc": "gbk",
+  "text": "今天的会议记录：我们讨论了下个月的旅行计划，大家都觉得应该先订好住宿。请记得带护照。",
+  "hex": "bdf1ccecb5c4bbe1d2e9bcc7c2bca3baced2c3c7ccd6c2dbc1cbcfc2b8f6d4c2b5c4c2c3d0d0bcc6bbaea3acb4f3bcd2b6bcbef5b5c3d3a6b8c3cfc8b6a9bac3d7a1cbdea1a3c7ebbcc7b5c3b4f8bba4d5d5a1a3"
+ },
+ "ja": {
+  "enc": "shift_jis",
+  "text": "今日の会議メモ：来月の旅行について話し合いました。まずホテルを予約することにしました。パスポートを忘れないでください。",
+  "hex": "8da193fa82cc89ef8b6383818382814697888c8e82cc97b78d7382c982c282a282c4986282b58d8782a282dc82b582bd814282dc82b8837a8365838b82f0975c96f182b782e982b182c682c982b582dc82b582bd814283708358837c815b836782f0965982ea82c882a282c582ad82be82b382a28142"
+ },
+ "ja-euc": {
+  "enc": "euc_jp",
+  "text": "東京の天気は晴れです。明日は雨が降るかもしれません。傘を持って行きましょう。",
+  "hex": "c5ecb5fea4cec5b7b5a4a4cfc0b2a4eca4c7a4b9a1a3ccc0c6fca4cfb1aba4acb9dfa4eba4aba4e2a4b7a4eca4dea4bba4f3a1a3bbb1a4f2bbfda4c3a4c6b9d4a4ada4dea4b7a4e7a4a6a1a3"
+ },
+ "ko": {
+  "enc": "euc_kr",
+  "text": "오늘 회의 기록: 다음 달 여행 계획에 대해 이야기했습니다. 먼저 숙소를 예약하기로 했습니다. 여권을 잊지 마세요.",
+  "hex": "bfc0b4c320c8b8c0c720b1e2b7cf3a20b4d9c0bd20b4de20bfa9c7e020b0e8c8b9bfa120b4ebc7d820c0ccbedfb1e2c7dfbdc0b4cfb4d92e20b8d5c0fa20bcf7bcd2b8a620bfb9bee0c7cfb1e2b7ce20c7dfbdc0b4cfb4d92e20bfa9b1c7c0bb20c0d8c1f620b8b6bcbcbfe42e"
+ },
+ "short-tw": {
+  "enc": "big5",
+  "text": "繁體中文測試",
+  "hex": "c163c5e9a4a4a4e5b4fab8d5"
+ },
+ "short-cn": {
+  "enc": "gbk",
+  "text": "简体中文测试",
+  "hex": "bcf2cce5d6d0cec4b2e2cad4"
+ },
+ "utf8-mixed": {
+  "enc": "utf-8",
+  "text": "繁體 简体 English 日本語のテキスト 한국어 텍스트",
+  "hex": "e7b981e9ab9420e7ae80e4bd9320456e676c69736820e697a5e69cace8aa9ee381aee38386e382ade382b9e3838820ed959ceab5adec96b420ed858dec8aa4ed8ab8"
+ },
+ "utf16le-bom": {
+  "enc": "utf-16",
+  "text": "繁體 简体 English 日本語のテキスト 한국어 텍스트",
+  "hex": "fffe417ed49a2000807b534f200045006e0067006c006900730068002000e5652c679e8a6e30c630ad30b930c83020005cd56dadb4c520004dd1a4c2b8d2"
+ },
+ "html-sjis": {
+  "enc": "shift_jis",
+  "text": "<html><head><meta charset=\"shift_jis\"></head><body>日本語</body></html>",
+  "hex": "3c68746d6c3e3c686561643e3c6d65746120636861727365743d2273686966745f6a6973223e3c2f686561643e3c626f64793e93fa967b8cea3c2f626f64793e3c2f68746d6c3e",
+  "declared": "shift_jis"
+ }
+}
