@@ -7,6 +7,8 @@ export type Entry = {
   notes: string;
   // Position inside its folder (drag-and-drop); unset = after ordered items.
   order?: number;
+  // Saved in an incognito window: always opens in an incognito window.
+  incognito?: boolean;
   updated: number;
   revision: string;
   deleted: boolean;
@@ -646,6 +648,8 @@ export async function decrypt(input: unknown, key: CryptoKey): Promise<Vault> {
   }
   for (const x of [...v.entries, ...v.memos] as { order?: unknown }[])
     if (x.order !== undefined && !Number.isFinite(x.order)) delete x.order;
+  for (const x of v.entries as { incognito?: unknown }[])
+    if (x.incognito !== undefined && x.incognito !== true) delete x.incognito;
   for (const x of v.memos)
     if (x.folder !== undefined && typeof x.folder !== "string") delete x.folder;
   const folders = (v as Vault).folders;

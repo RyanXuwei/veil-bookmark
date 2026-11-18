@@ -3563,5 +3563,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Web image",
   "ja": "Web の画像",
   "ko": "웹 이미지"
+ },
+ "一律用無痕視窗開啟": {
+  "zh-CN": "一律用无痕窗口打开",
+  "en": "Always open in an incognito window",
+  "ja": "常にシークレットウィンドウで開く",
+  "ko": "항상 시크릿 창에서 열기"
  }
 };

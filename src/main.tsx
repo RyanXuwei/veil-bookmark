@@ -66,7 +66,15 @@ document.documentElement.dataset.surface = isNotes
     : isPopup
       ? "popup"
       : "manager";
-const empty = { id: "", title: "", url: "", folder: "", tags: "", notes: "" };
+const empty = {
+  id: "",
+  title: "",
+  url: "",
+  folder: "",
+  tags: "",
+  notes: "",
+  incognito: false,
+};
 function App() {
   const [status, setStatus] = useState<any>(null),
     [vault, setVault] = useState<Vault | null>(null),
@@ -290,6 +298,7 @@ function App() {
         ...empty,
         title: capture.title || capture.url,
         url: capture.url,
+        incognito: !!status?.incognito,
       });
       await chrome.storage.session.remove("capture");
     });
@@ -336,7 +345,14 @@ function App() {
             <span className="quickIcon">▱</span>
             <span className="quickText">
               <strong>{x.title}</strong>
-              <small>{new URL(x.url).hostname}</small>
+              <small>
+                {x.incognito && (
+                  <span className="privTag" title={t("一律用無痕視窗開啟")}>
+                    {t("無痕")}
+                  </span>
+                )}
+                {new URL(x.url).hostname}
+              </small>
             </span>
           </button>
           <button
@@ -361,7 +377,11 @@ function App() {
             </button>
             <button
               onClick={() => {
-                setEditor({ ...x, tags: x.tags.join(", ") });
+                setEditor({
+                  ...x,
+                  tags: x.tags.join(", "),
+                  incognito: !!x.incognito,
+                });
                 setMenuId(null);
               }}
             >
@@ -896,7 +916,9 @@ function App() {
                 <button
                   title={t("手動新增網址")}
                   aria-label={t("手動新增書籤")}
-                  onClick={() => setEditor({ ...empty })}
+                  onClick={() =>
+                    setEditor({ ...empty, incognito: !!status?.incognito })
+                  }
                 >
                   {t("手動新增")}
                 </button>
@@ -1071,6 +1093,16 @@ function App() {
                     setEditor({ ...editor, notes: e.target.value })
                   }
                 />
+              </label>
+              <label className="ackRow privRow">
+                <input
+                  type="checkbox"
+                  checked={!!editor.incognito}
+                  onChange={(e) =>
+                    setEditor({ ...editor, incognito: e.target.checked })
+                  }
+                />
+                <span>{t("一律用無痕視窗開啟")}</span>
               </label>
               <button className="primary full" disabled={busy}>
                 {busy ? t("儲存中…") : t("加密儲存 →")}

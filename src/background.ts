@@ -1083,7 +1083,9 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const x = v.entries.find((x) => x.id === m.id && !x.deleted);
     if (!x) throw Error("書籤不存在");
     const url = safeUrl(x.url);
-    if (m.incognito) await chrome.windows.create({ url, incognito: true });
+    // A bookmark saved in an incognito window opens in one from anywhere.
+    if (m.incognito || (x.incognito && !sourceWindow.incognito))
+      await chrome.windows.create({ url, incognito: true });
     else if (Number.isInteger(m.targetTabId)) {
       const tab = await chrome.tabs.get(m.targetTabId);
       if (tab.windowId !== sourceWindow.id)

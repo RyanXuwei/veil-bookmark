@@ -772,3 +772,20 @@ html[data-surface="popup"] {
 .quickSub > .nameForm {
   margin: 4px 0 4px 8px;
 }
+
+/* Bookmarks saved in an incognito window */
+.privTag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2f3a36;
+  color: #f3f0de;
+  font-size: 10px;
+  line-height: 16px;
+  vertical-align: 1px;
+}
+.privRow {
+  font-weight: 500;
+  margin: 2px 0 10px;
+}

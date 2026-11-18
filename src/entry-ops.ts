@@ -12,6 +12,7 @@ export function upsertEntry(
     folder?: unknown;
     tags?: unknown;
     notes?: unknown;
+    incognito?: unknown;
   },
 ): Entry {
   const old = v.entries.find((y) => y.id === x.id);
@@ -32,6 +33,10 @@ export function upsertEntry(
     notes: String(x.notes || "").slice(0, 5000),
     ...(old?.order !== undefined && old.folder === cleanFolderName(x.folder)
       ? { order: old.order }
+      : {}),
+    // Left out by editors that do not show it (the phone): keep as it was.
+    ...((x.incognito === undefined ? old?.incognito : x.incognito === true)
+      ? { incognito: true }
       : {}),
     updated: Math.max(Date.now(), (old?.updated || 0) + 1),
     revision: crypto.randomUUID(),
