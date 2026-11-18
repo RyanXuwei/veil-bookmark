@@ -24,11 +24,14 @@ export async function mergeSnapshots(o: {
   envelopes: Envelope[];
   // Password key for legacy v1 snapshots (from before key slots).
   legacy?: { salt: string; kek: CryptoKey };
-}): Promise<{ v: Vault; keys: KeySlots; upload: boolean }> {
+}): Promise<{ v: Vault; keys: KeySlots; upload: boolean; damaged: number[] }> {
   let { v, keys } = o;
   const remoteVaults: Vault[] = [];
+  // Snapshots of this vault that cannot be decrypted (e.g. cut short):
+  // skipped and never deleted, instead of being mistaken for another vault.
+  const damaged: number[] = [];
   let stale = false;
-  for (const remote of o.envelopes) {
+  for (const [index, remote] of o.envelopes.entries()) {
     if (remote.id !== v.id) throw new VaultMismatch();
     let rv: Vault;
     if (remote.version === 1) {
@@ -38,9 +41,14 @@ export async function mergeSnapshots(o: {
     } else {
       try {
         await verifySlots(o.dek, v.id, remote.keys);
-        rv = await decrypt(remote, o.dek);
       } catch {
         throw new VaultMismatch();
+      }
+      try {
+        rv = await decrypt(remote, o.dek);
+      } catch {
+        damaged.push(index);
+        continue;
       }
       // The newest key slots win, e.g. after a password reset on another device.
       if (remote.keys.updated > keys.updated) keys = remote.keys;
@@ -49,17 +57,23 @@ export async function mergeSnapshots(o: {
     remoteVaults.push(rv);
     v = merge(v, rv);
   }
-  if (o.envelopes.some((r) => r.version === 3 && r.keys.updated < keys.updated))
+  if (
+    o.envelopes.some(
+      (r, i) =>
+        r.version === 3 && r.keys.updated < keys.updated && !damaged.includes(i),
+    )
+  )
     stale = true;
   const canonical = JSON.stringify(merge(v, v));
   let remoteUnion: Vault = emptyVault(v.id);
   for (const rv of remoteVaults) remoteUnion = merge(remoteUnion, rv);
   // Upload when Drive is missing changes or newer keys, or consolidate several
   // snapshots into one so Drive keeps a single current copy.
+  const readable = o.envelopes.length - damaged.length;
   const upload =
-    !o.envelopes.length ||
-    o.envelopes.length > 1 ||
+    !readable ||
+    readable > 1 ||
     stale ||
     JSON.stringify(remoteUnion) !== canonical;
-  return { v, keys, upload };
+  return { v, keys, upload, damaged };
 }

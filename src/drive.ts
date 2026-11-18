@@ -173,7 +173,15 @@ export async function readRemoteWith(t: string) {
     if (!r) continue;
     const raw = await r.text();
     if (raw.length > 66_000_000) throw Error("Drive 備份過大");
-    envelopes.push(validateEnvelope(JSON.parse(raw)));
+    let e: Envelope;
+    try {
+      e = validateEnvelope(JSON.parse(raw));
+    } catch {
+      // An unreadable file (e.g. an upload cut short) is skipped, and since
+      // its ID is not returned it is never deleted.
+      continue;
+    }
+    envelopes.push(e);
     ids.push(id);
   }
   return { t, envelopes, ids };

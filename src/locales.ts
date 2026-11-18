@@ -3389,5 +3389,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Read",
   "ja": "読む",
   "ko": "읽기"
+ },
+ "記事資料不完整，無法開啟。請從 Google Drive 或加密備份還原。": {
+  "zh-CN": "记事数据不完整，无法打开。请从 Google Drive 或加密备份还原。",
+  "en": "The notes data is incomplete and cannot be opened. Restore from Google Drive or an encrypted backup.",
+  "ja": "メモのデータが不完全なため開けません。Google Drive または暗号化バックアップから復元してください。",
+  "ko": "메모 데이터가 불완전하여 열 수 없습니다. Google Drive 또는 암호화 백업에서 복원하세요."
  }
 };

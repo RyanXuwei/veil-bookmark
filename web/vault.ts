@@ -47,8 +47,51 @@ async function idb<T>(
   }
 }
 const cacheGet = () => idb<unknown>("readonly", (s) => s.get("vault"));
-const cacheSet = (e: SealedEnvelope) =>
-  idb("readwrite", (s) => s.put(e, "vault"));
+// Bookmarks (with folders) and notes are encrypted separately, so saving a
+// bookmark does not re-encrypt notes with pictures. Both parts are written in
+// one IndexedDB put (atomic). Older copies hold one envelope with everything.
+type Part = "entries" | "memos" | "all";
+type Layout2 = { layout: 2; a: SealedEnvelope; b: SealedEnvelope };
+let lastParts: { a: SealedEnvelope; b: SealedEnvelope; keys: string } | null =
+  null;
+const entriesPart = (v: Vault): Vault => ({ ...v, memos: [] });
+const memosPart = (v: Vault): Vault => ({ ...v, entries: [], folders: [] });
+async function cacheWrite(
+  v: Vault,
+  dek: CryptoKey,
+  keys: KeySlots,
+  part: Part = "all",
+) {
+  const k = JSON.stringify(keys);
+  const prev =
+    lastParts && lastParts.keys === k && lastParts.a.id === v.id
+      ? lastParts
+      : null;
+  const a =
+    part === "memos" && prev ? prev.a : await seal(entriesPart(v), dek, keys);
+  const b =
+    part === "entries" && prev ? prev.b : await seal(memosPart(v), dek, keys);
+  const record: Layout2 = { layout: 2, a, b };
+  await idb("readwrite", (s) => s.put(record, "vault"));
+  lastParts = { a, b, keys: k };
+}
+/** This phone's copy: the envelope that holds the key slots, and a reader. */
+function cachedCopy(c: unknown) {
+  if (c && (c as Layout2).layout === 2) {
+    const a = validateEnvelope((c as Layout2).a);
+    const b = validateEnvelope((c as Layout2).b);
+    if (a.version !== 3 || b.version !== 3 || a.id !== b.id) return null;
+    return {
+      env: a,
+      read: async (dek: CryptoKey) =>
+        merge(await decrypt(a, dek), await decrypt(b, dek)),
+    };
+  }
+  const e = validateEnvelope(c);
+  return e.version === 3
+    ? { env: e, read: (dek: CryptoKey) => decrypt(e, dek) }
+    : null;
+}
 export const hasCache = async () => {
   try {
     return !!(await cacheGet());
@@ -57,7 +100,10 @@ export const hasCache = async () => {
   }
 };
 /** Removes this phone's encrypted copy (Drive is not touched). */
-export const clearCache = () => idb("readwrite", (s) => s.delete("vault"));
+export const clearCache = () => {
+  lastParts = null;
+  return idb("readwrite", (s) => s.delete("vault"));
+};
 
 // ---- State ---------------------------------------------------------------
 export type SyncState = {
@@ -136,18 +182,15 @@ async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
   let remote: Envelope[] = [];
   let ids: string[] = [];
   if (t) ({ envelopes: remote, ids } = await readRemoteWith(t));
-  let cached: SealedEnvelope | null = null;
+  let cached: ReturnType<typeof cachedCopy> = null;
   try {
     const c = await cacheGet();
-    if (c) {
-      const e = validateEnvelope(c);
-      if (e.version === 3) cached = e;
-    }
+    if (c) cached = cachedCopy(c);
   } catch {}
   const sealed = remote
     .filter((x): x is SealedEnvelope => x.version === 3)
     .sort((a, b) => b.keys.updated - a.keys.updated);
-  const first = sealed[0] || (t && remote.length ? null : cached);
+  const first = sealed[0] || (t && remote.length ? null : cached?.env);
   if (!first)
     throw Error(
       remote.length
@@ -157,18 +200,22 @@ async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
           : "請先連接 Google Drive",
     );
   const dek = await key(first);
-  let v = await decrypt(first, dek);
+  let v =
+    cached && first === cached.env
+      ? await cached.read(dek)
+      : await decrypt(first, dek);
   let keys = first.keys;
   // Edits made on this phone that were not uploaded yet.
-  if (cached && cached !== first && cached.id === v.id)
+  if (cached && first !== cached.env && cached.env.id === v.id)
     try {
-      v = merge(v, await decrypt(cached, dek));
+      v = merge(v, await cached.read(dek));
     } catch {}
+  lastParts = null;
   open = { v, dek, keys };
   if (t) {
     await syncNow(remote, ids);
   } else {
-    await cacheSet(await seal(v, dek, keys));
+    await cacheWrite(v, dek, keys);
     setSync({ pending: !!cached && !t });
   }
   emit();
@@ -176,6 +223,7 @@ async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
 
 export function lock() {
   open = null;
+  lastParts = null;
   clearTimeout(timer);
   emit();
 }
@@ -215,14 +263,18 @@ export function syncNow(pre?: Envelope[], preIds?: string[]) {
       // Keep edits made on this phone while Drive was being read.
       const edited = o.v !== base;
       const next = edited ? merge(m.v, o.v) : m.v;
-      const snapshot = await seal(next, o.dek, m.keys);
       o.v = { ...next };
       o.keys = m.keys;
       if (edited) soon();
-      await cacheSet(snapshot);
+      await cacheWrite(next, o.dek, m.keys);
       if (m.upload) {
-        await upload(t, snapshot);
-        await removeSnapshots(t, r.ids);
+        // Drive keeps one envelope with everything.
+        await upload(t, await seal(next, o.dek, m.keys));
+        // Snapshots that could not be read are kept, never deleted.
+        await removeSnapshots(
+          t,
+          r.ids.filter((_, i) => !m.damaged.includes(i)),
+        );
       }
       setSync({
         syncing: false,
@@ -249,9 +301,9 @@ function soon() {
 }
 
 // ---- Edits ---------------------------------------------------------------
-async function save() {
+async function save(part: Part) {
   const o = open!;
-  await cacheSet(await seal(o.v, o.dek, o.keys));
+  await cacheWrite(o.v, o.dek, o.keys, part);
   emit();
   soon();
 }
@@ -260,13 +312,13 @@ export async function saveEntry(x: Parameters<typeof upsertEntry>[1]) {
   // Validates before changing anything (throws on a bad name or URL).
   upsertEntry(open.v, x);
   open.v = { ...open.v };
-  await save();
+  await save("entries");
 }
 export async function removeEntry(id: string) {
   if (!open) throw Error("已上鎖，請重新解鎖");
   if (deleteEntry(open.v, id)) {
     open.v = { ...open.v };
-    await save();
+    await save("entries");
   }
 }
 /** Adds or replaces a memo; returns the stored memo (with its permanent ID). */
@@ -274,13 +326,13 @@ export async function saveMemo(x: Record<string, unknown>) {
   if (!open) throw Error("已上鎖，請重新解鎖");
   const memo = upsertMemo(open.v, x);
   open.v = { ...open.v };
-  await save();
+  await save("memos");
   return memo;
 }
 export async function removeMemo(id: string) {
   if (!open) throw Error("已上鎖，請重新解鎖");
   if (deleteMemo(open.v, id)) {
     open.v = { ...open.v };
-    await save();
+    await save("memos");
   }
 }

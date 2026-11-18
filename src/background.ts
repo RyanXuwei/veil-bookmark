@@ -147,17 +147,100 @@ async function local() {
   return (await chrome.storage.local.get("vault")).vault as
     Envelope | undefined;
 }
+
+// ---- Local storage layout --------------------------------------------------
+// Layout 2 keeps bookmarks (with all folder records) and notes in two
+// encrypted envelopes that share the vault ID and key slots:
+//   vault       bookmarks + folders (memos: [])
+//   vaultMemos  notes (entries: [], folders: [])
+//   vaultLayout 2
+// A bookmark change re-encrypts only the small bookmark part, so notes with
+// pictures or audio no longer slow it down. All three keys are always
+// written in one chrome.storage.local.set, which Chrome applies atomically.
+// Without vaultLayout, "vault" is the older single envelope with everything;
+// it is read as before and converted on the next save. Google Drive and
+// backup files keep the single-envelope format.
+type Part = "entries" | "memos" | "all";
+const NOTES_MISSING =
+  "記事資料不完整，無法開啟。請從 Google Drive 或加密備份還原。";
+// Decrypted parts by ciphertext, so each request does not decrypt the notes
+// again. Callers get a copy: requests modify the vault in place.
+const partCache = new Map<string, Vault>();
+async function decryptPart(e: Envelope, dek: CryptoKey) {
+  const key = e.version === 3 ? `${e.id}|${e.iv}` : "";
+  let v = key ? partCache.get(key) : undefined;
+  if (!v) {
+    v = await decrypt(e, dek);
+    if (key) {
+      if (partCache.size > 4) partCache.clear();
+      partCache.set(key, v);
+    }
+  }
+  return structuredClone(v);
+}
+/** The whole vault (bookmarks, notes, folders) from this computer. */
+async function readVault(dek: CryptoKey): Promise<Vault> {
+  const st = await chrome.storage.local.get([
+    "vault",
+    "vaultMemos",
+    "vaultLayout",
+  ]);
+  if (!st.vault) throw Error("尚無保險庫");
+  const a = await decryptPart(validateEnvelope(st.vault), dek);
+  if (st.vaultLayout !== 2) return a; // older single envelope
+  if (!st.vaultMemos) throw Error(NOTES_MISSING);
+  const b = await decryptPart(validateEnvelope(st.vaultMemos), dek);
+  if (b.id !== a.id) throw Error(NOTES_MISSING);
+  // A union, so nothing is lost even if an older release wrote "vault".
+  return merge(a, b);
+}
+const entriesPart = (v: Vault): Vault => ({ ...v, memos: [] });
+const memosPart = (v: Vault): Vault => ({ ...v, entries: [], folders: [] });
+/** Saves the vault on this computer; `part` says what changed. Other values
+ *  in `extra` are written in the same atomic call. */
+async function writeVault(
+  v: Vault,
+  dek: CryptoKey,
+  keys: KeySlots,
+  part: Part = "all",
+  extra: Record<string, unknown> = {},
+) {
+  const st = await chrome.storage.local.get([
+    "vault",
+    "vaultMemos",
+    "vaultLayout",
+  ]);
+  const old = st.vault as Envelope | undefined;
+  // Both parts unless the stored layout already matches and keys are equal.
+  if (
+    st.vaultLayout !== 2 ||
+    !st.vaultMemos ||
+    !old ||
+    old.version !== 3 ||
+    old.id !== v.id ||
+    JSON.stringify(old.keys) !== JSON.stringify(keys)
+  )
+    part = "all";
+  const set: Record<string, unknown> = { ...extra, vaultLayout: 2 };
+  if (part !== "memos") set.vault = await seal(entriesPart(v), dek, keys);
+  if (part !== "entries") set.vaultMemos = await seal(memosPart(v), dek, keys);
+  await chrome.storage.local.set(set);
+}
+/** One envelope with everything, for Google Drive and backup files. */
+async function combined(dek: CryptoKey) {
+  const e = await local();
+  if (!e || e.version !== 3) throw Error("請先建立或還原保險庫");
+  return seal(await readVault(dek), dek, e.keys);
+}
 async function localKeys(): Promise<KeySlots> {
   const e = await local();
   if (!e || e.version !== 3) throw Error("請先建立或還原保險庫");
   return e.keys;
 }
-async function save(v: Vault, s: Session, keys?: KeySlots) {
+async function save(v: Vault, s: Session, keys?: KeySlots, part: Part = "all") {
   await session();
   const k = keys || (await localKeys());
-  await chrome.storage.local.set({
-    vault: await seal(v, await keyOf(s), k),
-  });
+  await writeVault(v, await keyOf(s), k, keys ? "all" : part);
 }
 async function rateLimited<T>(fn: () => Promise<T>) {
   const { attempts = 0, nextAttempt = 0 } = await chrome.storage.session.get<{
@@ -214,43 +297,83 @@ async function openDrive(envelopes: Envelope[], password: string) {
   }
   return { ...o, v, sealed: await seal(v, o.dek, o.sealed.keys) };
 }
-async function sync(interactive = false) {
-  const s = await session();
-  const dek = await keyOf(s);
-  const e = await local();
-  if (!e) throw Error("請先建立或還原保險庫");
-  let keys = await localKeys();
-  const { t, envelopes, ids } = await readRemote(interactive);
-  let merged;
-  try {
-    merged = await mergeSnapshots({
-      v: await decrypt(e, dek),
-      dek,
-      keys,
-      envelopes,
-      ...(s.legacy && {
-        legacy: { salt: s.legacy.salt, kek: await importKey(s.legacy.kek) },
-      }),
+// One sync at a time. Reading and writing Google Drive (the slow part) runs
+// outside the request queue so the popup and the notebook stay responsive;
+// only merging into this computer's vault waits in the queue, and it reads
+// the local vault there, so edits made meanwhile are never overwritten.
+let syncChain: Promise<unknown> = Promise.resolve();
+async function sync(interactive = false, inQueue = false): Promise<Vault> {
+  const run = async () => {
+    await session();
+    const { t, envelopes, ids } = await readRemote(interactive);
+    const step = async () => {
+      const s = await session();
+      const dek = await keyOf(s);
+      const e = await local();
+      if (!e) throw Error("請先建立或還原保險庫");
+      let keys = await localKeys();
+      const before = await readVault(dek);
+      let merged;
+      try {
+        merged = await mergeSnapshots({
+          v: before,
+          dek,
+          keys,
+          envelopes,
+          ...(s.legacy && {
+            legacy: {
+              salt: s.legacy.salt,
+              kek: await importKey(s.legacy.kek),
+            },
+          }),
+        });
+      } catch (err) {
+        if (err instanceof VaultMismatch) throw await conflict();
+        throw err;
+      }
+      const v = merged.v;
+      const keysChanged = JSON.stringify(keys) !== JSON.stringify(merged.keys);
+      keys = merged.keys;
+      await session();
+      // Only the parts Drive changed are written here.
+      const same = (a: Vault, b: Vault) =>
+        JSON.stringify(merge(a, a)) === JSON.stringify(merge(b, b));
+      const entriesChanged = !same(entriesPart(v), entriesPart(before));
+      const memosChanged = !same(memosPart(v), memosPart(before));
+      if (keysChanged || entriesChanged || memosChanged)
+        await writeVault(
+          v,
+          dek,
+          keys,
+          keysChanged || (entriesChanged && memosChanged)
+            ? "all"
+            : entriesChanged
+              ? "entries"
+              : "memos",
+        );
+      return { v, dek, keys, upload: merged.upload, damaged: merged.damaged };
+    };
+    const r = inQueue ? await step() : await serialized(step);
+    if (r.upload) {
+      await upload(t, await seal(r.v, r.dek, r.keys));
+      // Snapshots that could not be read are kept, never deleted.
+      await removeSnapshots(
+        t,
+        ids.filter((_, i) => !r.damaged.includes(i)),
+      );
+    }
+    await chrome.storage.local.set({
+      lastSync: Date.now(),
+      syncError: "",
+      driveConflict: false,
     });
-  } catch (err) {
-    if (err instanceof VaultMismatch) throw await conflict();
-    throw err;
-  }
-  const v = merged.v;
-  keys = merged.keys;
-  await session();
-  const snapshot = await seal(v, dek, keys);
-  await chrome.storage.local.set({ vault: snapshot });
-  if (merged.upload) {
-    await upload(t, snapshot);
-    await removeSnapshots(t, ids);
-  }
-  await chrome.storage.local.set({
-    lastSync: Date.now(),
-    syncError: "",
-    driveConflict: false,
-  });
-  return v;
+    return r.v;
+  };
+  // A sync requested from a page already holds the request queue.
+  if (inQueue) return run();
+  const task = syncChain.then(run, run);
+  syncChain = task.catch(() => {});
+  return task;
 }
 const LOCKED = "已上鎖，請重新解鎖";
 // The popup is often open for only a few seconds, so background sync must not
@@ -265,7 +388,8 @@ async function requestSync(delay = QUICK_SYNC_MS) {
   if (!driveEnabled) return;
   await chrome.alarms.create("veilmark-sync-soon", { delayInMinutes: 0.5 });
   clearTimeout(quickTimer);
-  quickTimer = setTimeout(() => void serialized(backgroundSync), delay);
+  // Returns the sync (Chrome ignores it; tests can wait for it).
+  quickTimer = setTimeout(() => backgroundSync(), delay);
 }
 async function backgroundSync() {
   const { driveEnabled } = await chrome.storage.local.get("driveEnabled");
@@ -445,8 +569,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const code = newRecoveryCode();
     let keys = await setPassword(dek, id, m.password);
     keys = await setRecovery(dek, id, code.bytes, keys);
-    const sealed = await seal(v, dek, keys);
-    await chrome.storage.local.set({ vault: sealed });
+    await writeVault(v, dek, keys);
+    const sealed = (await local()) as SealedEnvelope;
     await startSession({ v, dek, sealed }, generation);
     return { recoveryKey: code.code };
   }
@@ -455,16 +579,18 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const e = await local();
     if (!e) throw Error("尚無保險庫");
     const o = await rateLimited(() => openPassword(e, m.password));
-    if (o.sealed !== e) await chrome.storage.local.set({ vault: o.sealed });
-    await startSession(o, generation);
+    // "vault" may hold only the bookmarks: read both parts.
+    const v = o.sealed === e ? await readVault(o.dek) : o.v;
+    if (o.sealed !== e) await writeVault(v, o.dek, o.sealed.keys); // v1 → v3
+    await startSession({ ...o, v }, generation);
     await requestSync(0);
-    return o.v;
+    return v;
   }
   if (m.type === "RESTORE") {
     if (await local()) throw Error("只可在空白安裝還原，請先保留現有備份");
     const generation = lockGeneration;
     const o = await rateLimited(() => openPassword(m.envelope, m.password));
-    await chrome.storage.local.set({ vault: o.sealed });
+    await writeVault(o.v, o.dek, o.sealed.keys);
     await startSession(o, generation);
     return o.v;
   }
@@ -481,12 +607,12 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     if (e.version !== 3) throw Error("這個保險庫尚未建立救援金鑰");
     const bytes = parseRecoveryCode(m.recoveryKey);
     const dek = await rateLimited(() => openWithRecovery(e, bytes));
-    const v = await decrypt(e, dek);
+    const v = existing ? await readVault(dek) : await decrypt(e, dek);
     const code = newRecoveryCode();
     let keys = await setPassword(dek, e.id, m.newPassword, e.keys);
     keys = await setRecovery(dek, e.id, code.bytes, keys);
-    const sealed = await seal(v, dek, keys);
-    await chrome.storage.local.set({ vault: sealed });
+    await writeVault(v, dek, keys);
+    const sealed = (await local()) as SealedEnvelope;
     await startSession({ v, dek, sealed }, generation);
     await requestSync(0);
     return { recoveryKey: code.code };
@@ -511,8 +637,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const generation = lockGeneration;
     const { envelopes } = await readRemote(true);
     const o = await openDrive(envelopes, m.password);
-    await chrome.storage.local.set({
-      vault: o.sealed,
+    await writeVault(o.v, o.dek, o.sealed.keys, "all", {
       driveEnabled: true,
       driveConflict: false,
       syncError: "",
@@ -544,11 +669,11 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     return;
   }
   if (m.type === "EXPORT") {
-    await session();
-    return local();
+    // Backups always hold everything in one envelope.
+    return combined(await keyOf(await session()));
   }
   if (m.type === "SYNC") {
-    const v = await sync(true);
+    const v = await sync(true, true);
     await chrome.storage.local.set({ driveEnabled: true });
     return v;
   }
@@ -556,7 +681,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
   const key = await keyOf(s);
   const e = await local();
   if (!e) throw Error("尚無保險庫");
-  let v = await decrypt(e, key);
+  let v = await readVault(key);
   if (m.type === "LIST") return v;
   if (m.type === "VERIFY_PASSWORD") {
     if (e.version !== 3) throw Error("請先建立或還原保險庫");
@@ -627,12 +752,11 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const generation = lockGeneration;
     const { envelopes } = await readRemote(true);
     if (envelopes.length && envelopes.every((x) => x.id === e.id))
-      return sync(true); // Already the same vault (resolved elsewhere).
+      return sync(true, true); // Already the same vault (resolved elsewhere).
     const o = await openDrive(envelopes, m.password);
     if (generation !== lockGeneration || (await session()).nonce !== s.nonce)
       throw Error("已上鎖，請重新解鎖");
-    await chrome.storage.local.set({
-      vault: o.sealed,
+    await writeVault(o.v, o.dek, o.sealed.keys, "all", {
       driveEnabled: true,
       driveConflict: false,
       syncError: "",
@@ -652,7 +776,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     await session();
     // Upload first: if a delete fails, Drive still has this vault and the
     // choice can be repeated.
-    await upload(t, e);
+    await upload(t, await seal(v, key, e.keys)); // everything, not one part
     await removeSnapshots(t, ids);
     await chrome.storage.local.set({
       driveEnabled: true,
@@ -668,19 +792,19 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
   }
   if (m.type === "UPSERT") {
     upsertEntry(v, m.entry || {});
-    await save(v, s);
+    await save(v, s, undefined, "entries");
     await touch(s);
   } else if (m.type === "DELETE") {
-    if (deleteEntry(v, m.id)) await save(v, s);
+    if (deleteEntry(v, m.id)) await save(v, s, undefined, "entries");
     await touch(s);
   } else if (m.type === "MEMO_UPSERT") {
     const memo = upsertMemo(v, m.memo || {});
-    await save(v, s);
+    await save(v, s, undefined, "memos");
     await touch(s);
     await requestSync();
     return memo;
   } else if (m.type === "MEMO_DELETE") {
-    if (deleteMemo(v, m.id)) await save(v, s);
+    if (deleteMemo(v, m.id)) await save(v, s, undefined, "memos");
     await touch(s);
   } else if (m.type === "MEMO_META") {
     // Title / folder only, from the popup's quick menu (body untouched).
@@ -697,7 +821,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     }
     x.updated = Math.max(Date.now(), x.updated + 1);
     x.revision = crypto.randomUUID();
-    await save(v, s);
+    await save(v, s, undefined, "memos");
     await touch(s);
   } else if (m.type === "REORDER") {
     // Drag and drop: the full new order of one folder, which may now also
@@ -872,13 +996,15 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
       void session().catch(() => {});
       return;
     }
+    if (a.name.startsWith("veilmark-sync")) {
+      void backgroundSync(); // queues only its merge step
+      return;
+    }
     void serialized(async () => {
       if (a.name === "veilmark-lock") {
         try {
           await session();
         } catch {}
-      } else if (a.name.startsWith("veilmark-sync")) {
-        await backgroundSync();
       }
     });
   });

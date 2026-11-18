@@ -659,7 +659,8 @@ test("password change requires fresh proof, preserves data and recovery, rejects
     local.vault,
     c.parseRecoveryCode(created.recoveryKey),
   );
-  assert.deepEqual(await c.decrypt(local.vault, recovered), before);
+  // The backup (one envelope with everything) opens with the recovery key.
+  assert.deepEqual(await c.decrypt(await rpc("EXPORT"), recovered), before);
   await assert.rejects(
     rpc("CHANGE_PASSWORD", {
       ...proof,
@@ -730,8 +731,8 @@ test("quick sync: pulls right after unlock, pushes about a second after edits, s
   const fire = async () => {
     const due = [...quickTimers.values()];
     quickTimers.clear();
-    for (const t of due) t.fn();
-    await rpc("STATUS"); // queued behind the sync it started
+    // Drive is read and written outside the request queue: wait for the sync.
+    await Promise.all(due.map((t) => t.fn()));
   };
   try {
     await rpc("LOCK");
@@ -1215,7 +1216,7 @@ test("Drive storage full: clear message, nothing deleted, local data kept, sync 
     // Background sync after the edit records the clear message.
     const due = [...quickTimers.values()];
     quickTimers.clear();
-    for (const t of due) t.fn();
+    await Promise.all(due.map((t) => t.fn()));
     const s = await rpc("STATUS");
     assert.match(s.syncError, /空間已滿/);
     assert(!s.driveConflict);
@@ -1355,4 +1356,163 @@ test("nested folders: create sub, rename/move a subtree, delete moves contents u
   await rpc("FOLDER_CREATE", { kind: "memo", name: "日記/2026" });
   v = await rpc("LIST");
   assert.deepEqual(names(v, "memo"), ["日記", "日記/2026"]);
+});
+
+test("split storage: old single vault migrates safely, bookmark saves leave notes untouched, backups and Drive hold everything", async () => {
+  const c = await import("../src/crypto");
+  await rpc("LOCK");
+  delete local.vault;
+  delete local.vaultMemos;
+  delete local.vaultLayout;
+  delete local.driveEnabled;
+  delete session.attempts;
+  delete session.nextAttempt;
+  quickTimers.clear();
+  // An older release's vault: one envelope with bookmarks and a note.
+  await rpc("CREATE", { password: "abcd" });
+  await rpc("UPSERT", { entry: { title: "old bookmark", url: "https://old.example" } });
+  await rpc("MEMO_UPSERT", { memo: { title: "old note", body: "<p>keep me</p>", format: "html" } });
+  const dek = await c.importKey(session.session.key);
+  const everything = await c.decrypt(await rpc("EXPORT"), dek);
+  local.vault = await c.seal(everything, dek, local.vault.keys);
+  delete local.vaultMemos;
+  delete local.vaultLayout;
+  await rpc("LOCK");
+  // Unlocking the old layout shows everything.
+  let v = await rpc("UNLOCK", { password: "abcd" });
+  assert(v.memos.some((m: any) => m.title === "old note" && !m.deleted));
+  assert(v.entries.some((e: any) => e.title === "old bookmark"));
+  // The next save converts it: both parts written together.
+  await rpc("UPSERT", { entry: { title: "new bookmark", url: "https://new.example" } });
+  assert.equal(local.vaultLayout, 2);
+  assert(local.vaultMemos, "notes part written in the same save");
+  const bookmarks = await c.decrypt(local.vault, dek);
+  const notes = await c.decrypt(local.vaultMemos, dek);
+  assert.equal(bookmarks.memos.length, 0, "bookmark part has no notes");
+  assert.equal(notes.entries.length, 0, "notes part has no bookmarks");
+  assert(notes.memos.some((m: any) => m.title === "old note"));
+  // A bookmark edit leaves the encrypted notes exactly as they were.
+  const notesBefore = local.vaultMemos;
+  await rpc("UPSERT", { entry: { title: "another", url: "https://another.example" } });
+  assert.equal(local.vaultMemos, notesBefore, "notes not re-encrypted");
+  // A note edit leaves the bookmarks part alone.
+  const bookmarksBefore = local.vault;
+  await rpc("MEMO_UPSERT", { memo: { title: "second note", body: "<p>x</p>", format: "html" } });
+  assert.equal(local.vault, bookmarksBefore, "bookmarks not re-encrypted");
+  // Reads, backups and unlock always combine both parts.
+  v = await rpc("LIST");
+  assert.equal(v.memos.filter((m: any) => !m.deleted).length, 2);
+  assert.equal(v.entries.filter((e: any) => !e.deleted).length, 3);
+  const backup = await c.decrypt(await rpc("EXPORT"), dek);
+  assert.equal(backup.memos.filter((m: any) => !m.deleted).length, 2, "backup has the notes");
+  assert.equal(backup.entries.filter((e: any) => !e.deleted).length, 3, "backup has the bookmarks");
+  await rpc("LOCK");
+  v = await rpc("UNLOCK", { password: "abcd" });
+  assert.equal(v.memos.filter((m: any) => !m.deleted).length, 2, "unlock shows notes");
+  // A missing notes part is reported, never treated as "no notes".
+  const saved = local.vaultMemos;
+  delete local.vaultMemos;
+  await assert.rejects(rpc("LIST"), /記事資料不完整/);
+  await assert.rejects(
+    rpc("UPSERT", { entry: { title: "must not save", url: "https://x.example" } }),
+    /記事資料不完整/,
+  );
+  local.vaultMemos = saved;
+  assert.equal((await rpc("LIST")).memos.filter((m: any) => !m.deleted).length, 2);
+});
+
+test("Drive: a damaged snapshot is skipped and kept; edits made while Drive is read are not lost; uploads hold everything", async () => {
+  const c = await import("../src/crypto");
+  const originalFetch = globalThis.fetch;
+  const remote = new Map<string, any>();
+  let nextId = 0;
+  let gate: Promise<void> | null = null;
+  (chrome.runtime.getManifest as any) = () => ({
+    oauth2: { client_id: "test.apps.googleusercontent.com" },
+  });
+  (chrome as any).identity = {
+    getAuthToken: async () => ({ token: "synthetic-token" }),
+    removeCachedAuthToken: async () => {},
+    clearAllCachedAuthTokens: async () => {},
+  };
+  globalThis.fetch = async (input: any, init: any = {}) => {
+    const u = String(input);
+    if (init.method === "POST") {
+      const json = String(init.body)
+        .split("Content-Type: application/json\r\n\r\n")[1]
+        .split("\r\n--")[0];
+      const id = "d" + nextId++;
+      remote.set(id, JSON.parse(json));
+      return Response.json({ id });
+    }
+    const id = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
+    if (init.method === "DELETE")
+      return new Response(null, { status: remote.delete(id) ? 204 : 404 });
+    if (u.includes("alt=media")) {
+      if (gate) await gate; // Drive is slow: the user keeps editing meanwhile
+      if (!remote.has(id)) return new Response("", { status: 404 });
+      const body = remote.get(id);
+      return new Response(typeof body === "string" ? body : JSON.stringify(body));
+    }
+    return Response.json({ files: [...remote.keys()].map((id) => ({ id })) });
+  };
+  try {
+    await rpc("LOCK");
+    delete local.vault;
+    delete local.vaultMemos;
+    delete local.vaultLayout;
+    delete local.driveConflict;
+    local.syncError = "";
+    quickTimers.clear();
+    await rpc("CREATE", { password: "abcd" });
+    await rpc("MEMO_UPSERT", { memo: { title: "note in sync", body: "<p>n</p>", format: "html" } });
+    await rpc("SYNC");
+    const dek = await c.importKey(session.session.key);
+    const [good] = [...remote.keys()];
+    const pushed = await c.decrypt(remote.get(good), dek);
+    assert(pushed.memos.some((m: any) => m.title === "note in sync"), "Drive snapshot has the notes");
+    // One snapshot cut short (unreadable) and one with a bad ciphertext.
+    remote.set("cut", '{"version":3,"id":');
+    const bad = structuredClone(remote.get(good));
+    bad.ciphertext = bad.ciphertext.slice(0, -8) + "AAAAAAAA";
+    remote.set("bad", bad);
+    await rpc("UPSERT", { entry: { title: "after damage", url: "https://d.example" } });
+    await rpc("SYNC");
+    const s = await rpc("STATUS");
+    assert(!s.driveConflict, "not mistaken for another vault");
+    assert.equal(s.syncError, "");
+    assert(remote.has("cut") && remote.has("bad"), "unreadable snapshots are kept");
+    const readable = () => [...remote.entries()].filter(([id]) => id !== "cut" && id !== "bad");
+    assert.equal(readable().length, 1, "one current snapshot besides the damaged ones");
+    assert((await c.decrypt(readable()[0][1], dek)).entries.some((e: any) => e.title === "after damage"));
+    // A later sync does not keep re-uploading because of the damaged files.
+    const ids = [...remote.keys()].sort();
+    await rpc("SYNC");
+    assert.deepEqual([...remote.keys()].sort(), ids, "nothing to upload");
+    // Background sync: an edit made while Drive is being read is kept.
+    local.driveEnabled = true;
+    let release!: () => void;
+    gate = new Promise((r) => (release = r));
+    await rpc("UPSERT", { entry: { title: "trigger", url: "https://t.example" } });
+    const due = [...quickTimers.values()];
+    quickTimers.clear();
+    const syncing = Promise.all(due.map((t) => t.fn()));
+    // The request queue is free while Drive is read.
+    await rpc("UPSERT", { entry: { title: "typed during sync", url: "https://during.example" } });
+    release();
+    gate = null;
+    await syncing;
+    assert((await rpc("LIST")).entries.some((e: any) => e.title === "typed during sync"), "edit kept locally");
+    for (const t of [...quickTimers.values()]) await t.fn();
+    quickTimers.clear();
+    assert.equal(readable().length, 1);
+    assert(
+      (await c.decrypt(readable()[0][1], dek)).entries.some((e: any) => e.title === "typed during sync"),
+      "and uploaded",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    (chrome.runtime.getManifest as any) = () => ({});
+    delete local.driveEnabled;
+  }
 });
