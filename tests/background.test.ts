@@ -1384,7 +1384,7 @@ test("split storage: old single vault migrates safely, bookmark saves leave note
   assert(v.entries.some((e: any) => e.title === "old bookmark"));
   // The next save converts it: both parts written together.
   await rpc("UPSERT", { entry: { title: "new bookmark", url: "https://new.example" } });
-  assert.equal(local.vaultLayout, 2);
+  assert.equal(local.vaultLayout, 3);
   assert(local.vaultMemos, "notes part written in the same save");
   const bookmarks = await c.decrypt(local.vault, dek);
   const notes = await c.decrypt(local.vaultMemos, dek);
@@ -1515,4 +1515,76 @@ test("Drive: a damaged snapshot is skipped and kept; edits made while Drive is r
     (chrome.runtime.getManifest as any) = () => ({});
     delete local.driveEnabled;
   }
+});
+
+test("notes media: pictures and audio stored once each, text edits leave them alone, unused ones removed, backups whole", async () => {
+  const c = await import("../src/crypto");
+  await rpc("LOCK");
+  for (const k of Object.keys(local)) if (k.startsWith("vm:")) delete local[k];
+  delete local.vault;
+  delete local.vaultMemos;
+  delete local.vaultLayout;
+  delete local.vaultMedia;
+  delete local.driveEnabled;
+  quickTimers.clear();
+  await rpc("CREATE", { password: "abcd" });
+  const dek = await c.importKey(session.session.key);
+  const pic = (id: string, fill: string) => ({ id, data: fill.repeat(4000), mime: "image/png", w: 4, h: 4 });
+  const rec = { id: "r1", data: "QUJD".repeat(500), mime: "audio/webm", duration: 2, created: 1, x: 10, y: 10 };
+  const a = await rpc("MEMO_UPSERT", {
+    memo: { title: "with media", body: '<img data-veil-img="p1"><img data-veil-img="p2">', format: "html", images: [pic("p1", "AAAA"), pic("p2", "BBBB")], recordings: [rec] },
+  });
+  // Same picture in another note: stored once.
+  const b = await rpc("MEMO_UPSERT", {
+    memo: { title: "same picture", body: '<img data-veil-img="p9">', format: "html", images: [pic("p9", "AAAA")] },
+  });
+  const mediaKeys = () => Object.keys(local).filter((k) => k.startsWith("vm:")).sort();
+  assert.equal(local.vaultLayout, 3);
+  assert.equal(mediaKeys().length, 3, "two pictures and one clip, duplicates once");
+  assert.deepEqual(mediaKeys(), [...local.vaultMedia].map((h: string) => "vm:" + h).sort());
+  // The notes part holds references only; the records are encrypted.
+  const notes = await c.decrypt(local.vaultMemos, dek);
+  assert(notes.memos.every((m: any) => (m.images || []).every((i: any) => i.data.startsWith("\u0000vm:"))));
+  assert(!JSON.stringify(local).includes("AAAAAAAAAAAA"), "no picture data in plain text");
+  // Full reads (notebook) bring the data back; popup reads leave it out.
+  const full = await rpc("LIST");
+  assert.equal(full.memos.find((m: any) => m.id === a.id).images[0].data, "AAAA".repeat(4000));
+  assert.equal(full.memos.find((m: any) => m.id === a.id).recordings[0].data, rec.data);
+  const popup = await rpc("LIST", { lite: true });
+  assert(popup.memos.every((m: any) => !m.images && !m.recordings), "popup gets no media");
+  // Editing a note's text (popup quick rename) keeps every media record as is.
+  const before = Object.fromEntries(mediaKeys().map((k) => [k, local[k]]));
+  await rpc("MEMO_META", { id: a.id, title: "renamed", lite: true });
+  for (const [k, r] of Object.entries(before)) assert.equal(local[k], r, "media untouched");
+  const again = await rpc("LIST");
+  assert.equal(again.memos.find((m: any) => m.id === a.id).images.length, 2, "pictures kept after a popup edit");
+  // Backups hold the real data.
+  const backup = await c.decrypt(await rpc("EXPORT"), dek);
+  assert.equal((backup.memos.find((m: any) => m.id === a.id) as any).images[1].data, "BBBB".repeat(4000));
+  // Deleting the first note: its own picture and clip go, the shared one stays.
+  await rpc("MEMO_DELETE", { id: a.id, lite: true });
+  assert.equal(mediaKeys().length, 1, "only the shared picture is left");
+  assert.equal((await rpc("LIST")).memos.find((m: any) => m.id === b.id).images[0].data, "AAAA".repeat(4000));
+  // A leftover record (cleanup cut short) is removed on the next unlock.
+  local["vm:" + "f".repeat(64)] = { iv: "x", ciphertext: "y" };
+  await rpc("LOCK");
+  await rpc("UNLOCK", { password: "abcd" });
+  await rpc("STATUS");
+  assert(!local["vm:" + "f".repeat(64)], "orphan removed");
+  assert.equal(mediaKeys().length, 1);
+  // A missing record: the vault still opens, the reference is kept (never
+  // dropped), and backups refuse with a clear message instead of losing it.
+  const [only] = mediaKeys();
+  const saved = local[only];
+  delete local[only];
+  await rpc("LOCK");
+  await rpc("UNLOCK", { password: "abcd" });
+  await assert.rejects(rpc("EXPORT"), /圖片或錄音資料不完整/);
+  await rpc("MEMO_META", { id: b.id, title: "still referenced", lite: true });
+  assert.equal(local.vaultMedia.length, 1, "reference kept after a save");
+  local[only] = saved;
+  await rpc("LOCK");
+  await rpc("UNLOCK", { password: "abcd" });
+  assert.equal((await rpc("LIST")).memos.find((m: any) => m.id === b.id).images[0].data, "AAAA".repeat(4000));
+  assert(await rpc("EXPORT"));
 });

@@ -1,4 +1,6 @@
 import {
+  b64,
+  unb64,
   derive,
   cleanDrawing,
   cleanRecordings,
@@ -62,6 +64,7 @@ let queue = Promise.resolve();
 let lockGeneration = 0;
 async function lock() {
   lockGeneration++;
+  clearCaches(); // no decrypted data stays in memory once locked
   await chrome.storage.session.remove(["session", "capture", "passwordProof"]);
   await chrome.alarms.clear("veilmark-lock");
 }
@@ -149,23 +152,40 @@ async function local() {
 }
 
 // ---- Local storage layout --------------------------------------------------
-// Layout 2 keeps bookmarks (with all folder records) and notes in two
-// encrypted envelopes that share the vault ID and key slots:
-//   vault       bookmarks + folders (memos: [])
-//   vaultMemos  notes (entries: [], folders: [])
-//   vaultLayout 2
-// A bookmark change re-encrypts only the small bookmark part, so notes with
-// pictures or audio no longer slow it down. All three keys are always
-// written in one chrome.storage.local.set, which Chrome applies atomically.
-// Without vaultLayout, "vault" is the older single envelope with everything;
-// it is read as before and converted on the next save. Google Drive and
-// backup files keep the single-envelope format.
+// Layout 3 keeps three kinds of encrypted records:
+//   vault        bookmarks + all folder records (memos: [])
+//   vaultMemos   notes: text, drawings and the picture/audio details, where
+//                each picture or clip's data is replaced by a reference
+//                ("\u0000vm:<SHA-256 of the data>")
+//   vm:<hash>    one picture or audio clip, encrypted on its own
+//   vaultMedia   the hashes the notes refer to
+//   vaultLayout  3
+// Editing a bookmark re-encrypts only the bookmark part; editing a note's
+// text re-encrypts only the note text; a picture is encrypted once, when it
+// is added, and identical pictures are stored once. Each save writes all of
+// its records in one chrome.storage.local.set (atomic). Pictures no longer
+// referenced are removed only after that write. Layout 2 (no media records)
+// and the older single envelope are read as before and converted on the
+// next save. Google Drive snapshots and backup files keep one envelope with
+// everything, including the picture data.
 type Part = "entries" | "memos" | "all";
 const NOTES_MISSING =
   "記事資料不完整，無法開啟。請從 Google Drive 或加密備份還原。";
+const MEDIA_MISSING =
+  "記事的圖片或錄音資料不完整。請從 Google Drive 或加密備份還原。";
+const MARK = "\u0000vm:";
+const isMark = (d: string) => d.startsWith(MARK);
 // Decrypted parts by ciphertext, so each request does not decrypt the notes
-// again. Callers get a copy: requests modify the vault in place.
+// again. Callers get a copy: requests modify the vault in place. Cleared when
+// the vault locks.
 const partCache = new Map<string, Vault>();
+const mediaCache = new Map<string, string>(); // hash -> picture/audio data
+const hashOf = new Map<string, string>(); // picture/audio data -> hash
+function clearCaches() {
+  partCache.clear();
+  mediaCache.clear();
+  hashOf.clear();
+}
 async function decryptPart(e: Envelope, dek: CryptoKey) {
   const key = e.version === 3 ? `${e.id}|${e.iv}` : "";
   let v = key ? partCache.get(key) : undefined;
@@ -178,8 +198,84 @@ async function decryptPart(e: Envelope, dek: CryptoKey) {
   }
   return structuredClone(v);
 }
-/** The whole vault (bookmarks, notes, folders) from this computer. */
-async function readVault(dek: CryptoKey): Promise<Vault> {
+const hex = (b: ArrayBuffer) =>
+  [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+const sha256 = async (s: string) =>
+  hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
+type MediaRecord = { iv: string; ciphertext: string };
+const mediaAad = (vaultId: string, hash: string) =>
+  new TextEncoder().encode(`Veilmark|media|${vaultId}|${hash}`);
+async function sealMedia(
+  dek: CryptoKey,
+  vaultId: string,
+  hash: string,
+  data: string,
+): Promise<MediaRecord> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData: mediaAad(vaultId, hash) },
+    dek,
+    new TextEncoder().encode(data),
+  );
+  return { iv: b64(iv), ciphertext: b64(new Uint8Array(ct)) };
+}
+async function openMedia(
+  dek: CryptoKey,
+  vaultId: string,
+  hash: string,
+  r: MediaRecord,
+) {
+  try {
+    const pt = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: unb64(r.iv), additionalData: mediaAad(vaultId, hash) },
+      dek,
+      unb64(r.ciphertext),
+    );
+    const data = new TextDecoder().decode(pt);
+    if ((await sha256(data)) === hash) return data;
+  } catch {}
+  throw Error(MEDIA_MISSING);
+}
+/** Every picture and audio clip in the notes. */
+function mediaItems(v: Vault) {
+  const out: { data: string }[] = [];
+  for (const m of v.memos) {
+    for (const i of m.images || []) out.push(i);
+    for (const r of m.recordings || []) out.push(r);
+  }
+  return out;
+}
+/** Puts the picture and audio data back in place of the references. */
+async function withMedia(v: Vault, dek: CryptoKey) {
+  const need = new Set<string>();
+  for (const x of mediaItems(v))
+    if (isMark(x.data) && !mediaCache.has(x.data.slice(MARK.length)))
+      need.add(x.data.slice(MARK.length));
+  if (need.size) {
+    const keys = [...need].map((h) => "vm:" + h);
+    const st = await chrome.storage.local.get(keys);
+    for (const h of need) {
+      const r = st["vm:" + h] as MediaRecord | undefined;
+      try {
+        if (r) {
+          const data = await openMedia(dek, v.id, h, r);
+          mediaCache.set(h, data);
+          hashOf.set(data, h);
+        }
+      } catch {}
+    }
+  }
+  // A missing or damaged record keeps its reference: the vault still opens,
+  // nothing is dropped, and backups / Drive refuse with a clear message.
+  for (const x of mediaItems(v))
+    if (isMark(x.data) && mediaCache.has(x.data.slice(MARK.length)))
+      x.data = mediaCache.get(x.data.slice(MARK.length))!;
+  return v;
+}
+/** The vault on this computer. With `full` false, pictures and audio stay as
+ *  references (for the popup, which never shows them); such a vault must
+ *  never be uploaded or exported. */
+async function readVault(dek: CryptoKey, full = true): Promise<Vault> {
   const st = await chrome.storage.local.get([
     "vault",
     "vaultMemos",
@@ -187,12 +283,18 @@ async function readVault(dek: CryptoKey): Promise<Vault> {
   ]);
   if (!st.vault) throw Error("尚無保險庫");
   const a = await decryptPart(validateEnvelope(st.vault), dek);
-  if (st.vaultLayout !== 2) return a; // older single envelope
+  if (st.vaultLayout !== 2 && st.vaultLayout !== 3) return a; // one envelope
   if (!st.vaultMemos) throw Error(NOTES_MISSING);
   const b = await decryptPart(validateEnvelope(st.vaultMemos), dek);
   if (b.id !== a.id) throw Error(NOTES_MISSING);
+  if (full) await withMedia(b, dek);
   // A union, so nothing is lost even if an older release wrote "vault".
   return merge(a, b);
+}
+/** Refuses to let references leave this computer (Drive, backups). */
+function assertFull(v: Vault) {
+  if (mediaItems(v).some((x) => isMark(x.data))) throw Error(MEDIA_MISSING);
+  return v;
 }
 const entriesPart = (v: Vault): Vault => ({ ...v, memos: [] });
 const memosPart = (v: Vault): Vault => ({ ...v, entries: [], folders: [] });
@@ -209,11 +311,12 @@ async function writeVault(
     "vault",
     "vaultMemos",
     "vaultLayout",
+    "vaultMedia",
   ]);
   const old = st.vault as Envelope | undefined;
-  // Both parts unless the stored layout already matches and keys are equal.
+  // Every part unless the stored layout already matches and keys are equal.
   if (
-    st.vaultLayout !== 2 ||
+    st.vaultLayout !== 3 ||
     !st.vaultMemos ||
     !old ||
     old.version !== 3 ||
@@ -221,16 +324,68 @@ async function writeVault(
     JSON.stringify(old.keys) !== JSON.stringify(keys)
   )
     part = "all";
-  const set: Record<string, unknown> = { ...extra, vaultLayout: 2 };
+  const set: Record<string, unknown> = { ...extra, vaultLayout: 3 };
+  const stored = new Set<string>(
+    st.vaultLayout === 3 && Array.isArray(st.vaultMedia) ? st.vaultMedia : [],
+  );
+  let unused: string[] = [];
   if (part !== "memos") set.vault = await seal(entriesPart(v), dek, keys);
-  if (part !== "entries") set.vaultMemos = await seal(memosPart(v), dek, keys);
+  if (part !== "entries") {
+    // Notes: each picture/clip becomes a reference; new ones are encrypted
+    // into their own record in this same write.
+    // A copy of the note records (the caller's vault keeps the real data).
+    const notes: Vault = {
+      ...memosPart(v),
+      memos: v.memos.map((m) => ({
+        ...m,
+        ...(m.images && { images: m.images.map((i) => ({ ...i })) }),
+        ...(m.recordings && { recordings: m.recordings.map((r) => ({ ...r })) }),
+      })),
+    };
+    const refs = new Set<string>();
+    for (const x of mediaItems(notes)) {
+      let hash: string;
+      if (isMark(x.data)) hash = x.data.slice(MARK.length);
+      else {
+        // Known pictures are not hashed again on every save.
+        hash = hashOf.get(x.data) || (await sha256(x.data));
+        mediaCache.set(hash, x.data);
+        hashOf.set(x.data, hash);
+        if (!stored.has(hash) && !set["vm:" + hash])
+          set["vm:" + hash] = await sealMedia(dek, v.id, hash, x.data);
+        x.data = MARK + hash;
+      }
+      refs.add(hash);
+    }
+    set.vaultMemos = await seal(notes, dek, keys);
+    set.vaultMedia = [...refs];
+    unused = [...stored].filter((h) => !refs.has(h));
+  }
   await chrome.storage.local.set(set);
+  // Only after the notes no longer refer to them.
+  if (unused.length)
+    await chrome.storage.local.remove(unused.map((h) => "vm:" + h));
+}
+/** Removes picture/audio records nothing refers to (e.g. a cleanup cut
+ *  short). Run on unlock; cheap with chrome.storage.local.getKeys. */
+async function pruneMedia() {
+  const st = await chrome.storage.local.get(["vaultLayout", "vaultMedia"]);
+  if (st.vaultLayout !== 3 || !Array.isArray(st.vaultMedia)) return;
+  const local = chrome.storage.local as unknown as {
+    getKeys?: () => Promise<string[]>;
+  };
+  const all = local.getKeys
+    ? await local.getKeys()
+    : Object.keys(await chrome.storage.local.get(null));
+  const keep = new Set(st.vaultMedia.map((h: string) => "vm:" + h));
+  const extra = all.filter((k) => k.startsWith("vm:") && !keep.has(k));
+  if (extra.length) await chrome.storage.local.remove(extra);
 }
 /** One envelope with everything, for Google Drive and backup files. */
 async function combined(dek: CryptoKey) {
   const e = await local();
   if (!e || e.version !== 3) throw Error("請先建立或還原保險庫");
-  return seal(await readVault(dek), dek, e.keys);
+  return seal(assertFull(await readVault(dek)), dek, e.keys);
 }
 async function localKeys(): Promise<KeySlots> {
   const e = await local();
@@ -355,7 +510,7 @@ async function sync(interactive = false, inQueue = false): Promise<Vault> {
     };
     const r = inQueue ? await step() : await serialized(step);
     if (r.upload) {
-      await upload(t, await seal(r.v, r.dek, r.keys));
+      await upload(t, await seal(assertFull(r.v), r.dek, r.keys));
       // Snapshots that could not be read are kept, never deleted.
       await removeSnapshots(
         t,
@@ -376,6 +531,21 @@ async function sync(interactive = false, inQueue = false): Promise<Vault> {
   return task;
 }
 const LOCKED = "已上鎖，請重新解鎖";
+// Requests from the popup that work without picture and audio data.
+const LITE_OK = new Set([
+  "LIST",
+  "UPSERT",
+  "DELETE",
+  "MEMO_META",
+  "MEMO_DELETE",
+  "REORDER",
+  "FOLDER_ORDER",
+  "FOLDER_CREATE",
+  "FOLDER_RENAME",
+  "FOLDER_DELETE",
+  "TOUCH",
+  "OPEN",
+]);
 // The popup is often open for only a few seconds, so background sync must not
 // wait for the 5-minute tick: pull right after unlocking and push about a
 // second after each change. The alarm is a fallback in case Chrome stops the
@@ -583,6 +753,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     const v = o.sealed === e ? await readVault(o.dek) : o.v;
     if (o.sealed !== e) await writeVault(v, o.dek, o.sealed.keys); // v1 → v3
     await startSession({ ...o, v }, generation);
+    void serialized(pruneMedia).catch(() => {});
     await requestSync(0);
     return v;
   }
@@ -681,7 +852,9 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
   const key = await keyOf(s);
   const e = await local();
   if (!e) throw Error("尚無保險庫");
-  let v = await readVault(key);
+  // Pages other than the notebook never show pictures or audio: for their
+  // everyday requests the notes keep references instead of the data.
+  let v = await readVault(key, !(m.lite && LITE_OK.has(m.type)));
   if (m.type === "LIST") return v;
   if (m.type === "VERIFY_PASSWORD") {
     if (e.version !== 3) throw Error("請先建立或還原保險庫");
@@ -776,7 +949,8 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     await session();
     // Upload first: if a delete fails, Drive still has this vault and the
     // choice can be repeated.
-    await upload(t, await seal(v, key, e.keys)); // everything, not one part
+    // Everything, never one part or references.
+    await upload(t, await seal(assertFull(await readVault(key)), key, e.keys));
     await removeSnapshots(t, ids);
     await chrome.storage.local.set({
       driveEnabled: true,
