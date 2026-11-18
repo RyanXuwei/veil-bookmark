@@ -1,0 +1,9 @@
+{
+  // Cloudflare: the mobile web app is a static site served from web-dist/.
+  // Build command: npm ci && npm run build:web    Deploy command: npx wrangler deploy
+  "name": "veil-bookmark",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./web-dist"
+  }
+}
