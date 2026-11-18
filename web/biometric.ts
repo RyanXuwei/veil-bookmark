@@ -1,3 +1,4 @@
+import { workspaceKey } from "./accounts";
 // Face ID / fingerprint unlock for the mobile web app, with a passkey and the
 // WebAuthn PRF extension. The passkey (kept by the phone, unlocked with
 // biometrics) produces a secret that only this phone can compute; that secret
@@ -40,11 +41,15 @@ async function kv<T>(
     d.close();
   }
 }
-const load = () =>
-  kv<BioRecord | undefined>("readonly", (s) => s.get("unlock"));
-const store = (r: BioRecord) => kv("readwrite", (s) => s.put(r, "unlock"));
+const load = () => {
+  const key = workspaceKey("unlock");
+  return kv<BioRecord | undefined>("readonly", (s) => s.get(key));
+};
+const store = (r: BioRecord, key = workspaceKey("unlock")) =>
+  kv("readwrite", (s) => s.put(r, key));
 /** Turns biometric unlock off on this phone. */
-export const disable = () => kv("readwrite", (s) => s.delete("unlock"));
+export const disable = (key = workspaceKey("unlock")) =>
+  kv("readwrite", (s) => s.delete(key));
 
 export type BioStatus = "off" | "on" | "expired";
 export async function status(): Promise<BioStatus> {
@@ -58,10 +63,12 @@ export async function status(): Promise<BioStatus> {
 }
 /** Records an unlock with the master password (restarts the 30 days). */
 export async function passwordUsed(vault: string) {
+  const storageKey = workspaceKey("unlock");
   try {
     const r = await load();
-    if (r && r.vault === vault) await store({ ...r, passwordAt: Date.now() });
-    else if (r) await disable(); // A different vault now: the key is useless.
+    if (r && r.vault === vault)
+      await store({ ...r, passwordAt: Date.now() }, storageKey);
+    else if (r) await disable(storageKey); // A different vault now: the key is useless.
   } catch {}
 }
 
@@ -127,6 +134,7 @@ async function assert(credential: string, salt: Uint8Array) {
 
 /** Creates a passkey and stores the data key wrapped with its secret. */
 export async function enable(dek: CryptoKey, vault: string) {
+  const storageKey = workspaceKey("unlock");
   const salt = random(32);
   let cred: PublicKeyCredential | null;
   try {
@@ -173,18 +181,22 @@ export async function enable(dek: CryptoKey, vault: string) {
     key,
     unb64(await exportKey(dek)),
   );
-  await store({
-    credential: id,
-    salt: b64(salt),
-    iv: b64(iv),
-    wrapped: b64(new Uint8Array(wrapped)),
-    vault,
-    passwordAt: Date.now(),
-  });
+  await store(
+    {
+      credential: id,
+      salt: b64(salt),
+      iv: b64(iv),
+      wrapped: b64(new Uint8Array(wrapped)),
+      vault,
+      passwordAt: Date.now(),
+    },
+    storageKey,
+  );
 }
 
 /** Asks for Face ID / fingerprint and returns the vault's data key. */
 export async function unlockKey(): Promise<{ dek: CryptoKey; vault: string }> {
+  const storageKey = workspaceKey("unlock");
   const r = await load();
   if (!r) throw Error("尚未啟用生物辨識解鎖");
   if (Date.now() - r.passwordAt > MAX_AGE)
@@ -205,7 +217,7 @@ export async function unlockKey(): Promise<{ dek: CryptoKey; vault: string }> {
     );
     return { dek: await importKey(b64(new Uint8Array(raw))), vault: r.vault };
   } catch {
-    await disable();
+    await disable(storageKey);
     throw Error("生物辨識資料已失效，請輸入主密碼後重新啟用");
   }
 }

@@ -184,7 +184,8 @@ function zip(files: Record<string, Uint8Array | string>) {
 const W_NS =
   'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
 const docx = zip({
-  "[Content_Types].xml": '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
+  "[Content_Types].xml":
+    '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
   "word/document.xml": `<?xml version="1.0"?><w:document ${W_NS}><w:body>
 <w:p><w:pPr><w:pStyle w:val="1"/></w:pPr><w:r><w:t>會議紀錄</w:t></w:r></w:p>
 <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>重點</w:t></w:r><w:r><w:t xml:space="preserve">：預算 &amp; 時程</w:t></w:r></w:p>
@@ -195,7 +196,8 @@ const docx = zip({
 <w:tbl><w:tr><w:tc><w:p><w:r><w:t>品項</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>金額</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
 <w:p><w:r><w:t>&lt;script&gt;alert(1)&lt;/script&gt;</w:t></w:r></w:p>
 </w:body></w:document>`,
-  "word/_rels/document.xml.rels": '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rLink" Type="hyperlink" Target="https://example.com/ref" TargetMode="External"/><Relationship Id="rImg" Type="image" Target="media/image1.png"/></Relationships>',
+  "word/_rels/document.xml.rels":
+    '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rLink" Type="hyperlink" Target="https://example.com/ref" TargetMode="External"/><Relationship Id="rImg" Type="image" Target="media/image1.png"/></Relationships>',
   "word/styles.xml": `<?xml version="1.0"?><w:styles ${W_NS}><w:style w:type="paragraph" w:styleId="1"><w:name w:val="heading 1"/></w:style></w:styles>`,
   "word/numbering.xml": `<?xml version="1.0"?><w:numbering ${W_NS}><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`,
   "word/media/image1.png": Buffer.from(png, "base64"),
@@ -222,11 +224,19 @@ const context = await browser.newContext({
 let signedIn = true;
 let authUrl = "";
 await context.addInitScript(() => {
-  if ((window as any).__noToken || sessionStorage.getItem("veilTestNoToken"))
+  if (
+    localStorage.getItem("veilTestSeeded") ||
+    (window as any).__noToken ||
+    sessionStorage.getItem("veilTestNoToken")
+  )
     return;
-  sessionStorage.setItem(
-    "veilGoogleToken",
+  localStorage.setItem("veilTestSeeded", "1");
+  localStorage.setItem(
+    "veilAccount:test-account",
     JSON.stringify({
+      id: "test-account",
+      email: "test@example.com",
+      name: "Test",
       token: "synthetic-token",
       expires: Date.now() + 3600_000,
     }),
@@ -242,6 +252,16 @@ await context.route("https://accounts.google.com/**", (r) => {
 await context.route("https://www.googleapis.com/**", async (route) => {
   const req = route.request();
   const u = req.url();
+  if (u.includes("/about?"))
+    return route.fulfill({
+      json: {
+        user: {
+          permissionId: "test-account",
+          emailAddress: "test@example.com",
+          displayName: "Test",
+        },
+      },
+    });
   if (req.headers()["authorization"] !== "Bearer synthetic-token" || !signedIn)
     return route.fulfill({ status: 401, body: "" });
   if (req.method() === "POST") {
@@ -268,7 +288,10 @@ await context.route("https://www.googleapis.com/**", async (route) => {
   });
 });
 
-const page = await context.newPage();
+await context.addInitScript(() =>
+  sessionStorage.setItem("veilActiveAccount", "test-account"),
+);
+let page = await context.newPage();
 const snap = async (name: string) => {
   if (shot) await page.screenshot({ path: resolve(shot, name) });
 };
@@ -429,7 +452,9 @@ try {
   await edit.getByRole("button", { name: "粗體" }).click();
   await page.keyboard.type("記得帶傘");
   assert.equal(
-    await edit.getByRole("button", { name: "粗體" }).getAttribute("aria-pressed"),
+    await edit
+      .getByRole("button", { name: "粗體" })
+      .getAttribute("aria-pressed"),
     "true",
   );
   await edit.getByText("已加密儲存").waitFor();
@@ -447,7 +472,9 @@ try {
   // New note from ＋, with a heading and a list; then delete it.
   await page.getByRole("button", { name: "新增記事" }).click();
   const fresh0 = page.getByRole("dialog", { name: "新增記事" });
-  await fresh0.getByRole("textbox", { name: "標題", exact: true }).fill("購物清單");
+  await fresh0
+    .getByRole("textbox", { name: "標題", exact: true })
+    .fill("購物清單");
   await fresh0.getByRole("textbox", { name: "記事內容" }).click();
   await fresh0.getByRole("button", { name: "項目符號" }).click();
   await page.keyboard.type("牛奶");
@@ -457,7 +484,10 @@ try {
   await page.getByRole("button", { name: "#dfeef4" }).click();
   await page.getByRole("button", { name: "關閉" }).click();
   await fresh0.getByRole("button", { name: "← 完成" }).click();
-  await page.getByRole("status").filter({ hasText: "已加密收藏記事" }).waitFor();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "已加密收藏記事" })
+    .waitFor();
   await expectRemote(async (rv) => {
     const m = rv.memos.find((x) => x.title === "購物清單" && !x.deleted)!;
     assert.match(m.body, /<ul><li>牛奶<\/li><li>雞蛋<\/li><\/ul>/);
@@ -468,7 +498,9 @@ try {
   await page.getByRole("button", { name: "編輯" }).click();
   await page.getByRole("button", { name: "記事選項" }).click();
   await page.getByRole("button", { name: "刪除記事" }).click();
-  await page.getByRole("button", { name: "確定刪除？會同步到所有裝置" }).click();
+  await page
+    .getByRole("button", { name: "確定刪除？會同步到所有裝置" })
+    .click();
   await page.getByRole("status").filter({ hasText: "已刪除記事" }).waitFor();
   await expectRemote(async (rv) => {
     const m = rv.memos.find((x) => x.deleted)!;
@@ -480,13 +512,38 @@ try {
   // ---- Import: .docx, Markdown and a Big5 text file become notes ---------
   await page.getByRole("tab", { name: /記事本/ }).click();
   await page.locator('input[type=file][accept*=".docx"]').setInputFiles([
-    { name: "會議.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx },
-    { name: "清單.md", mimeType: "text/markdown", buffer: Buffer.from("## 待辦\n\n- **買** 牛奶\n- 寄信\n\n[說明](https://example.com/md)\n") },
-    { name: "舊檔.txt", mimeType: "text/plain", buffer: Buffer.from([0xa4, 0xa4, 0xa4, 0xe5, 0x0a, 0x41]) },
-    { name: "舊版.doc", mimeType: "application/msword", buffer: Buffer.from("x") },
+    {
+      name: "會議.docx",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      buffer: docx,
+    },
+    {
+      name: "清單.md",
+      mimeType: "text/markdown",
+      buffer: Buffer.from(
+        "## 待辦\n\n- **買** 牛奶\n- 寄信\n\n[說明](https://example.com/md)\n",
+      ),
+    },
+    {
+      name: "舊檔.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from([0xa4, 0xa4, 0xa4, 0xe5, 0x0a, 0x41]),
+    },
+    {
+      name: "舊版.doc",
+      mimeType: "application/msword",
+      buffer: Buffer.from("x"),
+    },
   ]);
-  await page.getByRole("status").filter({ hasText: "已匯入 3 則記事" }).waitFor();
-  await page.getByRole("alert").filter({ hasText: "不支援舊版 Word 文件" }).waitFor();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "已匯入 3 則記事" })
+    .waitFor();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "不支援舊版 Word 文件" })
+    .waitFor();
   await expectRemote(async (rv) => {
     const live = rv.memos.filter((m) => !m.deleted);
     const d = live.find((m) => m.title === "會議")!;
@@ -494,14 +551,20 @@ try {
     assert.match(d.body, /<h1>會議紀錄<\/h1>/);
     assert.match(d.body, /<b>重點<\/b>：預算 &amp; 時程/);
     assert.match(d.body, /<ol><li>第一項<\/li><li>第二項<\/li><\/ol>/);
-    assert.match(d.body, /<a href="https:\/\/example\.com\/ref"[^>]*>參考網址<\/a>/);
+    assert.match(
+      d.body,
+      /<a href="https:\/\/example\.com\/ref"[^>]*>參考網址<\/a>/,
+    );
     assert.match(d.body, /<p>品項 \| 金額<\/p>/);
     assert.match(d.body, /&lt;script&gt;/, "text stays text");
     assert.doesNotMatch(d.body, /<script/i);
     assert.equal(d.images?.length, 1, "picture imported");
     assert.match(d.body, new RegExp(`data-veil-img="${d.images![0].id}"`));
     const m = live.find((x) => x.title === "清單")!;
-    assert.match(m.body, /<h2>待辦<\/h2><ul><li><b>買<\/b> 牛奶<\/li><li>寄信<\/li><\/ul>/);
+    assert.match(
+      m.body,
+      /<h2>待辦<\/h2><ul><li><b>買<\/b> 牛奶<\/li><li>寄信<\/li><\/ul>/,
+    );
     assert.match(m.body, /href="https:\/\/example\.com\/md"/);
     const t = live.find((x) => x.title === "舊檔")!;
     assert.match(t.body, /<p>中文<\/p><p>A<\/p>/, "Big5 text decoded");
@@ -523,7 +586,10 @@ try {
       q.onsuccess = () => r(q.result);
     });
     return new Promise<string>((r) => {
-      const q = db.transaction("kv").objectStore("kv").get("vault");
+      const q = db
+        .transaction("kv")
+        .objectStore("kv")
+        .get("vault:test-account");
       q.onsuccess = () => r(JSON.stringify(q.result));
     });
   });
@@ -532,7 +598,7 @@ try {
     "phone copy is encrypted",
   );
   await page.evaluate(() => {
-    sessionStorage.removeItem("veilGoogleToken");
+    const key="veilAccount:test-account";const a=JSON.parse(localStorage.getItem(key)!);localStorage.setItem(key,JSON.stringify({...a,token:"",expires:0}));
     sessionStorage.setItem("veilTestNoToken", "1");
   });
   await page.reload();
@@ -553,9 +619,12 @@ try {
   // Reconnecting uploads it (the popup is simulated by handing back a token).
   await page.evaluate(() => {
     sessionStorage.removeItem("veilTestNoToken");
-    sessionStorage.setItem(
-      "veilGoogleToken",
+    localStorage.setItem(
+      "veilAccount:test-account",
       JSON.stringify({
+        id: "test-account",
+        email: "test@example.com",
+        name: "Test",
         token: "synthetic-token",
         expires: Date.now() + 3600_000,
       }),
@@ -597,12 +666,17 @@ try {
   await page.getByRole("button", { name: "關閉" }).click();
 
   // ---- New phone: Google sign-in URL ---------------------------------------
+  await page.close();
   const fresh = await context.newPage();
   await fresh.goto(APP);
-  await fresh.evaluate(() => {
+  await fresh.evaluate(async () => {
     sessionStorage.setItem("veilTestNoToken", "1");
-    sessionStorage.removeItem("veilGoogleToken");
-    indexedDB.deleteDatabase("veil-bookmark-web");
+    localStorage.removeItem("veilAccount:test-account");
+    await new Promise<void>((resolve, reject) => {
+      const r = indexedDB.deleteDatabase("veil-bookmark-web");
+      r.onsuccess = () => resolve();
+      r.onerror = () => reject(r.error);
+    });
   });
   await fresh.reload();
   await fresh.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
@@ -636,7 +710,9 @@ try {
     .filter({ hasText: "Google 授權回應無效" })
     .waitFor();
   assert.equal(
-    await fresh.evaluate(() => sessionStorage.getItem("veilGoogleToken")),
+    await fresh.evaluate(() =>
+      sessionStorage.getItem("veilAccount:test-account"),
+    ),
     null,
   );
   // The real reply is kept on this phone: a reload (or reopening the app)
@@ -664,8 +740,13 @@ try {
   // After the hour: a new token is requested without a prompt.
   await fresh.evaluate(() =>
     localStorage.setItem(
-      "veilGoogleToken",
-      JSON.stringify({ token: "old", expires: Date.now() - 1000 }),
+      "veilAccount:test-account",
+      JSON.stringify({
+        id: "test-account",
+        email: "test@example.com",
+        token: "old",
+        expires: Date.now() - 1000,
+      }),
     ),
   );
   await fresh.reload();
@@ -681,8 +762,13 @@ try {
   // Google refuses the silent request (signed out): no error, no loop.
   await fresh.evaluate(() =>
     localStorage.setItem(
-      "veilGoogleToken",
-      JSON.stringify({ token: "old", expires: Date.now() - 1000 }),
+      "veilAccount:test-account",
+      JSON.stringify({
+        id: "test-account",
+        email: "test@example.com",
+        token: "old",
+        expires: Date.now() - 1000,
+      }),
     ),
   );
   await fresh.reload();
@@ -698,14 +784,17 @@ try {
     .getByRole("button", { name: /使用 Google 帳號連接 Drive/ })
     .waitFor();
   await fresh.evaluate(() => {
-    localStorage.removeItem("veilGoogleToken");
+    localStorage.removeItem("veilAccount:test-account");
     localStorage.removeItem("veilGoogleConnected");
   });
   await fresh.close();
   void state;
 
   // ---- Computers: Chrome goes to the extension; other browsers stay --------
-  const desk = await browser.newContext({ locale: "zh-TW", serviceWorkers: "block" });
+  const desk = await browser.newContext({
+    locale: "zh-TW",
+    serviceWorkers: "block",
+  });
   await desk.route("https://chromewebstore.google.com/**", (r) =>
     r.fulfill({ body: "store", contentType: "text/plain" }),
   );
@@ -718,7 +807,9 @@ try {
   );
   const chrome = await desk.newPage();
   await chrome.goto(APP);
-  await chrome.waitForURL(/chromewebstore\.google\.com\/detail\/chpabfajilpjflfmnkopjjcnoaaliefg/);
+  await chrome.waitForURL(
+    /chromewebstore\.google\.com\/detail\/chpabfajilpjflfmnkopjjcnoaaliefg/,
+  );
   await chrome.goto(APP + "?desktop");
   await chrome.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
   await desk.close();
@@ -731,13 +822,29 @@ try {
   await bare.goto(APP);
   await bare.evaluate(() => {
     sessionStorage.setItem("veilTestNoToken", "1");
-    sessionStorage.removeItem("veilGoogleToken");
+    localStorage.removeItem("veilAccount:test-account");
     indexedDB.deleteDatabase("veil-bookmark-web");
   });
   await bare.reload();
   await bare.getByText("手機版尚未完成 Google 設定").waitFor();
   await bare.close();
 
+  page = await context.newPage();
+  await page.goto(APP);
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "veilAccount:test-account",
+      JSON.stringify({
+        id: "test-account",
+        email: "test@example.com",
+        token: "synthetic-token",
+        expires: Date.now() + 3600000,
+      }),
+    ),
+  );
+  await page.reload();
+  await page.getByLabel("主密碼").fill(PASSWORD);
+  await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
   // ---- Idle lock: any use of the page counts, even scrolling in a sheet ----
   await page.getByRole("button", { name: "上鎖" }).waitFor();
   await page.getByRole("button", { name: "上鎖" }).click();
@@ -754,7 +861,11 @@ try {
   await page.mouse.move(box.x + 40, box.y + 40);
   await page.mouse.wheel(0, 200); // scrolling inside the sheet
   await page.clock.fastForward("14:00");
-  assert.equal(await page.getByRole("heading", { name: "歡迎回來" }).count(), 0, "still unlocked");
+  assert.equal(
+    await page.getByRole("heading", { name: "歡迎回來" }).count(),
+    0,
+    "still unlocked",
+  );
   await page.getByRole("button", { name: "關閉" }).click();
   await page.clock.fastForward("16:00"); // no use for 16 minutes
   await page.getByRole("heading", { name: "歡迎回來" }).waitFor();
@@ -765,7 +876,7 @@ try {
   await page.getByRole("button", { name: "上鎖" }).waitFor();
   await page.locator(".syncDot").click();
   await page
-    .getByRole("button", { name: "清除這支手機上的資料並登出" })
+    .getByRole("button", { name: "移除此帳戶的本機資料並登出" })
     .click();
   await page.getByRole("button", { name: "確定清除並登出？" }).click();
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();

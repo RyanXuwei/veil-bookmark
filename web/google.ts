@@ -5,6 +5,17 @@
 // reload or reopening the app does not ask to connect again. After it
 // expires the app asks Google for a new one without any prompt (a redirect
 // with prompt=none) when the user has connected on this phone before.
+import {
+  account,
+  activeAccount,
+  identify,
+  selectAccount,
+  storeAccount,
+  workspaceKey,
+  kv,
+  accountLock,
+} from "./accounts";
+import { readRemoteWith } from "../src/drive";
 import { SCOPE } from "../src/drive";
 
 const TOKEN = "veilGoogleToken";
@@ -35,22 +46,63 @@ export const configured = () => !!clientId;
 export const redirectUri = () => location.origin + location.pathname;
 
 export function token(): string {
-  for (const store of ["localStorage", "sessionStorage"] as const)
-    try {
-      const s = JSON.parse(
-        window[store].getItem(TOKEN) || "null",
-      ) as Stored | null;
-      if (s && s.expires > Date.now() + 60_000) return s.token;
-    } catch {}
-  return "";
+  const a = account();
+  return a && a.expires > Date.now() + 60000 ? a.token : "";
 }
-/** Signs out on this phone: no token, and no silent reconnection. */
 export function forgetToken() {
-  for (const store of ["localStorage", "sessionStorage"] as const)
-    try {
-      window[store].removeItem(TOKEN);
-      window[store].removeItem(CONNECTED);
-    } catch {}
+  const a = account();
+  if (a) storeAccount({ ...a, token: "", expires: 0 });
+  for (const store of [localStorage, sessionStorage]) {
+    store.removeItem(TOKEN);
+    store.removeItem(CONNECTED);
+  }
+}
+/** Verify a pre-upgrade token and copy old data only if Drive proves it is the same vault. */
+export async function migrateAccount() {
+  if (activeAccount() !== "legacy") return;
+  let old: Stored | null = null;
+  try {
+    old = JSON.parse(
+      localStorage.getItem(TOKEN) || sessionStorage.getItem(TOKEN) || "null",
+    );
+  } catch {}
+  if (!old || old.expires <= Date.now() + 60000) return;
+  const user = await identify(old.token);
+  const linked = await linkLegacy(user.id, old.token);
+  storeAccount({ ...user, ...old });
+  const saved = await kv<any>("veil-bookmark-web", "vault", "readonly");
+  if (!saved || linked) selectAccount(user.id);
+  localStorage.removeItem(TOKEN);
+  sessionStorage.removeItem(TOKEN);
+  localStorage.removeItem(CONNECTED);
+}
+async function linkLegacy(id: string, t: string) {
+  if (!(await kv("veil-bookmark-web", "vault", "readonly"))) return false;
+  const remote = await readRemoteWith(t);
+  return accountLock(async () => {
+    const saved = await kv<any>("veil-bookmark-web", "vault", "readonly");
+    const env = saved?.layout === 2 ? saved.a : saved;
+    if (
+      !env ||
+      !remote.envelopes.length ||
+      remote.envelopes.some((e) => e.id !== env.id)
+    )
+      return false;
+    const key = workspaceKey("vault", id);
+    const existing = await kv<any>("veil-bookmark-web", key, "readonly");
+    if (existing)
+      return (existing.layout === 2 ? existing.a : existing).id === env.id;
+    await kv("veil-bookmark-web", key, "readwrite", saved);
+    const bio = await kv("veil-bookmark-bio", "unlock", "readonly");
+    if (bio)
+      await kv(
+        "veil-bookmark-bio",
+        workspaceKey("unlock", id),
+        "readwrite",
+        bio,
+      );
+    return true;
+  }, id);
 }
 
 function authUrl(state: string, silent = false) {
@@ -62,22 +114,25 @@ function authUrl(state: string, silent = false) {
     scope: SCOPE,
     state,
     include_granted_scopes: "true",
-    ...(silent ? { prompt: "none" } : {}),
+    ...(silent
+      ? { prompt: "none", login_hint: account()?.email || "" }
+      : { prompt: "select_account" }),
   }).toString();
   return u.toString();
 }
 // "p." marks the popup flow, so the popup knows to hand the reply back;
 // "s." marks a silent renewal, whose refusal is not an error to show.
-function newState(kind: "p" | "r" | "s") {
+function newState(kind: "p" | "r" | "s", add = false) {
+  sessionStorage.setItem("veilOAuthTarget", add ? "" : activeAccount());
   const state = kind + "." + crypto.randomUUID();
   sessionStorage.setItem(STATE, state);
   return state;
 }
 
 /** Leaves the page for Google's sign-in; the app reopens with a token. */
-export function signInRedirect() {
+export function signInRedirect(add = false) {
   if (!clientId) throw Error("手機版尚未設定 Google 用戶端");
-  location.assign(authUrl(newState("r")));
+  location.assign(authUrl(newState("r", add)));
 }
 
 /** When this phone connected before and the token has expired: asks Google
@@ -89,11 +144,11 @@ export function renewSilently() {
       !clientId ||
       token() ||
       !navigator.onLine ||
-      !localStorage.getItem(CONNECTED) ||
-      sessionStorage.getItem(SILENT)
+      !account()?.token ||
+      sessionStorage.getItem(workspaceKey(SILENT))
     )
       return false;
-    sessionStorage.setItem(SILENT, "1");
+    sessionStorage.setItem(workspaceKey(SILENT), "1");
     location.replace(authUrl(newState("s"), true));
     return true;
   } catch {
@@ -103,14 +158,14 @@ export function renewSilently() {
 
 /** Signs in in a popup window and resolves when the token arrives. Falls back
  *  to a redirect when the browser blocks popups. */
-export function signInPopup(): Promise<void> {
+export function signInPopup(add = false): Promise<void> {
   if (!clientId) return Promise.reject(Error("手機版尚未設定 Google 用戶端"));
-  const url = authUrl(newState("p"));
+  const url = authUrl(newState("p", add));
   const channel = new BroadcastChannel(CHANNEL);
   const w = window.open(url, "_blank");
   if (!w) {
     channel.close();
-    signInRedirect();
+    signInRedirect(add);
     return new Promise(() => {});
   }
   return new Promise((resolve, reject) => {
@@ -121,13 +176,19 @@ export function signInPopup(): Promise<void> {
       },
       5 * 60 * 1000,
     );
-    channel.onmessage = (e) => {
+    channel.onmessage = async (e) => {
+      if (
+        e.data?.veilOAuth &&
+        new URLSearchParams(e.data.veilOAuth.replace(/^#/, "")).get("state") !==
+          sessionStorage.getItem(STATE)
+      )
+        return;
       const hash = e.data?.veilOAuth;
       if (typeof hash !== "string") return;
       clearTimeout(timer);
       channel.close();
       try {
-        accept(hash);
+        await accept(hash);
         resolve();
       } catch (err) {
         reject(err);
@@ -136,7 +197,7 @@ export function signInPopup(): Promise<void> {
   });
 }
 
-function accept(hash: string) {
+async function accept(hash: string) {
   const p = new URLSearchParams(hash.replace(/^#/, ""));
   const expected = sessionStorage.getItem(STATE);
   sessionStorage.removeItem(STATE);
@@ -152,19 +213,19 @@ function accept(hash: string) {
   if (!(p.get("scope") || "").split(" ").includes(SCOPE))
     throw Error("請在 Google 授權畫面允許存取應用程式資料");
   const expires = Date.now() + Number(p.get("expires_in") || 3600) * 1000;
-  const value = JSON.stringify({ token: t, expires } satisfies Stored);
-  try {
-    localStorage.setItem(TOKEN, value);
-    localStorage.setItem(CONNECTED, "1");
-  } catch {
-    sessionStorage.setItem(TOKEN, value); // Private mode: this tab only.
-  }
-  sessionStorage.removeItem(SILENT);
+  const user = await identify(t);
+  const target = sessionStorage.getItem("veilOAuthTarget");
+  if (target && target !== "legacy" && user.id !== target)
+    throw Error("選取的帳戶不同，請使用新增帳戶");
+  if (activeAccount() === "legacy") await linkLegacy(user.id, t);
+  storeAccount({ ...user, token: t, expires });
+  selectAccount(user.id);
+  sessionStorage.removeItem(workspaceKey(SILENT));
 }
 
 /** Handles Google's reply when the page loads. "popup" means this window is
  *  the sign-in popup: the reply went to the app and this window can close. */
-export function handleReturn(): "popup" | "done" | "" {
+export async function handleReturn(): Promise<"popup" | "done" | ""> {
   const hash = location.hash;
   if (!/(^|[#&])(access_token|error)=/.test(hash)) return "";
   history.replaceState(null, "", location.pathname + location.search);
@@ -182,6 +243,6 @@ export function handleReturn(): "popup" | "done" | "" {
     sessionStorage.removeItem(STATE);
     return "";
   }
-  accept(hash);
+  await accept(hash);
   return "done";
 }

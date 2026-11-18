@@ -3401,5 +3401,83 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Some note pictures or audio are incomplete. Restore from Google Drive or an encrypted backup.",
   "ja": "メモの画像または録音データが不完全です。Google Drive または暗号化バックアップから復元してください。",
   "ko": "메모의 사진 또는 녹음 데이터가 불완전합니다. Google Drive 또는 암호화 백업에서 복원하세요."
+ },
+ "Google 帳戶": {
+  "zh-CN": "Google 帐户",
+  "en": "Google account",
+  "ja": "Google アカウント",
+  "ko": "Google 계정"
+ },
+ "切換帳戶": {
+  "zh-CN": "切换帐户",
+  "en": "Switch account",
+  "ja": "アカウントを切り替え",
+  "ko": "계정 전환"
+ },
+ "新增帳戶": {
+  "zh-CN": "添加帐户",
+  "en": "Add account",
+  "ja": "アカウントを追加",
+  "ko": "계정 추가"
+ },
+ "升級前的本機副本（離線）": {
+  "zh-CN": "升级前的本机副本（脱机）",
+  "en": "Pre-upgrade local copy (offline)",
+  "ja": "更新前のローカルコピー（オフライン）",
+  "ko": "업데이트 전 로컬 사본 (오프라인)"
+ },
+ "無法確認 Google 帳戶，請重新連線": {
+  "zh-CN": "无法确认 Google 帐户，请重新连接",
+  "en": "Cannot verify the Google account. Please reconnect.",
+  "ja": "Google アカウントを確認できません。再接続してください",
+  "ko": "Google 계정을 확인할 수 없습니다. 다시 연결하세요"
+ },
+ "此瀏覽器不支援安全的多帳戶儲存，請更新瀏覽器": {
+  "zh-CN": "此浏览器不支持安全的多帐户保存，请更新浏览器",
+  "en": "Update your browser to use secure multi-account storage.",
+  "ja": "安全な複数アカウント保存にはブラウザを更新してください",
+  "ko": "안전한 다중 계정 저장을 위해 브라우저를 업데이트하세요"
+ },
+ "選取的帳戶不同，請使用新增帳戶": {
+  "zh-CN": "选取的帐户不同，请使用添加帐户",
+  "en": "This is a different account. Use Add account instead.",
+  "ja": "別のアカウントです。「アカウントを追加」を使用してください",
+  "ko": "다른 계정입니다. 계정 추가를 사용하세요"
+ },
+ "Google 帳戶與工作區不符，已停止同步": {
+  "zh-CN": "Google 帐户与工作区不符，已停止同步",
+  "en": "Account and workspace do not match. Sync stopped.",
+  "ja": "アカウントとワークスペースが一致しないため同期を停止しました",
+  "ko": "계정과 작업 공간이 일치하지 않아 동기화를 중지했습니다"
+ },
+ "移除此帳戶": {
+  "zh-CN": "移除此帐户",
+  "en": "Remove this account",
+  "ja": "このアカウントを削除",
+  "ko": "이 계정 제거"
+ },
+ "確定移除此帳戶": {
+  "zh-CN": "确定移除此帐户",
+  "en": "Confirm account removal",
+  "ja": "アカウントの削除を確認",
+  "ko": "계정 제거 확인"
+ },
+ "移除此帳戶的本機資料並登出": {
+  "zh-CN": "移除此帐户的本机数据并注销",
+  "en": "Remove this account's local data and sign out",
+  "ja": "このアカウントのローカルデータを削除してログアウト",
+  "ko": "이 계정의 로컬 데이터를 삭제하고 로그아웃"
+ },
+ "只移除此帳戶的本機副本與解鎖設定，未同步的修改會遺失；其他帳戶及 Drive 資料不受影響。": {
+  "zh-CN": "只移除此帐户的本机副本与解锁设置，未同步的修改会遗失；其他帐户及 Drive 数据不受影响。",
+  "en": "Only this account's local copy and unlock settings are removed. Unsynced edits will be lost. Other accounts and Drive data are not affected.",
+  "ja": "このアカウントのローカルコピーと解除設定のみ削除します。未同期の変更は失われます。他のアカウントと Drive データには影響しません。",
+  "ko": "이 계정의 로컬 사본과 잠금 해제 설정만 삭제됩니다. 동기화되지 않은 변경 사항은 사라집니다. 다른 계정과 Drive 데이터에는 영향이 없습니다."
+ },
+ "請先儲存並關閉編輯畫面，再切換帳戶": {
+  "zh-CN": "请先保存并关闭编辑画面，再切换帐户",
+  "en": "Save and close the editor before switching accounts.",
+  "ja": "保存して編集画面を閉じてからアカウントを切り替えてください",
+  "ko": "저장하고 편집 화면을 닫은 후 계정을 전환하세요"
  }
 };

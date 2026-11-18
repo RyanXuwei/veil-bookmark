@@ -25,6 +25,8 @@ for (const f of [
   "src/folders.ts",
   "web/main.tsx",
   "web/google.ts",
+  "web/accounts.ts",
+  "web/account-menu.tsx",
   "web/vault.ts",
   "web/biometric.ts",
 ]) {

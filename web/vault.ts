@@ -18,35 +18,21 @@ import { readRemoteWith, removeSnapshots, upload } from "../src/drive";
 import { deleteEntry, upsertEntry } from "../src/entry-ops";
 import { deleteMemo, upsertMemo } from "../src/memo-ops";
 import { mergeSnapshots, VaultMismatch } from "../src/sync-core";
-import { token } from "./google";
+import {
+  accountLock,
+  account,
+  removeAccount,
+  activeAccount,
+  identify,
+  kv,
+  workspaceKey,
+} from "./accounts";
+import { token, forgetToken } from "./google";
 import * as bio from "./biometric";
 
 // ---- Encrypted copy on this phone (IndexedDB) -------------------------------
 const DB = "veil-bookmark-web";
-function db(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const r = indexedDB.open(DB, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore("kv");
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-async function idb<T>(
-  mode: IDBTransactionMode,
-  fn: (s: IDBObjectStore) => IDBRequest,
-) {
-  const d = await db();
-  try {
-    return await new Promise<T>((resolve, reject) => {
-      const r = fn(d.transaction("kv", mode).objectStore("kv"));
-      r.onsuccess = () => resolve(r.result as T);
-      r.onerror = () => reject(r.error);
-    });
-  } finally {
-    d.close();
-  }
-}
-const cacheGet = () => idb<unknown>("readonly", (s) => s.get("vault"));
+const cacheGet = () => kv<unknown>(DB, workspaceKey("vault"), "readonly");
 // Bookmarks (with folders) and notes are encrypted separately, so saving a
 // bookmark does not re-encrypt notes with pictures. Both parts are written in
 // one IndexedDB put (atomic). Older copies hold one envelope with everything.
@@ -62,6 +48,7 @@ async function cacheWrite(
   keys: KeySlots,
   part: Part = "all",
 ) {
+  const storageKey = workspaceKey("vault");
   const k = JSON.stringify(keys);
   const prev =
     lastParts && lastParts.keys === k && lastParts.a.id === v.id
@@ -72,7 +59,7 @@ async function cacheWrite(
   const b =
     part === "entries" && prev ? prev.b : await seal(memosPart(v), dek, keys);
   const record: Layout2 = { layout: 2, a, b };
-  await idb("readwrite", (s) => s.put(record, "vault"));
+  await kv(DB, storageKey, "readwrite", record);
   lastParts = { a, b, keys: k };
 }
 /** This phone's copy: the envelope that holds the key slots, and a reader. */
@@ -102,7 +89,7 @@ export const hasCache = async () => {
 /** Removes this phone's encrypted copy (Drive is not touched). */
 export const clearCache = () => {
   lastParts = null;
-  return idb("readwrite", (s) => s.delete("vault"));
+  return kv(DB, workspaceKey("vault"), "readwrite", undefined, true);
 };
 
 // ---- State ---------------------------------------------------------------
@@ -141,17 +128,19 @@ const NOT_FOUND =
 /** Opens the vault with the master password. */
 export async function unlock(password: string) {
   if (Date.now() < nextAttempt) throw Error("嘗試次數過多，請稍後再試");
-  await openVault(async (first) => {
-    try {
-      const { dek } = await openWithPassword(first, password);
-      attempts = 0;
-      return dek;
-    } catch (e) {
-      nextAttempt =
-        Date.now() + Math.min(60000, 1000 * 2 ** Math.min(attempts++, 6));
-      throw e;
-    }
-  });
+  await serialized(() =>
+    openVault(async (first) => {
+      try {
+        const { dek } = await openWithPassword(first, password);
+        attempts = 0;
+        return dek;
+      } catch (e) {
+        nextAttempt =
+          Date.now() + Math.min(60000, 1000 * 2 ** Math.min(attempts++, 6));
+        throw e;
+      }
+    }),
+  );
   await bio.passwordUsed(open!.v.id);
 }
 
@@ -159,16 +148,18 @@ export async function unlock(password: string) {
  *  biometric prompt comes first: Safari only allows it right after a tap. */
 export async function unlockBiometric() {
   const k = await bio.unlockKey();
-  await openVault(async (first) => {
-    try {
-      if (first.id !== k.vault) throw Error();
-      await verifySlots(k.dek, first.id, first.keys);
-      return k.dek;
-    } catch {
-      await bio.disable();
-      throw Error("生物辨識資料已失效，請輸入主密碼後重新啟用");
-    }
-  });
+  await serialized(() =>
+    openVault(async (first) => {
+      try {
+        if (first.id !== k.vault) throw Error();
+        await verifySlots(k.dek, first.id, first.keys);
+        return k.dek;
+      } catch {
+        await bio.disable();
+        throw Error("生物辨識資料已失效，請輸入主密碼後重新啟用");
+      }
+    }),
+  );
 }
 
 /** Turns on biometric unlock for the open vault. */
@@ -178,10 +169,16 @@ export async function enableBiometric() {
 }
 
 async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
+  if (activeAccount() !== "legacy" && !account())
+    throw Error("請先連接 Google Drive");
   const t = token();
   let remote: Envelope[] = [];
   let ids: string[] = [];
-  if (t) ({ envelopes: remote, ids } = await readRemoteWith(t));
+  if (t) {
+    if ((await identify(t)).id !== activeAccount())
+      throw Error("Google 帳戶與工作區不符，已停止同步");
+    ({ envelopes: remote, ids } = await readRemoteWith(t));
+  }
   let cached: ReturnType<typeof cachedCopy> = null;
   try {
     const c = await cacheGet();
@@ -212,12 +209,9 @@ async function openVault(key: (first: SealedEnvelope) => Promise<CryptoKey>) {
     } catch {}
   lastParts = null;
   open = { v, dek, keys };
-  if (t) {
-    await syncNow(remote, ids);
-  } else {
-    await cacheWrite(v, dek, keys);
-    setSync({ pending: !!cached && !t });
-  }
+  await cacheWrite(v, dek, keys);
+  setSync({ pending: true });
+  if (t) void syncNow(remote, ids);
   emit();
 }
 
@@ -232,7 +226,8 @@ export function lock() {
 let queue: Promise<unknown> = Promise.resolve();
 let timer: ReturnType<typeof setTimeout> | undefined;
 function serialized<T>(fn: () => Promise<T>) {
-  const r = queue.then(fn, fn);
+  const run = () => accountLock(fn);
+  const r = queue.then(run, run);
   queue = r.catch(() => {});
   return r;
 }
@@ -248,8 +243,11 @@ export function syncNow(pre?: Envelope[], preIds?: string[]) {
       return;
     }
     setSync({ syncing: true });
-    const base = o.v;
     try {
+      if ((await identify(t)).id !== activeAccount())
+        throw Error("Google 帳戶與工作區不符，已停止同步");
+      await refreshLocal(o);
+      const base = o.v;
       const r = pre
         ? { envelopes: pre, ids: preIds! }
         : await readRemoteWith(t);
@@ -307,32 +305,64 @@ async function save(part: Part) {
   emit();
   soon();
 }
-export async function saveEntry(x: Parameters<typeof upsertEntry>[1]) {
-  if (!open) throw Error("已上鎖，請重新解鎖");
-  // Validates before changing anything (throws on a bad name or URL).
-  upsertEntry(open.v, x);
-  open.v = { ...open.v };
-  await save("entries");
+async function refreshLocal(o: NonNullable<typeof open>) {
+  const c = await cacheGet();
+  if (!c) return;
+  const parts = c as Layout2;
+  if (
+    parts.layout === 2 &&
+    lastParts &&
+    parts.a.ciphertext === lastParts.a.ciphertext &&
+    parts.a.iv === lastParts.a.iv &&
+    parts.b.ciphertext === lastParts.b.ciphertext &&
+    parts.b.iv === lastParts.b.iv
+  )
+    return;
+  const saved = cachedCopy(c);
+  if (!saved || saved.env.id !== o.v.id)
+    throw Error("Google 帳戶與工作區不符，已停止同步");
+  await verifySlots(o.dek, o.v.id, saved.env.keys);
+  o.v = merge(o.v, await saved.read(o.dek));
+  if (saved.env.keys.updated > o.keys.updated) o.keys = saved.env.keys;
+  lastParts = null;
 }
-export async function removeEntry(id: string) {
-  if (!open) throw Error("已上鎖，請重新解鎖");
-  if (deleteEntry(open.v, id)) {
-    open.v = { ...open.v };
-    await save("entries");
-  }
+function edit<T>(fn: (v: Vault) => T, part: Part): Promise<T> {
+  return serialized(async () => {
+    if (activeAccount() !== "legacy" && !account())
+      throw Error("請先連接 Google Drive");
+    const o = open;
+    if (!o) throw Error("已上鎖，請重新解鎖");
+    await refreshLocal(o);
+    if (open !== o) throw Error("已上鎖，請重新解鎖");
+    const result = fn(o.v);
+    o.v = { ...o.v };
+    await save(part);
+    return result;
+  });
 }
-/** Adds or replaces a memo; returns the stored memo (with its permanent ID). */
-export async function saveMemo(x: Record<string, unknown>) {
-  if (!open) throw Error("已上鎖，請重新解鎖");
-  const memo = upsertMemo(open.v, x);
-  open.v = { ...open.v };
-  await save("memos");
-  return memo;
+export const saveEntry = (x: Parameters<typeof upsertEntry>[1]) =>
+  edit((v) => upsertEntry(v, x), "entries");
+export const removeEntry = (id: string) =>
+  edit((v) => deleteEntry(v, id), "entries");
+export const saveMemo = (x: Record<string, unknown>) =>
+  edit((v) => upsertMemo(v, x), "memos");
+export const removeMemo = (id: string) =>
+  edit((v) => deleteMemo(v, id), "memos");
+/** Drain storage and synchronization before changing the selection. */
+export async function prepareAccountSwitch() {
+  await serialized(async () => {
+    lock();
+  });
+  sync = { syncing: false, lastSync: 0, error: "", pending: false };
+  emit();
 }
-export async function removeMemo(id: string) {
-  if (!open) throw Error("已上鎖，請重新解鎖");
-  if (deleteMemo(open.v, id)) {
-    open.v = { ...open.v };
-    await save("memos");
-  }
+
+export async function removeWorkspace() {
+  await serialized(async () => {
+    lock();
+    await clearCache();
+    await bio.disable();
+    forgetToken();
+    removeAccount();
+  });
 }

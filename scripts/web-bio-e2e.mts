@@ -68,21 +68,28 @@ const context = await browser.newContext({
   locale: "zh-TW",
   serviceWorkers: "block",
 });
-await context.addInitScript(() =>
-  sessionStorage.setItem(
-    "veilGoogleToken",
-    JSON.stringify({
-      token: "synthetic-token",
-      expires: Date.now() + 3600_000,
-    }),
-  ),
-);
+await context.addInitScript(()=>{
+ if(localStorage.getItem("veilBioTestSeeded"))return;
+ localStorage.setItem("veilBioTestSeeded","1");
+ localStorage.setItem("veilAccount:test-account",JSON.stringify({id:"test-account",email:"test@example.com",token:"synthetic-token",expires:Date.now()+3600000}));
+});
+
 await context.route("**/app/config.json", (r) =>
   r.fulfill({ json: { clientId: "test-client.apps.googleusercontent.com" } }),
 );
 await context.route("https://www.googleapis.com/**", async (route) => {
   const req = route.request();
   const u = req.url();
+  if (u.includes("/about?"))
+    return route.fulfill({
+      json: {
+        user: {
+          permissionId: "test-account",
+          emailAddress: "test@example.com",
+          displayName: "Test",
+        },
+      },
+    });
   if (req.method() === "POST") return route.fulfill({ json: { id: "x" } });
   const fid = decodeURIComponent(u.split("/files/")[1]?.split("?")[0] || "");
   if (u.includes("alt=media"))
@@ -95,6 +102,9 @@ await context.route("https://www.googleapis.com/**", async (route) => {
   });
 });
 
+await context.addInitScript(() =>
+  sessionStorage.setItem("veilActiveAccount", "test-account"),
+);
 const page = await context.newPage();
 const cdp = await context.newCDPSession(page);
 await cdp.send("WebAuthn.enable");
@@ -118,7 +128,10 @@ const record = () =>
       q.onsuccess = () => r(q.result);
     });
     return new Promise<any>((r) => {
-      const q = db.transaction("kv").objectStore("kv").get("unlock");
+      const q = db
+        .transaction("kv")
+        .objectStore("kv")
+        .get("unlock:test-account");
       q.onsuccess = () => {
         db.close();
         r(q.result ?? null);
@@ -133,9 +146,10 @@ const editRecord = (patch: Record<string, unknown>) =>
     });
     await new Promise<void>((r) => {
       const s = db.transaction("kv", "readwrite").objectStore("kv");
-      const q = s.get("unlock");
+      const q = s.get("unlock:test-account");
       q.onsuccess = () => {
-        s.put({ ...q.result, ...patch }, "unlock").onsuccess = () => r();
+        s.put({ ...q.result, ...patch }, "unlock:test-account").onsuccess =
+          () => r();
       };
     });
     db.close();
@@ -231,7 +245,7 @@ try {
   await page.getByRole("button", { name: "啟用 Face ID／指紋解鎖" }).click();
   await page.getByText("已啟用生物辨識解鎖").waitFor();
   await page
-    .getByRole("button", { name: "清除這支手機上的資料並登出" })
+    .getByRole("button", { name: "移除此帳戶的本機資料並登出" })
     .click();
   await page.getByRole("button", { name: "確定清除並登出？" }).click();
   await page.getByRole("heading", { name: "在手機上開啟你的書籤" }).waitFor();
@@ -245,19 +259,34 @@ try {
     serviceWorkers: "block",
   });
   await other.addInitScript(() =>
-    sessionStorage.setItem(
-      "veilGoogleToken",
+    localStorage.setItem(
+      "veilAccount:test-account",
       JSON.stringify({
+        id: "test-account",
+        email: "test@example.com",
+        name: "Test",
         token: "synthetic-token",
         expires: Date.now() + 3600_000,
       }),
     ),
+  );
+  await other.addInitScript(() =>
+    sessionStorage.setItem("veilActiveAccount", "test-account"),
   );
   await other.route("**/app/config.json", (r) =>
     r.fulfill({ json: { clientId: "test-client.apps.googleusercontent.com" } }),
   );
   await other.route("https://www.googleapis.com/**", (route) => {
     const u = route.request().url();
+    if (u.includes("/about?"))
+      return route.fulfill({
+        json: {
+          user: {
+            permissionId: "test-account",
+            emailAddress: "test@example.com",
+          },
+        },
+      });
     if (u.includes("alt=media"))
       return route.fulfill({
         body: JSON.stringify(remote.get("s1")),

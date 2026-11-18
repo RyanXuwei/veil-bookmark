@@ -35,6 +35,7 @@ import {
   forgetToken,
   handleReturn,
   loadConfig,
+  migrateAccount,
   renewSilently,
   signInPopup,
   signInRedirect,
@@ -42,6 +43,8 @@ import {
 } from "./google";
 import {
   clearCache,
+  prepareAccountSwitch,
+  removeWorkspace,
   hasCache,
   lock,
   removeEntry,
@@ -56,6 +59,8 @@ import {
   enableBiometric,
   unlockBiometric,
 } from "./vault";
+import { AccountMenu } from "./account-menu";
+import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
 import { VERSION } from "../src/version";
 import "./app.css";
@@ -217,21 +222,26 @@ function App({ shared }: { shared: Draft | null }) {
     } catch {}
     setLangTick((x) => x + 1);
   };
-  return v ? (
-    <Library
-      shared={pendingShare}
-      clearShared={() => setPendingShare(null)}
-      onLang={relang}
-      onCleared={() => setCache(false)}
-    />
-  ) : (
-    <Unlock
-      cache={cache}
-      error={error}
-      setError={setError}
-      shared={!!pendingShare}
-      syncError={s.error}
-    />
+  return (
+    <>
+      <AccountMenu />
+      {v ? (
+        <Library
+          shared={pendingShare}
+          clearShared={() => setPendingShare(null)}
+          onLang={relang}
+          onCleared={() => setCache(false)}
+        />
+      ) : (
+        <Unlock
+          cache={cache}
+          error={error}
+          setError={setError}
+          shared={!!pendingShare}
+          syncError={s.error}
+        />
+      )}
+    </>
   );
 }
 
@@ -756,7 +766,10 @@ function Library({
         />
       )}
       {memoActions && (
-        <Sheet title={memoTitle(memoActions)} onClose={() => setMemoActions(null)}>
+        <Sheet
+          title={memoTitle(memoActions)}
+          onClose={() => setMemoActions(null)}
+        >
           <MemoActionList
             m={memoActions}
             onRead={() => {
@@ -1166,8 +1179,7 @@ function MemoEditor({
   const chain = useRef<Promise<boolean>>(Promise.resolve(true));
   const latest = useRef({ title, paper, folder });
   latest.current = { title, paper, folder };
-  const extras =
-    (memo?.recordings?.length || 0) + (memo?.drawing?.length || 0);
+  const extras = (memo?.recordings?.length || 0) + (memo?.drawing?.length || 0);
 
   useLayoutEffect(() => {
     const el = body.current!;
@@ -1580,18 +1592,7 @@ function Settings({
           <button
             className={signedIn ? "secondary" : "primary"}
             disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              setError("");
-              try {
-                await signInPopup();
-                await syncNow();
-              } catch (e) {
-                setError((e as Error).message);
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={() => window.dispatchEvent(new Event("veil-connect"))}
           >
             <GoogleMark />{" "}
             {signedIn ? t("重新連線 Google") : t("使用 Google 帳號連接 Drive")}
@@ -1626,9 +1627,9 @@ function Settings({
             className="danger full"
             onClick={async () => {
               // Remove everything first, then show the locked screen.
-              forgetToken();
-              await clearCache();
-              await bio.disable();
+              await removeWorkspace();
+              sessionStorage.removeItem("veilActiveAccount");
+              location.reload();
               lock();
               onCleared();
             }}
@@ -1640,7 +1641,7 @@ function Settings({
             className="secondary full"
             onClick={() => setConfirmClear(true)}
           >
-            {t("清除這支手機上的資料並登出")}
+            {t("移除此帳戶的本機資料並登出")}
           </button>
         )}
         <Credits />
@@ -1758,7 +1759,9 @@ function BioPrompt({ onDone }: { onDone: (msg: string) => void }) {
               try {
                 await enableBiometric();
                 setShow(false);
-                onDone("已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。");
+                onDone(
+                  "已啟用生物辨識解鎖。下次可以直接用 Face ID／指紋打開。",
+                );
               } catch (e) {
                 setError((e as Error).message);
               } finally {
@@ -1918,63 +1921,69 @@ function GoogleMark() {
 }
 
 // ---- Start -----------------------------------------------------------------
-if (window.top !== window.self) {
-  // Never run inside another site's frame.
-  document.body.textContent = "";
-} else {
-  initLang();
-  let returned: ReturnType<typeof handleReturn> = "";
-  let startError = "";
-  try {
-    returned = handleReturn();
-  } catch (e) {
-    startError = (e as Error).message;
+async function boot() {
+  if (window.top !== window.self) {
+    // Never run inside another site's frame.
+    document.body.textContent = "";
+  } else {
+    initLang();
+    let returned: Awaited<ReturnType<typeof handleReturn>> = "";
+    let startError = "";
+    try {
+      returned = await handleReturn();
+      if (returned !== "popup") await migrateAccount();
+    } catch (e) {
+      startError = (e as Error).message;
+    }
+    const root = createRoot(document.getElementById("root")!);
+    if (
+      returned !== "popup" &&
+      desktopChrome() &&
+      !new URLSearchParams(location.search).has("desktop")
+    ) {
+      // In Chrome on a computer the extension is the full product.
+      location.replace(STORE);
+    } else if (returned === "popup")
+      root.render(
+        <main className="unlock">
+          <section className="welcomeCard">
+            <h1>{t("已連接 Google")}</h1>
+            <p className="muted">
+              {t("可以關閉這個分頁，回到 Veil Bookmark。")}
+            </p>
+          </section>
+        </main>,
+      );
+    else {
+      const shared = sharedLink();
+      root.render(
+        <AppWithError
+          shared={shared && { ...emptyDraft, ...shared }}
+          initial={startError}
+        />,
+      );
+    }
+    if ("serviceWorker" in navigator && location.protocol === "https:")
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
-  const root = createRoot(document.getElementById("root")!);
-  if (
-    returned !== "popup" &&
-    desktopChrome() &&
-    !new URLSearchParams(location.search).has("desktop")
-  ) {
-    // In Chrome on a computer the extension is the full product.
-    location.replace(STORE);
-  } else if (returned === "popup")
-    root.render(
-      <main className="unlock">
-        <section className="welcomeCard">
-          <h1>{t("已連接 Google")}</h1>
-          <p className="muted">{t("可以關閉這個分頁，回到 Veil Bookmark。")}</p>
-        </section>
-      </main>,
-    );
-  else {
-    const shared = sharedLink();
-    root.render(
-      <AppWithError
-        shared={shared && { ...emptyDraft, ...shared }}
-        initial={startError}
-      />,
+  function AppWithError({
+    shared,
+    initial,
+  }: {
+    shared: Draft | null;
+    initial: string;
+  }) {
+    const [shown, setShown] = useState(initial);
+    return (
+      <>
+        {shown && (
+          <div className="topError" role="alert" onClick={() => setShown("")}>
+            {tError(shown)}
+          </div>
+        )}
+        <App shared={shared} />
+      </>
     );
   }
-  if ("serviceWorker" in navigator && location.protocol === "https:")
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
-function AppWithError({
-  shared,
-  initial,
-}: {
-  shared: Draft | null;
-  initial: string;
-}) {
-  const [shown, setShown] = useState(initial);
-  return (
-    <>
-      {shown && (
-        <div className="topError" role="alert" onClick={() => setShown("")}>
-          {tError(shown)}
-        </div>
-      )}
-      <App shared={shared} />
-    </>
-  );
-}
+void boot();
