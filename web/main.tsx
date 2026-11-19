@@ -6,7 +6,18 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { safeUrl, type Entry, type Memo, type MemoImage } from "../src/crypto";
+import {
+  cleanDrawing,
+  cleanRecordings,
+  safeUrl,
+  type DrawingStroke,
+  type Entry,
+  type Memo,
+  type MemoImage,
+  type MemoRecording,
+} from "../src/crypto";
+import { DrawingLayer } from "../src/drawing";
+import { AudioSticker, Recorder } from "../src/recorder";
 import {
   LANGS,
   detect,
@@ -1414,7 +1425,14 @@ function Reader({
       a.rel = "noopener noreferrer";
     }
   }, [memo, md]);
-  const extras = (memo.recordings?.length || 0) + (memo.drawing?.length || 0);
+  const strokes = cleanDrawing(memo.drawing);
+  const voices = cleanRecordings(memo.recordings);
+  const area = useRef<HTMLDivElement>(null);
+  const inkHeight = useInkHeight(
+    area,
+    strokes,
+    !md && (strokes.length > 0 || voices.length > 0),
+  );
   return (
     <div
       className="reader"
@@ -1444,19 +1462,84 @@ function Reader({
         style={{ background: memo.paperColor || DEFAULT_PAPER }}
       >
         <h1>{memoTitle(memo)}</h1>
-        {extras > 0 && (
-          <p className="note">
-            {t("這則記事含有錄音或手繪，請在電腦的記事本中檢視。")}
-          </p>
-        )}
-        <div className={md ? "memoBody mdPreview" : "memoBody"} ref={body} />
+        <div className="inkArea" ref={area} style={{ minHeight: inkHeight }}>
+          <div className={md ? "memoBody mdPreview" : "memoBody"} ref={body} />
+          {!md && (
+            <DrawingLayer
+              strokes={strokes}
+              mode="text"
+              color=""
+              width={0}
+              onChange={() => {}}
+            />
+          )}
+          {!md && (
+            <div className="nbAudioLayer">
+              {voices.map((r) => (
+                <VoicePlayer key={r.id} recording={r} />
+              ))}
+            </div>
+          )}
+        </div>
       </article>
     </div>
   );
 }
 
-// The phone's notebook: text styles, lists, quotes, highlight and pictures.
-// Drawing, recording, fonts, alignment and page layout stay on the computer.
+/** Room for handwriting and voice notes: the paper is at least 70% of the
+ *  screen tall when a note has them (or while drawing), and tall enough for
+ *  the lowest stroke (strokes use a 794-unit wide page). */
+function useInkHeight(
+  area: React.RefObject<HTMLDivElement | null>,
+  strokes: DrawingStroke[],
+  needed: boolean,
+) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    const o = new ResizeObserver(() => setWidth(el.offsetWidth));
+    o.observe(el);
+    return () => o.disconnect();
+  }, []);
+  if (!needed || !width) return undefined;
+  const lowest = strokes.reduce(
+    (m, s) => s.points.reduce((n, p) => Math.max(n, p[1] + s.width), m),
+    0,
+  );
+  return Math.max(innerHeight * 0.7, (lowest * width) / 794 + 24);
+}
+
+/** A voice note in the reader: plays where it was placed. */
+function VoicePlayer({ recording: r }: { recording: MemoRecording }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    const bytes = Uint8Array.from(atob(r.data), (c) => c.charCodeAt(0));
+    const u = URL.createObjectURL(new Blob([bytes], { type: r.mime }));
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [r.data, r.mime]);
+  return (
+    <div
+      className="nbAudioSticker"
+      style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%` }}
+    >
+      <div className="nbAudioHandle readOnly">
+        {t("錄音")} · {Math.floor(r.duration / 60)}:
+        {String(Math.floor(r.duration % 60)).padStart(2, "0")}
+      </div>
+      <audio controls src={url} preload="metadata" aria-label={t("播放錄音")} />
+    </div>
+  );
+}
+
+// Pen colours and width (in the 794-unit page space the extension uses).
+const INK_COLORS = ["#30372d", "#c0392b", "#2463b5", "#2e8b57"];
+const INK_WIDTH = 5;
+
+// The phone's notebook: text styles, lists, quotes, highlight, pictures,
+// handwriting and voice notes. Fonts, alignment and page layout stay on the
+// computer.
 const TOOLS: {
   cmd: string;
   label: string;
@@ -1518,7 +1601,37 @@ function MemoEditor({
   const chain = useRef<Promise<boolean>>(Promise.resolve(true));
   const latest = useRef({ title, paper, folder });
   latest.current = { title, paper, folder };
-  const extras = (memo?.recordings?.length || 0) + (memo?.drawing?.length || 0);
+  // Handwriting and voice notes, in the extension's formats (a 794-unit page
+  // and page-relative sticker positions), saved with the note.
+  const [mode, setMode] = useState<"text" | "pen" | "eraser">("text");
+  const [penColor, setPenColor] = useState(INK_COLORS[0]);
+  const [strokes, setStrokes] = useState<DrawingStroke[]>(() =>
+    cleanDrawing(memo?.drawing),
+  );
+  const [voices, setVoices] = useState<MemoRecording[]>(() =>
+    cleanRecordings(memo?.recordings),
+  );
+  const [recording, setRecording] = useState(false);
+  const ink = useRef(strokes);
+  ink.current = strokes;
+  const audio = useRef(voices);
+  audio.current = voices;
+  const area = useRef<HTMLDivElement>(null);
+  const inkHeight = useInkHeight(
+    area,
+    strokes,
+    mode !== "text" || strokes.length > 0 || voices.length > 0,
+  );
+  function drawChanged(next: DrawingStroke[]) {
+    setStrokes(next);
+    ink.current = next;
+    changed();
+  }
+  function voicesChanged(next: MemoRecording[]) {
+    setVoices(next);
+    audio.current = next;
+    changed();
+  }
 
   useLayoutEffect(() => {
     const el = body.current!;
@@ -1601,7 +1714,9 @@ function MemoEditor({
         !id.current &&
         !now.title.trim() &&
         !htmlToText(html) &&
-        !used.length
+        !used.length &&
+        !ink.current.length &&
+        !audio.current.length
       ) {
         setSaveState("saved");
         return true; // An untouched new memo is not kept.
@@ -1616,6 +1731,8 @@ function MemoEditor({
           paperColor: now.paper,
           folder: now.folder,
           images: used.map((x) => images.current.get(x)!),
+          drawing: ink.current,
+          recordings: audio.current,
         });
         id.current = m.id;
         setSaveState(dirty.current ? "dirty" : "saved");
@@ -1754,17 +1871,15 @@ function MemoEditor({
             changed();
           }}
         />
-        {extras > 0 && (
-          <p className="note">
-            {t(
-              "這則記事的錄音與手繪只能在電腦上檢視；在手機上編輯文字不會影響它們。",
-            )}
-          </p>
-        )}
+        <div
+          className="inkArea"
+          ref={area}
+          style={{ minHeight: inkHeight }}
+        >
         <div
           ref={body}
-          className="memoBody editable"
-          contentEditable
+          className={"memoBody editable" + (mode === "text" ? "" : " drawing")}
+          contentEditable={mode === "text"}
           suppressContentEditableWarning
           role="textbox"
           aria-multiline="true"
@@ -1781,6 +1896,30 @@ function MemoEditor({
             );
           }}
         />
+          <DrawingLayer
+            strokes={strokes}
+            mode={mode}
+            color={penColor}
+            width={INK_WIDTH}
+            onChange={drawChanged}
+          />
+          <div className="nbAudioLayer">
+            {voices.map((r) => (
+              <AudioSticker
+                key={r.id}
+                recording={r}
+                onMove={(x, y) =>
+                  voicesChanged(
+                    audio.current.map((a) => (a.id === r.id ? { ...a, x, y } : a)),
+                  )
+                }
+                onDelete={() =>
+                  voicesChanged(audio.current.filter((a) => a.id !== r.id))
+                }
+              />
+            ))}
+          </div>
+        </div>
       </article>
       <div
         className="tools"
@@ -1788,7 +1927,77 @@ function MemoEditor({
         aria-label={t("格式工具列")}
         style={{ bottom: keyboard }}
       >
-        {TOOLS.map((x) => (
+        {recording || voices.length < 5 ? (
+          <div className="inkRecorder">
+            <Recorder
+              disabled={false}
+              onBusy={setRecording}
+              onRecorded={(r) => {
+                // Placed at the left of what is on screen; drag to move.
+                const box = area.current?.getBoundingClientRect();
+                const y = box
+                  ? Math.max(0, Math.min(0.9, (innerHeight * 0.3 - box.top) / box.height))
+                  : 0.1;
+                voicesChanged([...audio.current, { ...r, x: 0.04, y }]);
+              }}
+            />
+          </div>
+        ) : null}
+        <button
+          type="button"
+          aria-label={t("手寫")}
+          title={t("手寫")}
+          aria-pressed={mode === "pen"}
+          onClick={() => setMode(mode === "pen" ? "text" : "pen")}
+        >
+          ✎
+        </button>
+        <button
+          type="button"
+          aria-label={t("橡皮擦")}
+          title={t("橡皮擦")}
+          aria-pressed={mode === "eraser"}
+          onClick={() => setMode(mode === "eraser" ? "text" : "eraser")}
+        >
+          ⌫̸
+        </button>
+        {mode !== "text" && (
+          <>
+            {INK_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="inkSwatch"
+                aria-label={t("筆色") + " " + c}
+                aria-pressed={penColor === c}
+                onClick={() => {
+                  setPenColor(c);
+                  setMode("pen");
+                }}
+              >
+                <span style={{ background: c }} />
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label={t("復原最後一筆")}
+              title={t("復原最後一筆")}
+              disabled={!strokes.length}
+              onClick={() => drawChanged(ink.current.slice(0, -1))}
+            >
+              ↺
+            </button>
+            <button
+              type="button"
+              aria-label={t("回到文字")}
+              title={t("回到文字")}
+              onClick={() => setMode("text")}
+            >
+              T
+            </button>
+          </>
+        )}
+        {mode === "text" && TOOLS.map((x) => (
           <button
             key={x.cmd}
             type="button"

@@ -3611,5 +3611,23 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "The incognito-only folder is empty",
   "ja": "シークレット専用フォルダーは空です",
   "ko": "시크릿 전용 폴더가 비어 있습니다"
+ },
+ "手寫": {
+  "zh-CN": "手写",
+  "en": "Handwriting",
+  "ja": "手書き",
+  "ko": "손글씨"
+ },
+ "復原最後一筆": {
+  "zh-CN": "复原最后一笔",
+  "en": "Undo last stroke",
+  "ja": "最後の線を取り消す",
+  "ko": "마지막 획 취소"
+ },
+ "回到文字": {
+  "zh-CN": "回到文字",
+  "en": "Back to text",
+  "ja": "テキストに戻る",
+  "ko": "텍스트로 돌아가기"
  }
 };

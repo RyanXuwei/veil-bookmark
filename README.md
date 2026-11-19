@@ -44,7 +44,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.14.3
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.15.0
 
 ## 功能
 
@@ -114,7 +114,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[�
 1. 開啟上面的網址，按「使用 Google 帳號連接 Drive」。
 2. 第一次使用（Google Drive 上還沒有保險庫）：輸入兩次主密碼、按「建立保險庫」，保存畫面上的救援金鑰後按「我已保存，開始使用」就建立好了，不需要擴充功能。之後在電腦安裝擴充功能，用「從 Google Drive 還原」和同一組主密碼就能接上。已經在電腦用擴充功能的人，選擇同一個 Google 帳號即可。
 3. 輸入主密碼即可瀏覽、搜尋、新增、編輯與刪除書籤；修改會同步回電腦。
-4. 「記事本」分頁可以閱讀、新增、編輯與刪除記事，也能用「匯入檔案」把 .txt、.md、.html、.docx 變成記事：粗體、斜體、底線、刪除線、標題、項目符號與編號清單、引言、螢光筆、插入照片、紙張顏色與資料夾。手繪、錄音、字型與版面配置請在電腦上使用；在手機上編輯含有手繪或錄音的記事不會影響它們。
+4. 「記事本」分頁可以閱讀、新增、編輯與刪除記事，也能用「匯入檔案」把 .txt、.md、.html、.docx 變成記事：粗體、斜體、底線、刪除線、標題、項目符號與編號清單、引言、螢光筆、插入照片、紙張顏色與資料夾。也能手寫（手指或觸控筆）與錄音，格式與電腦版相同，兩邊都看得到；字型與版面配置請在電腦上使用。
 
 - 可以「加到主畫面」當成 App 使用。
 - **分享進 Veil Bookmark（Android）**：加到主畫面後，在 Chrome 選取文字按「分享」、或在相簿／其他 App 分享圖片，選 Veil Bookmark 就會存成一則記事（附上來源網址）；只分享網址則開啟新增書籤。保險庫上鎖時，分享的內容只暫放在記憶體，解鎖後才加密存入。
