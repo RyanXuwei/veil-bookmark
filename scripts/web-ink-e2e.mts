@@ -30,6 +30,18 @@ const types: Record<string, string> = {
   ".webmanifest": "application/manifest+json",
   ".png": "image/png",
 };
+// The site's own headers (web/public/_headers, "/*" block), as Cloudflare
+// sends them: the microphone must be allowed by its Permissions-Policy.
+const siteHeaders: Record<string, string> = {};
+{
+  const text = await readFile(resolve(root, "web/public/_headers"), "utf8");
+  const block = text.replace(/\r/g, "").split(/\n(?=\/)/)[0];
+  for (const line of block.split("\n").slice(1)) {
+    const m = /^\s+([\w-]+):\s*(.*)$/.exec(line);
+    if (m && m[1] !== "X-Frame-Options") siteHeaders[m[1]] = m[2];
+  }
+}
+assert(siteHeaders["Permissions-Policy"], "headers read");
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url!, "http://x").pathname);
   if (req.method !== "GET") return res.writeHead(405).end(); // like static hosting
@@ -41,6 +53,7 @@ const server = createServer(async (req, res) => {
   try {
     const body = await readFile(file);
     res.writeHead(200, {
+      ...siteHeaders,
       "content-type": types[extname(file)] || "application/octet-stream",
     });
     res.end(body);
@@ -75,7 +88,6 @@ const browser = await chromium.launch({
   args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
 });
 const context = await browser.newContext({ ...devices["Pixel 7"], locale: "zh-TW" } as any);
-await context.grantPermissions(["microphone"]);
 await context.addInitScript(() => {
   if (localStorage.getItem("veilTestSeeded")) return;
   localStorage.setItem("veilTestSeeded", "1");
@@ -167,7 +179,27 @@ try {
   assert.equal(await page.locator(".memoEdit .nbDrawing path").count(), 1);
   await page.getByRole("button", { name: "回到文字" }).click();
   // Record about two seconds.
+  // Microphone refused (as after tapping "Don't allow"; headless Chromium
+  // cannot show the real prompt, so the browser's answer is simulated): the
+  // help explains how to allow it; after allowing, 重試 records.
+  await page.evaluate(() => {
+    const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    (window as any).__denyMic = true;
+    navigator.mediaDevices.getUserMedia = (c) =>
+      (window as any).__denyMic
+        ? Promise.reject(new DOMException("Permission denied", "NotAllowedError"))
+        : real(c);
+  });
   await page.getByRole("button", { name: "開始錄音" }).click();
+  const help = page.getByRole("alertdialog", { name: "沒有麥克風權限。" });
+  await help.waitFor();
+  assert((await help.textContent())!.includes("Android"), "help for this phone");
+  if (shot) await page.screenshot({ path: resolve(shot, "phone-mic-help.png") });
+  await context.grantPermissions(["microphone"]);
+  await page.evaluate(() => ((window as any).__denyMic = false));
+
+  await help.getByRole("button", { name: "重試" }).click();
+  await help.waitFor({ state: "detached" });
   await page.getByRole("button", { name: "停止錄音" }).waitFor();
   await page.waitForTimeout(2300);
   await page.getByRole("button", { name: "停止錄音" }).click();
@@ -211,7 +243,7 @@ try {
   await memoOnDrive("手寫錄音", (m) => m.body.includes("補一句文字") && m.drawing.length === 1 && m.recordings.length === 1);
   assert.deepEqual(blocked, [], "no media blocked");
   assert.deepEqual(errors, []);
-  console.log("PASS phone handwriting and voice notes: draw, undo, colour, erase, record, saved in the extension's formats, shown and playable in the reader, kept when the text is edited");
+  console.log("PASS phone handwriting and voice notes: microphone allowed by the site headers, refused permission explained with a retry, draw, undo, colour, erase, record, saved in the extension's formats, shown and playable in the reader, kept when the text is edited");
 } finally {
   await browser.close();
   server.close();

@@ -1,7 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { MemoRecording } from "./crypto";
 import { t } from "./i18n";
 import { ToolIcon } from "./tool-icon";
+
+/** Where to turn the microphone back on, for this browser. */
+function micHelp() {
+  const ua = navigator.userAgent;
+  if (/OculusBrowser/i.test(ua))
+    return t("請到 Meta Quest 的「設定 › 隱私權 › 麥克風」允許瀏覽器使用麥克風，再到瀏覽器的網站設定允許這個網站。");
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
+    return t("iPhone／iPad：點網址列的「大小」(ᴀA) › 網站設定 › 麥克風 › 允許；或到「設定 › Safari › 麥克風」。加到主畫面的 App 請到「設定 › Safari › 麥克風」。");
+  if (/Android/i.test(ua))
+    return t("Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許；若仍無法使用，到手機「設定 › 應用程式 › Chrome › 權限」開啟麥克風。");
+  if (location.protocol === "chrome-extension:")
+    return t("點網址列右側的麥克風圖示選「一律允許」，或到 Chrome 設定 › 隱私權和安全性 › 網站設定 › 麥克風，允許 Veil Bookmark。");
+  return t("點網址列左側的網站資訊圖示 › 麥克風 › 允許，然後再按一次錄音。");
+}
 
 export function Recorder({
   disabled,
@@ -14,7 +29,9 @@ export function Recorder({
 }) {
   const [phase, setPhase] = useState("idle"),
     [seconds, setSeconds] = useState(0),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    // Shown when the microphone was refused: how to allow it, and a retry.
+    [blocked, setBlocked] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null),
     stream = useRef<MediaStream | null>(null);
   const mounted = useRef(true),
@@ -47,9 +64,17 @@ export function Recorder({
   }
   async function start() {
     setError("");
+    setBlocked(false);
     setPhase("requesting");
     callbacks.current.onBusy(true);
     try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        const e = Error("unsupported");
+        e.name = "NotSupportedError";
+        throw e;
+      }
+      // Asking for the microphone shows the browser's permission prompt when
+      // it has not been answered yet.
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!mounted.current) {
         s.getTracks().forEach((t) => t.stop());
@@ -115,12 +140,22 @@ export function Recorder({
       };
       rec.start(1000);
       setPhase("recording");
-    } catch {
+    } catch (e) {
       stream.current?.getTracks().forEach((t) => t.stop());
       if (mounted.current) {
         setPhase("idle");
         callbacks.current.onBusy(false);
-        setError(t("無法錄音，請確認麥克風權限與裝置"));
+        const name = (e as Error)?.name || "";
+        if (name === "NotAllowedError" || name === "SecurityError") {
+          setBlocked(true);
+          setError(t("沒有麥克風權限。"));
+        } else if (name === "NotFoundError" || name === "OverconstrainedError")
+          setError(t("找不到麥克風，請確認裝置已連接。"));
+        else if (name === "NotReadableError")
+          setError(t("麥克風正被其他 App 使用，請關閉後再試。"));
+        else if (name === "NotSupportedError")
+          setError(t("這個瀏覽器不支援錄音。"));
+        else setError(t("無法錄音，請確認麥克風權限與裝置"));
       }
     }
   }
@@ -172,11 +207,28 @@ export function Recorder({
         )}
       </div>
       <span className="rgName">{t("錄音機")}</span>
-      {error && (
+      {error && !blocked && (
         <span className="nbError" role="alert">
           {error}
         </span>
       )}
+      {blocked &&
+        // On the page itself: toolbars can clip fixed-position boxes.
+        createPortal(
+        <div className="micHelp" role="alertdialog" aria-label={t("沒有麥克風權限。")}>
+          <strong>{t("沒有麥克風權限。")}</strong>
+          <p>{micHelp()}</p>
+          <div className="micHelpButtons">
+            <button type="button" onClick={() => setBlocked(false)}>
+              {t("關閉")}
+            </button>
+            <button type="button" className="primary" onClick={() => void start()}>
+              {t("重試")}
+            </button>
+          </div>
+        </div>,
+          document.body,
+        )}
     </div>
   );
 }

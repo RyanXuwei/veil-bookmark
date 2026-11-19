@@ -3629,5 +3629,65 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Back to text",
   "ja": "テキストに戻る",
   "ko": "텍스트로 돌아가기"
+ },
+ "沒有麥克風權限。": {
+  "zh-CN": "没有麦克风权限。",
+  "en": "Microphone access is off.",
+  "ja": "マイクへのアクセスが許可されていません。",
+  "ko": "마이크 권한이 없습니다."
+ },
+ "找不到麥克風，請確認裝置已連接。": {
+  "zh-CN": "找不到麦克风，请确认设备已连接。",
+  "en": "No microphone found. Check that one is connected.",
+  "ja": "マイクが見つかりません。接続を確認してください。",
+  "ko": "마이크를 찾을 수 없습니다. 연결 상태를 확인하세요."
+ },
+ "麥克風正被其他 App 使用，請關閉後再試。": {
+  "zh-CN": "麦克风正被其他 App 使用，请关闭后再试。",
+  "en": "Another app is using the microphone. Close it and try again.",
+  "ja": "ほかのアプリがマイクを使用中です。閉じてからもう一度お試しください。",
+  "ko": "다른 앱이 마이크를 사용 중입니다. 닫은 후 다시 시도하세요."
+ },
+ "這個瀏覽器不支援錄音。": {
+  "zh-CN": "这个浏览器不支持录音。",
+  "en": "This browser cannot record audio.",
+  "ja": "このブラウザーは録音に対応していません。",
+  "ko": "이 브라우저는 녹음을 지원하지 않습니다."
+ },
+ "重試": {
+  "zh-CN": "重试",
+  "en": "Try again",
+  "ja": "再試行",
+  "ko": "다시 시도"
+ },
+ "請到 Meta Quest 的「設定 › 隱私權 › 麥克風」允許瀏覽器使用麥克風，再到瀏覽器的網站設定允許這個網站。": {
+  "zh-CN": "请到 Meta Quest 的「设置 › 隐私权 › 麦克风」允许浏览器使用麦克风，再到浏览器的网站设置允许这个网站。",
+  "en": "On Meta Quest, allow the browser to use the microphone in Settings › Privacy › Microphone, then allow this site in the browser's site settings.",
+  "ja": "Meta Quest の「設定 › プライバシー › マイク」でブラウザーにマイクを許可し、ブラウザーのサイト設定でこのサイトを許可してください。",
+  "ko": "Meta Quest의 설정 › 개인정보 보호 › 마이크에서 브라우저의 마이크 사용을 허용한 다음, 브라우저의 사이트 설정에서 이 사이트를 허용하세요."
+ },
+ "iPhone／iPad：點網址列的「大小」(ᴀA) › 網站設定 › 麥克風 › 允許；或到「設定 › Safari › 麥克風」。加到主畫面的 App 請到「設定 › Safari › 麥克風」。": {
+  "zh-CN": "iPhone／iPad：点网址列的「大小」(ᴀA) › 网站设置 › 麦克风 › 允许；或到「设置 › Safari › 麦克风」。加到主画面的 App 请到「设置 › Safari › 麦克风」。",
+  "en": "iPhone/iPad: tap ᴀA in the address bar › Website Settings › Microphone › Allow, or go to Settings › Safari › Microphone. For the Home Screen app, use Settings › Safari › Microphone.",
+  "ja": "iPhone／iPad：アドレスバーの「ぁあ」› Web サイトの設定 › マイク › 許可、または「設定 › Safari › マイク」。ホーム画面のアプリは「設定 › Safari › マイク」で設定します。",
+  "ko": "iPhone/iPad: 주소창의 가가 › 웹 사이트 설정 › 마이크 › 허용, 또는 설정 › Safari › 마이크. 홈 화면 앱은 설정 › Safari › 마이크에서 설정하세요."
+ },
+ "Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許；若仍無法使用，到手機「設定 › 應用程式 › Chrome › 權限」開啟麥克風。": {
+  "zh-CN": "Android：点网址列左侧的设置图标 › 权限 › 麦克风 › 允许；若仍无法使用，到手机「设置 › 应用程序 › Chrome › 权限」打开麦克风。",
+  "en": "Android: tap the settings icon at the left of the address bar › Permissions › Microphone › Allow. If it still does not work, turn on the microphone in Settings › Apps › Chrome › Permissions.",
+  "ja": "Android：アドレスバー左の設定アイコン › 権限 › マイク › 許可。それでも使えない場合は、端末の「設定 › アプリ › Chrome › 権限」でマイクをオンにしてください。",
+  "ko": "Android: 주소창 왼쪽의 설정 아이콘 › 권한 › 마이크 › 허용. 그래도 안 되면 휴대폰의 설정 › 애플리케이션 › Chrome › 권한에서 마이크를 켜세요."
+ },
+ "點網址列右側的麥克風圖示選「一律允許」，或到 Chrome 設定 › 隱私權和安全性 › 網站設定 › 麥克風，允許 Veil Bookmark。": {
+  "zh-CN": "点网址列右侧的麦克风图标选「一律允许」，或到 Chrome 设置 › 隐私权和安全性 › 网站设置 › 麦克风，允许 Veil Bookmark。",
+  "en": "Click the microphone icon at the right of the address bar and choose Always allow, or allow Veil Bookmark in Chrome Settings › Privacy and security › Site settings › Microphone.",
+  "ja": "アドレスバー右のマイクアイコンで「常に許可」を選ぶか、Chrome の設定 › プライバシーとセキュリティ › サイトの設定 › マイクで Veil Bookmark を許可してください。",
+  "ko": "주소창 오른쪽의 마이크 아이콘에서 항상 허용을 선택하거나, Chrome 설정 › 개인정보 보호 및 보안 › 사이트 설정 › 마이크에서 Veil Bookmark를 허용하세요."
+ },
+ "點網址列左側的網站資訊圖示 › 麥克風 › 允許，然後再按一次錄音。": {
+  "zh-CN": "点网址列左侧的网站信息图标 › 麦克风 › 允许，然后再按一次录音。",
+  "en": "Click the site information icon at the left of the address bar › Microphone › Allow, then press record again.",
+  "ja": "アドレスバー左のサイト情報アイコン › マイク › 許可 を選び、もう一度録音を押してください。",
+  "ko": "주소창 왼쪽의 사이트 정보 아이콘 › 마이크 › 허용을 선택한 후 다시 녹음을 누르세요."
  }
 };

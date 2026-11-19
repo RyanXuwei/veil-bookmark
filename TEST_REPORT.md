@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.15.0
+# 測試報告 · Veil Bookmark 1.15.1
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -358,3 +358,9 @@
 - 新增 `scripts/web-ink-e2e.mts`（Pixel 7 尺寸、Chromium 假麥克風）：畫兩筆、復原一筆、換紅色再畫、橡皮擦擦掉一筆、錄音約 2 秒；同步到 Drive 的記事含 1 筆紅色線條與 1 段錄音，且擴充功能的 `cleanDrawing`／`cleanRecordings` 原樣接受；閱讀畫面顯示線條、錄音播放器取得 blob 音檔且頁面安全政策允許；之後只改文字，線條與錄音仍保留。
 - 未在實機 iPhone／Android 上測試：iOS 的 MP4 錄音與 iOS 播放 WebM 的相容性需實機確認。
 - 其餘手機版測試、單元測試與 `popup-e2e` 通過。`notebook-e2e`、`cjk-e2e`、`markdown-e2e` 這次未能驗證：電腦已閒置約 40 分鐘，Chrome 的閒置偵測讓保險庫自動上鎖；這版擴充功能程式除版號外沒有變更。
+
+## 1.15.1 麥克風授權
+
+- `web-ink-e2e` 的測試伺服器改為送出 `web/public/_headers` 的標頭（與 Cloudflare 相同），之前漏掉的 `microphone=()` 因此能被測到：改回舊標頭時測試失敗，修正後通過。
+- 加測麥克風被拒絕：顯示 Android 的開啟步驟與「重試」，允許後按重試即開始錄音。headless Chromium 無法顯示真正的授權視窗，拒絕的回應以模擬方式產生。
+- 單元測試、手機版測試與 `popup-e2e` 通過。`notebook-e2e` 未能驗證（電腦閒置超過 15 分鐘，Chrome 的閒置偵測讓保險庫上鎖）。未在實機上測試。

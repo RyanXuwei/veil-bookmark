@@ -603,3 +603,13 @@ Markdown 預覽|Markdown preview|Markdown プレビュー|Markdown 미리보기
 手寫|Handwriting|手書き|손글씨
 復原最後一筆|Undo last stroke|最後の線を取り消す|마지막 획 취소
 回到文字|Back to text|テキストに戻る|텍스트로 돌아가기
+沒有麥克風權限。|Microphone access is off.|マイクへのアクセスが許可されていません。|마이크 권한이 없습니다.
+找不到麥克風，請確認裝置已連接。|No microphone found. Check that one is connected.|マイクが見つかりません。接続を確認してください。|마이크를 찾을 수 없습니다. 연결 상태를 확인하세요.
+麥克風正被其他 App 使用，請關閉後再試。|Another app is using the microphone. Close it and try again.|ほかのアプリがマイクを使用中です。閉じてからもう一度お試しください。|다른 앱이 마이크를 사용 중입니다. 닫은 후 다시 시도하세요.
+這個瀏覽器不支援錄音。|This browser cannot record audio.|このブラウザーは録音に対応していません。|이 브라우저는 녹음을 지원하지 않습니다.
+重試|Try again|再試行|다시 시도
+請到 Meta Quest 的「設定 › 隱私權 › 麥克風」允許瀏覽器使用麥克風，再到瀏覽器的網站設定允許這個網站。|On Meta Quest, allow the browser to use the microphone in Settings › Privacy › Microphone, then allow this site in the browser's site settings.|Meta Quest の「設定 › プライバシー › マイク」でブラウザーにマイクを許可し、ブラウザーのサイト設定でこのサイトを許可してください。|Meta Quest의 설정 › 개인정보 보호 › 마이크에서 브라우저의 마이크 사용을 허용한 다음, 브라우저의 사이트 설정에서 이 사이트를 허용하세요.
+iPhone／iPad：點網址列的「大小」(ᴀA) › 網站設定 › 麥克風 › 允許；或到「設定 › Safari › 麥克風」。加到主畫面的 App 請到「設定 › Safari › 麥克風」。|iPhone/iPad: tap ᴀA in the address bar › Website Settings › Microphone › Allow, or go to Settings › Safari › Microphone. For the Home Screen app, use Settings › Safari › Microphone.|iPhone／iPad：アドレスバーの「ぁあ」› Web サイトの設定 › マイク › 許可、または「設定 › Safari › マイク」。ホーム画面のアプリは「設定 › Safari › マイク」で設定します。|iPhone/iPad: 주소창의 가가 › 웹 사이트 설정 › 마이크 › 허용, 또는 설정 › Safari › 마이크. 홈 화면 앱은 설정 › Safari › 마이크에서 설정하세요.
+Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許；若仍無法使用，到手機「設定 › 應用程式 › Chrome › 權限」開啟麥克風。|Android: tap the settings icon at the left of the address bar › Permissions › Microphone › Allow. If it still does not work, turn on the microphone in Settings › Apps › Chrome › Permissions.|Android：アドレスバー左の設定アイコン › 権限 › マイク › 許可。それでも使えない場合は、端末の「設定 › アプリ › Chrome › 権限」でマイクをオンにしてください。|Android: 주소창 왼쪽의 설정 아이콘 › 권한 › 마이크 › 허용. 그래도 안 되면 휴대폰의 설정 › 애플리케이션 › Chrome › 권한에서 마이크를 켜세요.
+點網址列右側的麥克風圖示選「一律允許」，或到 Chrome 設定 › 隱私權和安全性 › 網站設定 › 麥克風，允許 Veil Bookmark。|Click the microphone icon at the right of the address bar and choose Always allow, or allow Veil Bookmark in Chrome Settings › Privacy and security › Site settings › Microphone.|アドレスバー右のマイクアイコンで「常に許可」を選ぶか、Chrome の設定 › プライバシーとセキュリティ › サイトの設定 › マイクで Veil Bookmark を許可してください。|주소창 오른쪽의 마이크 아이콘에서 항상 허용을 선택하거나, Chrome 설정 › 개인정보 보호 및 보안 › 사이트 설정 › 마이크에서 Veil Bookmark를 허용하세요.
+點網址列左側的網站資訊圖示 › 麥克風 › 允許，然後再按一次錄音。|Click the site information icon at the left of the address bar › Microphone › Allow, then press record again.|アドレスバー左のサイト情報アイコン › マイク › 許可 を選び、もう一度録音を押してください。|주소창 왼쪽의 사이트 정보 아이콘 › 마이크 › 허용을 선택한 후 다시 녹음을 누르세요.
