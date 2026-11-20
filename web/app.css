@@ -1291,3 +1291,26 @@ select:focus {
   color: #fff;
 }
 
+/* After a shared page was added: message plus "Add details". */
+.toast.sharedToast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 6px 6px 16px;
+}
+.toast.sharedToast span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toast.sharedToast button {
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #fff;
+  color: #243b38;
+  font: inherit;
+  font-weight: 600;
+}

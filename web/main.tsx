@@ -81,7 +81,9 @@ import {
   needsSetup,
   createVault,
   finishCreate,
+  addSharedLinks,
 } from "./vault";
+import * as shareInbox from "./share-inbox";
 import { AccountMenu } from "./account-menu";
 import { drawDiagrams, htmlText, markdownPreview } from "../src/md-preview";
 import { RecoveryKeyModal } from "../src/recovery";
@@ -285,15 +287,34 @@ function App({
   const [, setLangTick] = useState(0);
   const [pendingShare, setPendingShare] = useState(shared);
   const [pendingNote, setPendingNote] = useState(note);
+  // Shared pages sealed on this phone, added as bookmarks at the next unlock.
+  const [waiting, setWaiting] = useState(0);
+  const [justShared, setJustShared] = useState(false);
   useEffect(() => {
     void (async () => {
       await loadConfig();
+      // A shared page arrives with the app locked (every share reloads it):
+      // seal it in the share inbox at once, so the user can go back and
+      // share the next page without unlocking each time.
+      let inMemory = !!shared;
+      if (shared && !vault())
+        try {
+          if (await shareInbox.stash(shared)) {
+            inMemory = false;
+            setPendingShare(null);
+            setJustShared(true);
+          }
+        } catch {}
+      setWaiting(await shareInbox.count());
       // Connected before but the hour is over: get a new token unprompted.
-      if (!shared && !note && renewSilently()) return;
+      if (!inMemory && !note && renewSilently()) return;
       setCache(await hasCache());
       setReady(true);
     })();
   }, []);
+  useEffect(() => {
+    if (ready && !v) void shareInbox.count().then(setWaiting);
+  }, [!!v]);
   // After locking, offer the phone's encrypted copy even when offline.
   useEffect(() => {
     if (ready && !v) void hasCache().then(setCache);
@@ -366,6 +387,8 @@ function App({
           error={error}
           setError={setError}
           shared={pendingNote ? "note" : pendingShare ? "link" : ""}
+          waiting={waiting}
+          justShared={justShared}
           syncError={s.error}
         />
       )}
@@ -379,11 +402,15 @@ function Unlock({
   error,
   setError,
   shared,
+  waiting,
+  justShared,
 }: {
   cache: boolean;
   error: string;
   setError: (e: string) => void;
   shared: "" | "link" | "note";
+  waiting: number;
+  justShared: boolean;
   syncError: string;
 }) {
   const [password, setPassword] = useState("");
@@ -476,11 +503,24 @@ function Unlock({
                 "連接你在電腦上同步書籤的 Google 帳號，再輸入主密碼。資料只在這支手機上解密。",
               )}
         </p>
+        {justShared && (
+          <p className="status ok sharedSaved" role="status">
+            ✓ {t("已收到分享的網頁，並加密暫存在這支手機。")}
+          </p>
+        )}
+        {waiting > 0 && (
+          <p className="note sharedWaiting">
+            {t(
+              "{count} 個分享的網頁正在等待，解鎖後會自動加入書籤。不必現在解鎖，可以回到瀏覽器繼續分享。",
+              { count: waiting },
+            )}
+          </p>
+        )}
         {shared && (
           <p className="note">
             {shared === "note"
               ? t("解鎖後會把分享的內容加入記事本。")
-              : t("解鎖後即可收藏分享過來的網頁。")}
+              : t("解鎖後會自動把分享的網頁加入書籤。")}
           </p>
         )}
         {error && (
@@ -692,11 +732,53 @@ function Library({
   }
   const [settings, setSettings] = useState(false);
   const [toast, setToast] = useState("");
+  // After shared pages were added: a message and a shortcut to fill in the
+  // rest (folder, tags, notes) of the bookmark later.
+  const [sharedToast, setSharedToast] = useState<{
+    text: string;
+    entry: Entry | null;
+  } | null>(null);
   useEffect(() => {
-    if (shared) {
-      setEditing({ ...emptyDraft, ...shared });
-      clearShared();
-    }
+    // Shared pages become bookmarks right away: from this phone's share
+    // inbox (shared while locked) and the one shared just now, if any.
+    const extra = shared ? [{ title: shared.title, url: shared.url }] : [];
+    if (shared) clearShared();
+    void (async () => {
+      try {
+        const r = await addSharedLinks(extra);
+        if (r.invalid.length) setEditing({ ...emptyDraft, ...r.invalid[0] });
+        if (r.unreadable)
+          setImportError(
+            t("有 {count} 個分享的網頁無法讀取，請再分享一次。", {
+              count: r.unreadable,
+            }),
+          );
+        const n = r.added.length,
+          dup = r.existing.length;
+        if (!n && !dup) return;
+        setView("bookmarks");
+        const text =
+          n && dup
+            ? t("已加入 {count} 個書籤，{dup} 個原本就在書籤中", {
+                count: n,
+                dup,
+              })
+            : n > 1
+              ? t("已加入 {count} 個書籤", { count: n })
+              : n
+                ? t("已加入書籤：{title}", { title: r.added[0].title })
+                : dup > 1
+                  ? t("{count} 個網頁原本就在書籤中", { count: dup })
+                  : t("這個網頁原本就在書籤中");
+        const entry =
+          n === 1 ? r.added[0] : !n && dup === 1 ? r.existing[0] : null;
+        setSharedToast({ text, entry });
+      } catch (e) {
+        // Could not save (e.g. Google Drive not connected): edit by hand.
+        if (shared) setEditing({ ...emptyDraft, ...shared });
+        else setImportError(tError((e as Error).message));
+      }
+    })();
     if (note) {
       clearNote();
       setView("memos");
@@ -716,6 +798,11 @@ function Library({
     const id = setTimeout(() => setToast(""), 2400);
     return () => clearTimeout(id);
   }, [toast]);
+  useEffect(() => {
+    if (!sharedToast) return;
+    const id = setTimeout(() => setSharedToast(null), 6000);
+    return () => clearTimeout(id);
+  }, [sharedToast]);
   if (!v) return null;
   // The incognito-only folder is always offered (also empty, so bookmarks can
   // be added to it here); its bookmarks are listed only after the user opens
@@ -1134,6 +1221,30 @@ function Library({
       {toast && (
         <div className="toast" role="status">
           {t(toast)}
+        </div>
+      )}
+      {sharedToast && !toast && (
+        <div className="toast sharedToast" role="status">
+          <span>{sharedToast.text}</span>
+          {sharedToast.entry && (
+            <button
+              type="button"
+              onClick={() => {
+                const x = sharedToast.entry!;
+                setSharedToast(null);
+                setEditing({
+                  id: x.id,
+                  title: x.title,
+                  url: x.url,
+                  folder: x.folder,
+                  tags: x.tags.join(", "),
+                  notes: x.notes,
+                });
+              }}
+            >
+              {t("補填資料")}
+            </button>
+          )}
         </div>
       )}
     </div>

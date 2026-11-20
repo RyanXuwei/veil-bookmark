@@ -3689,5 +3689,65 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Click the site information icon at the left of the address bar › Microphone › Allow, then press record again.",
   "ja": "アドレスバー左のサイト情報アイコン › マイク › 許可 を選び、もう一度録音を押してください。",
   "ko": "주소창 왼쪽의 사이트 정보 아이콘 › 마이크 › 허용을 선택한 후 다시 녹음을 누르세요."
+ },
+ "已收到分享的網頁，並加密暫存在這支手機。": {
+  "zh-CN": "已收到分享的网页，并加密暂存在这支手机。",
+  "en": "Got the page you shared. It is stored encrypted on this phone.",
+  "ja": "共有したページを受け取り、この端末に暗号化して保存しました。",
+  "ko": "공유한 페이지를 받아 이 휴대폰에 암호화해 저장했습니다."
+ },
+ "{count} 個分享的網頁正在等待，解鎖後會自動加入書籤。不必現在解鎖，可以回到瀏覽器繼續分享。": {
+  "zh-CN": "{count} 个分享的网页正在等待，解锁后会自动加入书签。不必现在解锁，可以回到浏览器继续分享。",
+  "en": "{count} shared page(s) waiting. They become bookmarks automatically when you unlock. No need to unlock now: go back to the browser and keep sharing.",
+  "ja": "共有したページ {count} 件が待機中です。ロック解除時に自動でブックマークに追加されます。今すぐ解除しなくても、ブラウザに戻って共有を続けられます。",
+  "ko": "공유한 페이지 {count}개가 대기 중입니다. 잠금을 해제하면 자동으로 북마크에 추가됩니다. 지금 해제하지 않아도 브라우저로 돌아가 계속 공유할 수 있습니다."
+ },
+ "解鎖後會自動把分享的網頁加入書籤。": {
+  "zh-CN": "解锁后会自动把分享的网页加入书签。",
+  "en": "Unlock and the page you shared becomes a bookmark automatically.",
+  "ja": "ロックを解除すると、共有したページが自動でブックマークに追加されます。",
+  "ko": "잠금을 해제하면 공유한 페이지가 자동으로 북마크에 추가됩니다."
+ },
+ "有 {count} 個分享的網頁無法讀取，請再分享一次。": {
+  "zh-CN": "有 {count} 个分享的网页无法读取，请再分享一次。",
+  "en": "{count} shared page(s) could not be read. Please share them again.",
+  "ja": "共有したページ {count} 件を読み取れませんでした。もう一度共有してください。",
+  "ko": "공유한 페이지 {count}개를 읽을 수 없습니다. 다시 공유해 주세요."
+ },
+ "已加入 {count} 個書籤，{dup} 個原本就在書籤中": {
+  "zh-CN": "已加入 {count} 个书签，{dup} 个原本就在书签中",
+  "en": "Added {count} bookmarks; {dup} already saved",
+  "ja": "ブックマークを {count} 件追加しました（{dup} 件は登録済み）",
+  "ko": "북마크 {count}개를 추가했습니다({dup}개는 이미 저장됨)"
+ },
+ "已加入 {count} 個書籤": {
+  "zh-CN": "已加入 {count} 个书签",
+  "en": "Added {count} bookmarks",
+  "ja": "ブックマークを {count} 件追加しました",
+  "ko": "북마크 {count}개를 추가했습니다"
+ },
+ "已加入書籤：{title}": {
+  "zh-CN": "已加入书签：{title}",
+  "en": "Bookmarked: {title}",
+  "ja": "ブックマークに追加：{title}",
+  "ko": "북마크에 추가: {title}"
+ },
+ "{count} 個網頁原本就在書籤中": {
+  "zh-CN": "{count} 个网页原本就在书签中",
+  "en": "{count} pages were already bookmarked",
+  "ja": "{count} 件のページは登録済みです",
+  "ko": "{count}개 페이지는 이미 북마크에 있습니다"
+ },
+ "這個網頁原本就在書籤中": {
+  "zh-CN": "这个网页原本就在书签中",
+  "en": "This page is already bookmarked",
+  "ja": "このページは登録済みです",
+  "ko": "이 페이지는 이미 북마크에 있습니다"
+ },
+ "補填資料": {
+  "zh-CN": "补填数据",
+  "en": "Add details",
+  "ja": "詳細を追加",
+  "ko": "세부 정보 추가"
  }
 };

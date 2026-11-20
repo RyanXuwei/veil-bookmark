@@ -34,6 +34,8 @@ import {
 } from "./accounts";
 import { token, forgetToken } from "./google";
 import * as bio from "./biometric";
+import * as inbox from "./share-inbox";
+import { safeUrl, type Entry } from "../src/crypto";
 
 // ---- Encrypted copy on this phone (IndexedDB) -------------------------------
 const DB = "veil-bookmark-web";
@@ -92,9 +94,11 @@ export const hasCache = async () => {
   }
 };
 /** Removes this phone's encrypted copy (Drive is not touched). */
-export const clearCache = () => {
+export const clearCache = async () => {
   lastParts = null;
-  return kv(DB, workspaceKey("vault"), "readwrite", undefined, true);
+  await kv(DB, workspaceKey("vault"), "readwrite", undefined, true);
+  // Shared pages waiting for the next unlock, and this phone's share key.
+  await inbox.clear().catch(() => {});
 };
 
 // ---- State ---------------------------------------------------------------
@@ -401,6 +405,80 @@ export const saveMemo = (x: Record<string, unknown>) =>
   edit((v) => upsertMemo(v, x), "memos");
 export const removeMemo = (id: string) =>
   edit((v) => deleteMemo(v, id), "memos");
+/** Same page for duplicate checks: scheme and host case, a trailing slash
+ *  and the #fragment do not matter. */
+export function sameUrlKey(url: string) {
+  try {
+    const u = new URL(safeUrl(url));
+    u.hash = "";
+    return u.href.replace(/\/$/, "");
+  } catch {
+    return url.trim();
+  }
+}
+export type SharedResult = {
+  added: Entry[];
+  existing: Entry[];
+  invalid: { title: string; url: string }[];
+  unreadable: number;
+};
+/** Adds shared pages as bookmarks without asking: the ones sealed in this
+ *  phone's share inbox while locked, plus `extra` (kept in memory). The
+ *  title falls back to the site's name; folder, tags and notes stay empty
+ *  until the user fills them in. A page already bookmarked is not added
+ *  again. Also makes this phone's share key, so later shares need no unlock. */
+export async function addSharedLinks(
+  extra: { title: string; url: string }[] = [],
+): Promise<SharedResult> {
+  const o = open;
+  if (!o) throw Error("已上鎖，請重新解鎖");
+  await inbox.prepare(o.dek, o.v.id).catch(() => {});
+  const got = await inbox
+    .take(o.dek, o.v.id)
+    .catch(() => ({ links: [], ids: [] as string[], unreadable: 0 }));
+  const links = [...got.links.sort((a, b) => a.at - b.at), ...extra];
+  const r: SharedResult = {
+    added: [],
+    existing: [],
+    invalid: [],
+    unreadable: got.unreadable,
+  };
+  if (links.length)
+    await edit((v) => {
+      const seen = new Map<string, Entry>();
+      for (const x of v.entries)
+        if (!x.deleted) seen.set(sameUrlKey(x.url), x);
+      for (const l of links) {
+        let url: string;
+        try {
+          url = safeUrl(l.url.trim());
+        } catch {
+          r.invalid.push(l);
+          continue;
+        }
+        const key = sameUrlKey(url);
+        const old = seen.get(key);
+        if (old) {
+          if (!r.existing.includes(old) && !r.added.includes(old))
+            r.existing.push(old);
+          continue;
+        }
+        let site = url;
+        try {
+          site = new URL(url).hostname.replace(/^www\./, "") || url;
+        } catch {}
+        const entry = upsertEntry(v, {
+          title: l.title.trim().slice(0, 300) || site,
+          url,
+        });
+        seen.set(key, entry);
+        r.added.push(entry);
+      }
+    }, "entries");
+  // Saved (encrypted) on this phone: the inbox items are no longer needed.
+  await inbox.forget(got.ids).catch(() => {});
+  return r;
+}
 /** Drain storage and synchronization before changing the selection. */
 export async function prepareAccountSwitch() {
   await serialized(async () => {

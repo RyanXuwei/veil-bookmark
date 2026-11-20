@@ -640,7 +640,7 @@ try {
     assert(rv.entries.some((x) => x.title === "離線新增")),
   );
 
-  // ---- Share target: a link shared to the app opens the editor -------------
+  // ---- Share target: a shared link becomes a bookmark without a tap --------
   await page.goto(
     APP +
       "?title=" +
@@ -648,7 +648,8 @@ try {
       "&text=" +
       encodeURIComponent("看看 https://shared.example/page"),
   );
-  await page.getByText("解鎖後即可收藏分享過來的網頁。").waitFor();
+  // Sealed on this phone while locked (the share key was made at unlock).
+  await page.getByText("已收到分享的網頁，並加密暫存在這支手機。").waitFor();
   assert.equal(
     new URL(page.url()).search,
     "",
@@ -656,13 +657,22 @@ try {
   );
   await page.getByLabel("主密碼").fill(PASSWORD);
   await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
-  await page.getByRole("dialog", { name: "留下一個好去處" }).waitFor();
-  assert.equal(await page.getByLabel("名稱").inputValue(), "分享的頁面");
+  await page.getByText("已加入書籤：分享的頁面").waitFor();
   assert.equal(
-    await page.getByLabel("網址").inputValue(),
-    "https://shared.example/page",
+    await page.getByRole("dialog", { name: "留下一個好去處" }).count(),
+    0,
+    "no editor waiting for a tap",
   );
-  await page.getByRole("button", { name: "關閉" }).click();
+  await expectRemote(async (rv) =>
+    assert(
+      rv.entries.some(
+        (x) =>
+          !x.deleted &&
+          x.title === "分享的頁面" &&
+          x.url === "https://shared.example/page",
+      ),
+    ),
+  );
 
   // ---- New phone: Google sign-in URL ---------------------------------------
   await page.close();

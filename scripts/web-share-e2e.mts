@@ -1,5 +1,6 @@
 // Sharing into the mobile web app (Android share target, iPhone Shortcut):
-// selected text and pictures become a note, a link alone becomes a bookmark.
+// selected text and pictures become a note, a link alone becomes a bookmark
+// at once (no "Add" tap), also several shared in a row while locked.
 // While the vault is locked the shared content stays in memory only (service
 // worker → page), never in storage unencrypted.
 // Run: npm run build:web && npx tsx scripts/web-share-e2e.mts
@@ -176,6 +177,20 @@ const stored = () =>
     return out;
   });
 
+const shareCount = () =>
+  page.evaluate(async () => {
+    const db: IDBDatabase = await new Promise((ok) => {
+      const r = indexedDB.open("veil-bookmark-web", 1);
+      r.onsuccess = () => ok(r.result);
+    });
+    const list: unknown[] | undefined = await new Promise((ok) => {
+      const r = db.transaction("kv").objectStore("kv").get("shareInbox:share-user");
+      r.onsuccess = () => ok(r.result);
+    });
+    db.close();
+    return list?.length || 0;
+  });
+
 try {
   // Install the service worker (as the home-screen app has it).
   await page.goto(APP);
@@ -220,14 +235,84 @@ try {
   assert(!(await stored()).includes("ZQX-4417"), "only encrypted after saving");
   await page.getByRole("button", { name: "← 完成" }).click();
 
-  // 2) A link alone becomes a bookmark (editor prefilled).
-  await share({ title: "範例", text: "https://example.org/page" });
-  await page.getByText("解鎖後即可收藏分享過來的網頁。").waitFor();
+  // 2) Links shared one after another while locked become bookmarks without
+  //    asking: each is sealed on the phone (no unlock in between), all are
+  //    added at the next unlock, a page already saved is not added twice.
+  const bookmarks = async (n: number) => {
+    for (let i = 0; ; i++) {
+      try {
+        const x = (await current()).entries.filter((e) => !e.deleted);
+        if (x.length >= n) return x;
+      } catch {}
+      if (i > 40) throw Error("bookmarks did not reach Drive");
+      await page.waitForTimeout(250);
+    }
+  };
+  await share({ title: "範例", text: "https://example.org/page-QWV71" });
+  await page.getByText("已收到分享的網頁，並加密暫存在這支手機。").waitFor();
+  await page.getByText(/^1 個分享的網頁正在等待/).waitFor();
+  await share({ title: "", text: "", url: "https://www.sample.net/a-QWV72" });
+  await page.getByText(/^2 個分享的網頁正在等待/).waitFor();
+  await share({ title: "同一頁", text: "https://EXAMPLE.org/page-QWV71/#top" });
+  await page.getByText(/^3 個分享的網頁正在等待/).waitFor();
+  const sealed = await stored();
+  assert(!sealed.includes("QWV7"), "shared links are only stored encrypted while locked");
+  assert(!page.url().includes("QWV7"), "nothing shared is left in the address");
   await page.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
-  await page.getByLabel("網址").waitFor();
-  assert.equal(await page.getByLabel("網址").inputValue(), "https://example.org/page");
-  await page.keyboard.press("Escape");
+  await page.getByText("已加入 2 個書籤", { exact: true }).waitFor(); // the repeat is skipped
+  assert.equal(await page.getByLabel("網址").count(), 0, "no editor waiting for a tap");
+  let marks = await bookmarks(2);
+  assert.equal(marks.length, 2);
+  const a = marks.find((x) => x.url === "https://example.org/page-QWV71")!;
+  const b = marks.find((x) => x.url === "https://www.sample.net/a-QWV72")!;
+  assert.equal(a.title, "範例");
+  assert.equal(b.title, "sample.net", "missing title: the site's name for now");
+  assert.equal(a.folder, "");
+  assert.deepEqual(a.tags, []);
+  assert.equal(await shareCount(), 0, "share inbox emptied after saving");
+
+  // 2b) Already bookmarked: not added again; "Add details" opens it.
+  await share({ title: "範例", text: "https://example.org/page-QWV71" });
+  await page.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
+  await page.getByText("這個網頁原本就在書籤中").waitFor();
+  assert.equal((await bookmarks(2)).length, 2);
+
+  // 2c) A phone that has no share key yet (never unlocked since this
+  //     version): the link waits in memory, then is added the same way.
+  await page.evaluate(async () => {
+    const db: IDBDatabase = await new Promise((ok) => {
+      const r = indexedDB.open("veil-bookmark-web", 1);
+      r.onsuccess = () => ok(r.result);
+    });
+    await new Promise((ok) => {
+      const tx = db.transaction("kv", "readwrite");
+      tx.objectStore("kv").delete("shareKey:share-user");
+      tx.oncomplete = ok;
+    });
+    db.close();
+  });
+  await share({ title: "第三頁", text: "看看這個 https://example.com/third" });
+  await page.getByText("解鎖後會自動把分享的網頁加入書籤。").waitFor();
+  await page.getByLabel("主密碼", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "解鎖保險庫 →" }).click();
+  await page.getByText("已加入書籤：第三頁").waitFor();
+  marks = await bookmarks(3);
+  assert(marks.some((x) => x.url === "https://example.com/third" && x.title === "第三頁"));
+  // Fill in the rest later from the message.
+  await page.getByRole("button", { name: "補填資料" }).click();
+  assert.equal(await page.getByLabel("網址").inputValue(), "https://example.com/third");
+  await page.getByLabel("名稱").fill("第三頁（已補填）");
+  await page.getByRole("button", { name: "加密儲存 →" }).click();
+  await page.getByText("已更新書籤").waitFor();
+  for (let i = 0; ; i++) {
+    marks = await bookmarks(3);
+    if (marks.some((x) => x.title === "第三頁（已補填）")) break;
+    if (i > 40) throw Error("edited bookmark did not reach Drive");
+    await page.waitForTimeout(250);
+  }
+  assert.equal(marks.length, 3, "editing did not create another bookmark");
 
   // 3) Lost share (worker restarted): a clear message, no crash.
   await page.goto(APP + "?share=missing");
@@ -240,7 +325,7 @@ try {
   await page.getByText("已加入記事本").waitFor();
   assert.equal(new URL(page.url()).search, "", "text removed from the address");
   console.log(
-    "PASS share into the app: text + picture → note (title, source link, image, synced), locked meanwhile with nothing stored unencrypted, link alone → bookmark, lost share message, iPhone Shortcut text → note",
+    "PASS share into the app: text + picture → note (title, source link, image, synced), locked meanwhile with nothing stored unencrypted, links shared in a row while locked → sealed on the phone, added as bookmarks at unlock without a tap (site name as title, duplicates skipped, details filled in later), lost share message, iPhone Shortcut text → note",
   );
 } finally {
   await browser.close();

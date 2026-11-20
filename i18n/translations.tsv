@@ -613,3 +613,13 @@ iPhone／iPad：點網址列的「大小」(ᴀA) › 網站設定 › 麥克風
 Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許；若仍無法使用，到手機「設定 › 應用程式 › Chrome › 權限」開啟麥克風。|Android: tap the settings icon at the left of the address bar › Permissions › Microphone › Allow. If it still does not work, turn on the microphone in Settings › Apps › Chrome › Permissions.|Android：アドレスバー左の設定アイコン › 権限 › マイク › 許可。それでも使えない場合は、端末の「設定 › アプリ › Chrome › 権限」でマイクをオンにしてください。|Android: 주소창 왼쪽의 설정 아이콘 › 권한 › 마이크 › 허용. 그래도 안 되면 휴대폰의 설정 › 애플리케이션 › Chrome › 권한에서 마이크를 켜세요.
 點網址列右側的麥克風圖示選「一律允許」，或到 Chrome 設定 › 隱私權和安全性 › 網站設定 › 麥克風，允許 Veil Bookmark。|Click the microphone icon at the right of the address bar and choose Always allow, or allow Veil Bookmark in Chrome Settings › Privacy and security › Site settings › Microphone.|アドレスバー右のマイクアイコンで「常に許可」を選ぶか、Chrome の設定 › プライバシーとセキュリティ › サイトの設定 › マイクで Veil Bookmark を許可してください。|주소창 오른쪽의 마이크 아이콘에서 항상 허용을 선택하거나, Chrome 설정 › 개인정보 보호 및 보안 › 사이트 설정 › 마이크에서 Veil Bookmark를 허용하세요.
 點網址列左側的網站資訊圖示 › 麥克風 › 允許，然後再按一次錄音。|Click the site information icon at the left of the address bar › Microphone › Allow, then press record again.|アドレスバー左のサイト情報アイコン › マイク › 許可 を選び、もう一度録音を押してください。|주소창 왼쪽의 사이트 정보 아이콘 › 마이크 › 허용을 선택한 후 다시 녹음을 누르세요.
+已收到分享的網頁，並加密暫存在這支手機。|Got the page you shared. It is stored encrypted on this phone.|共有したページを受け取り、この端末に暗号化して保存しました。|공유한 페이지를 받아 이 휴대폰에 암호화해 저장했습니다.
+{count} 個分享的網頁正在等待，解鎖後會自動加入書籤。不必現在解鎖，可以回到瀏覽器繼續分享。|{count} shared page(s) waiting. They become bookmarks automatically when you unlock. No need to unlock now: go back to the browser and keep sharing.|共有したページ {count} 件が待機中です。ロック解除時に自動でブックマークに追加されます。今すぐ解除しなくても、ブラウザに戻って共有を続けられます。|공유한 페이지 {count}개가 대기 중입니다. 잠금을 해제하면 자동으로 북마크에 추가됩니다. 지금 해제하지 않아도 브라우저로 돌아가 계속 공유할 수 있습니다.
+解鎖後會自動把分享的網頁加入書籤。|Unlock and the page you shared becomes a bookmark automatically.|ロックを解除すると、共有したページが自動でブックマークに追加されます。|잠금을 해제하면 공유한 페이지가 자동으로 북마크에 추가됩니다.
+有 {count} 個分享的網頁無法讀取，請再分享一次。|{count} shared page(s) could not be read. Please share them again.|共有したページ {count} 件を読み取れませんでした。もう一度共有してください。|공유한 페이지 {count}개를 읽을 수 없습니다. 다시 공유해 주세요.
+已加入 {count} 個書籤，{dup} 個原本就在書籤中|Added {count} bookmarks; {dup} already saved|ブックマークを {count} 件追加しました（{dup} 件は登録済み）|북마크 {count}개를 추가했습니다({dup}개는 이미 저장됨)
+已加入 {count} 個書籤|Added {count} bookmarks|ブックマークを {count} 件追加しました|북마크 {count}개를 추가했습니다
+已加入書籤：{title}|Bookmarked: {title}|ブックマークに追加：{title}|북마크에 추가: {title}
+{count} 個網頁原本就在書籤中|{count} pages were already bookmarked|{count} 件のページは登録済みです|{count}개 페이지는 이미 북마크에 있습니다
+這個網頁原本就在書籤中|This page is already bookmarked|このページは登録済みです|이 페이지는 이미 북마크에 있습니다
+補填資料|Add details|詳細を追加|세부 정보 추가

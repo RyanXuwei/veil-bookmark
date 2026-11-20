@@ -44,7 +44,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.15.1
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.16.0
 
 ## 功能
 
@@ -117,7 +117,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[�
 4. 「記事本」分頁可以閱讀、新增、編輯與刪除記事，也能用「匯入檔案」把 .txt、.md、.html、.docx 變成記事：粗體、斜體、底線、刪除線、標題、項目符號與編號清單、引言、螢光筆、插入照片、紙張顏色與資料夾。也能手寫（手指或觸控筆）與錄音，格式與電腦版相同，兩邊都看得到；字型與版面配置請在電腦上使用。
 
 - 可以「加到主畫面」當成 App 使用。
-- **分享進 Veil Bookmark（Android）**：加到主畫面後，在 Chrome 選取文字按「分享」、或在相簿／其他 App 分享圖片，選 Veil Bookmark 就會存成一則記事（附上來源網址）；只分享網址則開啟新增書籤。保險庫上鎖時，分享的內容只暫放在記憶體，解鎖後才加密存入。
+- **分享進 Veil Bookmark（Android）**：加到主畫面後，在 Chrome 選取文字按「分享」、或在相簿／其他 App 分享圖片，選 Veil Bookmark 就會存成一則記事（附上來源網址）；只分享網址則直接建立書籤，不必再按「加入書籤」：名稱沒有時先用網站名稱，資料夾、標籤、備註之後再補填；已收藏過的網址不會重複建立。保險庫上鎖時也能連續分享多個網頁，每個網址都會先用這支手機的分享金鑰加密暫存（不需要解鎖），下次解鎖時一次加入書籤。分享的文字與圖片在上鎖時只暫放在記憶體，解鎖後才加密存入。
 - **iPhone**：Safari 不支援網頁出現在分享選單。可以複製文字或圖片，到「記事本」新增記事後貼上；或用「捷徑」App 做一個分享捷徑（接收文字與網址 → 「URL 編碼」→ 打開 `https://veil-bookmark.bitingbox.win/?text=` 加上編碼後的文字）。注意：捷徑會把文字放在網址裡，Safari 的瀏覽紀錄會留下這段文字，私密內容請用複製貼上。
 - 主密碼只在手機上使用；手機保留一份加密副本，沒有網路時也能開啟。閒置 15 分鐘或離開 5 分鐘後自動上鎖。
 - 可在「同步與設定」啟用 **Face ID／指紋解鎖**（需要支援通行金鑰的手機與瀏覽器，例如 Android 的 Chrome、iOS 18 以上的 Safari）。主密碼不會被儲存；每 30 天需要輸入一次主密碼。
