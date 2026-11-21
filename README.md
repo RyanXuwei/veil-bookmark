@@ -19,6 +19,20 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
+<div align="center">
+
+## 🎬 武俠篇宣傳影片
+
+### 妖不必斬，收起來就好｜免費加密書籤 Veil Bookmark 武俠篇
+
+<a href="https://www.youtube.com/watch?v=ECOXEfD-b68"><img src="https://img.youtube.com/vi/ECOXEfD-b68/maxresdefault.jpg" width="820" alt="妖不必斬，收起來就好｜免費加密書籤 Veil Bookmark 武俠篇 — 點擊觀看 YouTube 宣傳影片"></a>
+
+**[▶ 前往 YouTube 觀看武俠篇](https://www.youtube.com/watch?v=ECOXEfD-b68)**
+
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://github.com/RyanXuwei)
+
+</div>
+
 ## 為什麼用 Veil Bookmark
 
 | | |
@@ -44,7 +58,7 @@ Veil Bookmark 用你的主密碼把書籤和記事全部加密。不必註冊帳
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.16.0
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://github.com/RyanXuwei)　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.16.0
 
 ## 功能
 
