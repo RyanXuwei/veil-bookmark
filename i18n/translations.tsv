@@ -623,3 +623,19 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 {count} 個網頁原本就在書籤中|{count} pages were already bookmarked|{count} 件のページは登録済みです|{count}개 페이지는 이미 북마크에 있습니다
 這個網頁原本就在書籤中|This page is already bookmarked|このページは登録済みです|이 페이지는 이미 북마크에 있습니다
 補填資料|Add details|詳細を追加|세부 정보 추가
+用本機 AI 摘要並存入 Veil|Summarize locally and save to Veil|ローカルAIで要約してVeilに保存|로컬 AI로 요약하여 Veil에 저장
+本機 AI 摘要|Local AI summary|ローカルAI要約|로컬 AI 요약
+摘要|Summary|要約|요약
+無法擷取此頁面，請在一般網頁重試|Cannot capture this page. Try a regular web page.|このページを取得できません。通常のウェブページでお試しください|이 페이지를 가져올 수 없습니다. 일반 웹페이지에서 다시 시도하세요
+摘要頁面已過期，請重新右鍵擷取|This capture expired. Capture the page again.|取得したページの有効期限が切れました。再度取得してください|캡처가 만료되었습니다. 페이지를 다시 캡처하세요
+摘要內容無效|Invalid summary content|要約の内容が無効です|요약 내용이 올바르지 않습니다
+本摘要僅涵蓋頁面前段文字|This summary covers only the beginning of the page.|この要約はページ前半のテキストのみ対象です|이 요약은 페이지 앞부분의 텍스트만 포함합니다
+摘要與翻譯在這台電腦執行，首次使用可能下載 Chrome 模型。存入後依原設定加密同步。|Summary and translation run on this computer. Chrome may download models on first use. Saved notes follow your encrypted sync settings.|要約と翻訳はこのパソコンで実行されます。初回はChromeのモデルをダウンロードする場合があります。保存後は設定に従い暗号化して同期します。|요약과 번역은 이 컴퓨터에서 실행됩니다. 처음에는 Chrome 모델을 다운로드할 수 있습니다. 저장 후 기존 설정에 따라 암호화하여 동기화됩니다.
+請先解鎖 Veil，再產生摘要。|Unlock Veil before generating a summary.|要約を生成する前にVeilのロックを解除してください|요약을 생성하기 전에 Veil의 잠금을 해제하세요.
+本機摘要失敗，可重試或檢查 Chrome 模型狀態|Local summarization failed. Retry or check Chrome's model status.|ローカル要約に失敗しました。再試行するかChromeのモデル状態を確認してください|로컬 요약에 실패했습니다. 다시 시도하거나 Chrome 모델 상태를 확인하세요
+來源語言（可修改）|Source language (editable)|元の言語（変更可）|원문 언어 (변경 가능)
+摘要語言|Summary language|要約の言語|요약 언어
+此裝置或語言尚不支援 Chrome 本機摘要。需要支援本機 AI 的電腦版 Chrome，請確認模型、硬體與可用空間。|Chrome local summarization is unavailable for this device or language. Use a supported desktop Chrome and check models, hardware and free space.|この端末または言語ではChromeのローカル要約が利用できません。対応するデスクトップ版Chromeでモデル、ハードウェア、空き容量を確認してください。|이 기기 또는 언어에서는 Chrome 로컬 요약을 사용할 수 없습니다. 지원되는 데스크톱 Chrome에서 모델, 하드웨어 및 여유 공간을 확인하세요.
+開始本機摘要|Start local summary|ローカル要約を開始|로컬 요약 시작
+加密存入記事本|Save encrypted note|暗号化してメモ帳に保存|암호화하여 메모에 저장
+開啟記事|Open note|メモを開く|메모 열기

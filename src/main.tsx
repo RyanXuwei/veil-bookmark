@@ -9,6 +9,7 @@ import { VERSION } from "./version";
 import { BobaSupport } from "./boba-support";
 import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
+import { SummaryPage } from "./summary-page";
 import { SetupPage } from "./setup";
 import { Disclaimer } from "./disclaimer";
 import { RecoverForm, RecoveryKeyModal, RecoverySection } from "./recovery";
@@ -28,7 +29,7 @@ const CREDITS = {
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
   version: VERSION,
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-18",
+  lastUpdatedDate: "2026-11-22",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -48,6 +49,7 @@ async function rpc(type: string, data: Record<string, unknown> = {}) {
 }
 const isPopup = new URLSearchParams(location.search).has("popup");
 const isSetup = new URLSearchParams(location.search).has("setup");
+const isSummary = new URLSearchParams(location.search).has("summary");
 const isNotes = new URLSearchParams(location.search).has("notes");
 async function openNotebook(id = "") {
   await chrome.tabs.create({
@@ -1421,11 +1423,14 @@ function App() {
 }
 // The old full-page bookmark view is gone; an extension tab without a
 // known page opens the notebook instead.
-if (!isPopup && !isNotes && !isSetup) location.replace("index.html?notes");
+if (!isPopup && !isNotes && !isSetup && !isSummary)
+  location.replace("index.html?notes");
 else
   void loadLang().then(() =>
     createRoot(document.getElementById("root")!).render(
-      isNotes ? (
+      isSummary ? (
+        <SummaryPage rpc={rpc} />
+      ) : isNotes ? (
         <NotebookPage rpc={rpc} />
       ) : isSetup ? (
         <SetupPage rpc={rpc} />

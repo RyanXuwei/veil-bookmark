@@ -1,3 +1,5 @@
+import { captureSummary, SUMMARY_TTL } from "./summary-capture";
+import type { SummarySource } from "./local-summary";
 import {
   b64,
   unb64,
@@ -74,7 +76,12 @@ let lockGeneration = 0;
 async function lock() {
   lockGeneration++;
   clearCaches(); // no decrypted data stays in memory once locked
-  await chrome.storage.session.remove(["session", "capture", "passwordProof"]);
+  await chrome.storage.session.remove([
+    "session",
+    "capture",
+    "passwordProof",
+    "summaryJobs",
+  ]);
   await chrome.alarms.clear("veilmark-lock");
 }
 async function session(): Promise<Session> {
@@ -236,7 +243,11 @@ async function openMedia(
 ) {
   try {
     const pt = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: unb64(r.iv), additionalData: mediaAad(vaultId, hash) },
+      {
+        name: "AES-GCM",
+        iv: unb64(r.iv),
+        additionalData: mediaAad(vaultId, hash),
+      },
       dek,
       unb64(r.ciphertext),
     );
@@ -348,7 +359,9 @@ async function writeVault(
       memos: v.memos.map((m) => ({
         ...m,
         ...(m.images && { images: m.images.map((i) => ({ ...i })) }),
-        ...(m.recordings && { recordings: m.recordings.map((r) => ({ ...r })) }),
+        ...(m.recordings && {
+          recordings: m.recordings.map((r) => ({ ...r })),
+        }),
       })),
     };
     const refs = new Set<string>();
@@ -691,6 +704,45 @@ function moveItems(v: Vault, kind: FolderKind, from: string, to: string) {
     }
 }
 async function handle(m: any, sender: chrome.runtime.MessageSender) {
+  if (m.type === "SUMMARY_GET" || m.type === "SUMMARY_SAVE") {
+    const s = await session();
+    const { summaryJobs = {} } = await chrome.storage.session.get<{
+      summaryJobs?: Record<string, SummarySource>;
+    }>("summaryJobs");
+    const source = Object.hasOwn(summaryJobs, m.id)
+      ? summaryJobs[m.id]
+      : undefined;
+    if (!source || Date.now() - source.at > SUMMARY_TTL)
+      throw Error("摘要頁面已過期，請重新右鍵擷取");
+    if (m.type === "SUMMARY_GET") return { source, authorization: s.nonce };
+    if (m.authorization !== s.nonce) throw Error("已上鎖，請重新解鎖");
+    if (
+      typeof m.summary !== "string" ||
+      !m.summary.trim() ||
+      m.summary.length > 30000
+    )
+      throw Error("摘要內容無效");
+    const v = await readVault(await keyOf(s), true);
+    const clip = clipNote({
+      text:
+        t("本機 AI 摘要") +
+        "\n" +
+        m.summary +
+        "\n\n" +
+        new Date(source.at).toISOString() +
+        (source.truncated ? "\n" + t("本摘要僅涵蓋頁面前段文字") : ""),
+      pageTitle: source.title,
+      pageUrl: source.url,
+    });
+    clip.title = (t("摘要") + " · " + source.title).slice(0, 200);
+    const memo = upsertMemo(v, clip);
+    await save(v, s, undefined, "memos");
+    await touch(s);
+    delete summaryJobs[m.id];
+    await chrome.storage.session.set({ summaryJobs });
+    void requestSync();
+    return { id: memo.id };
+  }
   if (m.type === "OPEN_PRIVATE") {
     await chrome.windows.create({ incognito: true });
     return;
@@ -1186,6 +1238,17 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
     void menus();
   });
   chrome.alarms.onAlarm.addListener((a) => {
+    if (a.name.startsWith("veil-summary-expire:")) {
+      void serialized(async () => {
+        const { summaryJobs = {} } = await chrome.storage.session.get<{
+          summaryJobs?: Record<string, SummarySource>;
+        }>("summaryJobs");
+        const id = a.name.slice("veil-summary-expire:".length);
+        delete summaryJobs[id];
+        await chrome.storage.session.set({ summaryJobs });
+      });
+      return;
+    }
     if (a.name === "veilmark-lock") {
       void session().catch(() => {});
       return;
@@ -1225,6 +1288,12 @@ async function menus() {
     title: t("圖片加入 Veil 記事本"),
     contexts: ["image"],
   });
+  chrome.contextMenus.create({
+    id: "veil-summary",
+    title: t("用本機 AI 摘要並存入 Veil"),
+    contexts: ["page", "selection"],
+    documentUrlPatterns: ["http://*/*", "https://*/*"],
+  });
 }
 chrome.runtime.onInstalled.addListener(() => void menus());
 chrome.storage.onChanged.addListener((c, area) => {
@@ -1237,12 +1306,16 @@ function badge(text: string, title: string) {
   if (text === "✓")
     setTimeout(() => {
       void chrome.action.setBadgeText({ text: "" });
-      void chrome.action.setTitle({ title: chrome.i18n.getMessage("actionTitle") });
+      void chrome.action.setTitle({
+        title: chrome.i18n.getMessage("actionTitle"),
+      });
     }, 2500);
 }
 /** Saves notes clipped while locked (called once the vault is open). */
 async function applyClips(v: Vault) {
-  const { clips = [] } = await chrome.storage.session.get<{ clips?: Pending[] }>("clips");
+  const { clips = [] } = await chrome.storage.session.get<{
+    clips?: Pending[];
+  }>("clips");
   await chrome.storage.session.remove("clips");
   const fresh = clips.filter((c) => Date.now() - c.at < CLIP_TTL);
   void chrome.action.setBadgeText({ text: "" });
@@ -1251,18 +1324,38 @@ async function applyClips(v: Vault) {
   await save(v, await session(), undefined, "memos");
   badge("✓", t("已加入記事本"));
 }
-chrome.contextMenus.onClicked.addListener((info, tab) => void onClip(info, tab));
+chrome.contextMenus.onClicked.addListener(
+  (info, tab) => void onClip(info, tab),
+);
 // Also reachable from the extension's own tests (the menu cannot be clicked
 // by automation); other pages cannot reach the service worker's globals.
-(globalThis as any).veilOnClip = (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) =>
-  onClip(info, tab);
-async function onClip(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
-  if (info.menuItemId !== "veil-note-text" && info.menuItemId !== "veil-note-image")
+(globalThis as any).veilOnClip = (
+  info: chrome.contextMenus.OnClickData,
+  tab?: chrome.tabs.Tab,
+) => onClip(info, tab);
+async function onClip(
+  info: chrome.contextMenus.OnClickData,
+  tab?: chrome.tabs.Tab,
+) {
+  if (info.menuItemId === "veil-summary") {
+    try {
+      if (tab?.id === undefined) throw Error();
+      await captureSummary(tab.id);
+    } catch {
+      badge("!", t("無法擷取此頁面，請在一般網頁重試"));
+    }
+    return;
+  }
+  if (
+    info.menuItemId !== "veil-note-text" &&
+    info.menuItemId !== "veil-note-image"
+  )
     return;
   await (async () => {
     await loadLang();
     const image = info.menuItemId === "veil-note-image";
-    const picture = image && info.srcUrl ? await fetchPicture(info.srcUrl) : null;
+    const picture =
+      image && info.srcUrl ? await fetchPicture(info.srcUrl) : null;
     const clip = clipNote({
       text: image ? "" : info.selectionText || "",
       pageTitle: tab?.title || "",
@@ -1282,8 +1375,13 @@ async function onClip(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.T
       badge("✓", t("已加入記事本"));
     } catch {
       // Locked: keep it in memory until the vault is unlocked.
-      const { clips = [] } = await chrome.storage.session.get<{ clips?: Pending[] }>("clips");
-      const keep = [...clips.filter((c) => Date.now() - c.at < CLIP_TTL), { at: Date.now(), clip }].slice(-20);
+      const { clips = [] } = await chrome.storage.session.get<{
+        clips?: Pending[];
+      }>("clips");
+      const keep = [
+        ...clips.filter((c) => Date.now() - c.at < CLIP_TTL),
+        { at: Date.now(), clip },
+      ].slice(-20);
       await chrome.storage.session.set({ clips: keep });
       badge(String(keep.length), t("解鎖後會把選取的內容加入記事本"));
       try {

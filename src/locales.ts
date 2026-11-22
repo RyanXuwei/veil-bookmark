@@ -3749,5 +3749,101 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Add details",
   "ja": "詳細を追加",
   "ko": "세부 정보 추가"
+ },
+ "用本機 AI 摘要並存入 Veil": {
+  "zh-CN": "用本机 AI 摘要并存入 Veil",
+  "en": "Summarize locally and save to Veil",
+  "ja": "ローカルAIで要約してVeilに保存",
+  "ko": "로컬 AI로 요약하여 Veil에 저장"
+ },
+ "本機 AI 摘要": {
+  "zh-CN": "本机 AI 摘要",
+  "en": "Local AI summary",
+  "ja": "ローカルAI要約",
+  "ko": "로컬 AI 요약"
+ },
+ "摘要": {
+  "zh-CN": "摘要",
+  "en": "Summary",
+  "ja": "要約",
+  "ko": "요약"
+ },
+ "無法擷取此頁面，請在一般網頁重試": {
+  "zh-CN": "无法截取此页面，请在一般网页重试",
+  "en": "Cannot capture this page. Try a regular web page.",
+  "ja": "このページを取得できません。通常のウェブページでお試しください",
+  "ko": "이 페이지를 가져올 수 없습니다. 일반 웹페이지에서 다시 시도하세요"
+ },
+ "摘要頁面已過期，請重新右鍵擷取": {
+  "zh-CN": "摘要页面已过期，请重新右键截取",
+  "en": "This capture expired. Capture the page again.",
+  "ja": "取得したページの有効期限が切れました。再度取得してください",
+  "ko": "캡처가 만료되었습니다. 페이지를 다시 캡처하세요"
+ },
+ "摘要內容無效": {
+  "zh-CN": "摘要内容无效",
+  "en": "Invalid summary content",
+  "ja": "要約の内容が無効です",
+  "ko": "요약 내용이 올바르지 않습니다"
+ },
+ "本摘要僅涵蓋頁面前段文字": {
+  "zh-CN": "本摘要仅涵盖页面前段文字",
+  "en": "This summary covers only the beginning of the page.",
+  "ja": "この要約はページ前半のテキストのみ対象です",
+  "ko": "이 요약은 페이지 앞부분의 텍스트만 포함합니다"
+ },
+ "摘要與翻譯在這台電腦執行，首次使用可能下載 Chrome 模型。存入後依原設定加密同步。": {
+  "zh-CN": "摘要与翻译在这台电脑运行，首次使用可能下载 Chrome 模型。存入后依原设置加密同步。",
+  "en": "Summary and translation run on this computer. Chrome may download models on first use. Saved notes follow your encrypted sync settings.",
+  "ja": "要約と翻訳はこのパソコンで実行されます。初回はChromeのモデルをダウンロードする場合があります。保存後は設定に従い暗号化して同期します。",
+  "ko": "요약과 번역은 이 컴퓨터에서 실행됩니다. 처음에는 Chrome 모델을 다운로드할 수 있습니다. 저장 후 기존 설정에 따라 암호화하여 동기화됩니다."
+ },
+ "請先解鎖 Veil，再產生摘要。": {
+  "zh-CN": "请先解锁 Veil，再产生摘要。",
+  "en": "Unlock Veil before generating a summary.",
+  "ja": "要約を生成する前にVeilのロックを解除してください",
+  "ko": "요약을 생성하기 전에 Veil의 잠금을 해제하세요."
+ },
+ "本機摘要失敗，可重試或檢查 Chrome 模型狀態": {
+  "zh-CN": "本机摘要失败，可重试或检查 Chrome 模型状态",
+  "en": "Local summarization failed. Retry or check Chrome's model status.",
+  "ja": "ローカル要約に失敗しました。再試行するかChromeのモデル状態を確認してください",
+  "ko": "로컬 요약에 실패했습니다. 다시 시도하거나 Chrome 모델 상태를 확인하세요"
+ },
+ "來源語言（可修改）": {
+  "zh-CN": "来源语言（可修改）",
+  "en": "Source language (editable)",
+  "ja": "元の言語（変更可）",
+  "ko": "원문 언어 (변경 가능)"
+ },
+ "摘要語言": {
+  "zh-CN": "摘要语言",
+  "en": "Summary language",
+  "ja": "要約の言語",
+  "ko": "요약 언어"
+ },
+ "此裝置或語言尚不支援 Chrome 本機摘要。需要支援本機 AI 的電腦版 Chrome，請確認模型、硬體與可用空間。": {
+  "zh-CN": "此设备或语言尚不支持 Chrome 本机摘要。需要支持本机 AI 的电脑版 Chrome，请确认模型、硬件与可用空间。",
+  "en": "Chrome local summarization is unavailable for this device or language. Use a supported desktop Chrome and check models, hardware and free space.",
+  "ja": "この端末または言語ではChromeのローカル要約が利用できません。対応するデスクトップ版Chromeでモデル、ハードウェア、空き容量を確認してください。",
+  "ko": "이 기기 또는 언어에서는 Chrome 로컬 요약을 사용할 수 없습니다. 지원되는 데스크톱 Chrome에서 모델, 하드웨어 및 여유 공간을 확인하세요."
+ },
+ "開始本機摘要": {
+  "zh-CN": "开始本机摘要",
+  "en": "Start local summary",
+  "ja": "ローカル要約を開始",
+  "ko": "로컬 요약 시작"
+ },
+ "加密存入記事本": {
+  "zh-CN": "加密存入记事本",
+  "en": "Save encrypted note",
+  "ja": "暗号化してメモ帳に保存",
+  "ko": "암호화하여 메모에 저장"
+ },
+ "開啟記事": {
+  "zh-CN": "打开记事",
+  "en": "Open note",
+  "ja": "メモを開く",
+  "ko": "메모 열기"
  }
 };

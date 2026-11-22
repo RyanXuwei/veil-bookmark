@@ -4,6 +4,8 @@ const L = readFileSync("src/locales.ts", "utf8");
 const missing = new Set();
 for (const f of [
   "src/main.tsx",
+  "src/summary-page.tsx",
+  "src/summary-capture.ts",
   "src/setup.tsx",
   "src/memos.tsx",
   "src/disclaimer.tsx",

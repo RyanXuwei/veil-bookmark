@@ -24,6 +24,7 @@
         </p>
 
         <h2>擴充功能處理的資料</h2>
+<p>1.17.0 起，只有選擇右鍵本機摘要時，才讀取目前網頁可見文字（略過表單與隱藏元素，最多24,000字元）。來源文字暫存在瀏覽器 session 記憶體，十分鐘到期或上鎖時清除；模型與語言包可能由 Chrome 下載，但摘要與翻譯在本機執行，不將來源文字傳給雲端 AI。確認存入後，摘要與來源連結隨記事加密保存，依使用者原有設定同步至 Drive。</p>
         <ul>
           <li><strong>書籤與記事內容</strong>（名稱、網址、資料夾、標籤、私密備註、記事標題與內文）：以 AES-256-GCM 加密後存在你電腦的 Chrome 擴充功能儲存空間。主密碼不會被儲存或傳送。</li>
           <li><strong>救援金鑰</strong>：建立時只在畫面上顯示一次，不會被儲存或傳送；保險庫中只保存以救援金鑰加密的資料金鑰。</li>
@@ -116,6 +117,7 @@
         </p>
 
         <h2>Data the extension handles</h2>
+<p>From 1.17.0, choosing the local-summary context menu reads visible text from the current page, excluding forms and hidden elements, up to 24,000 characters. Captures stay in session memory and expire after ten minutes or on lock. Chrome may download models and language packs; inference and translation run locally with no cloud-AI fallback. After confirmation, the summary and source link are encrypted as a note and follow your Drive sync settings.</p>
         <p>From version 0.2.4, notes can include paper colors, drawings and positioned audio stickers. Recording starts only when you select Record and grant microphone access. Stopping or locking closes the microphone. Completed and placed clips are encrypted with the note locally, and included in encrypted vault sync only if you enable Drive. There is no speech recognition or transmission of raw audio to the developer. You can delete clips individually.</p>
         <ul>
           <li><strong>Bookmark and note content</strong> (title, URL, folder, tags, notes, note titles and text): encrypted with AES-256-GCM and stored in Chrome's extension storage on your computer. Your master password is never stored or transmitted.</li>

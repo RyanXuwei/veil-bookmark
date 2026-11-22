@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_appName__",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "minimum_chrome_version": "120",
   "description": "__MSG_appDesc__",
   "permissions": [
@@ -10,6 +10,7 @@
     "idle",
     "activeTab",
     "contextMenus",
+    "scripting",
     "identity",
     "unlimitedStorage"
   ],

@@ -58,7 +58,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://g
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://github.com/RyanXuwei)　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.16.0
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.17.0
 
 ## 功能
 
@@ -218,3 +218,11 @@ npm run build
 離線修改會保留在原帳戶，不會跟著切換到別的 Drive。「移除此帳戶」僅移除選定帳戶的本機資料與解鎖設定，但尚未同步的修改會遺失，請先確認同步完成。舊版未能確認帳戶歸屬的資料會保留為「升級前的本機副本（離線）」，不會自動上傳。
 
 如果 Veil Bookmark 對你有幫助，歡迎 [Give me a Boba!](https://bitingbox.bobaboba.me)。
+
+### 網頁本機 AI 摘要（電腦版 Chrome）
+
+在一般網頁按右鍵，選「用本機 AI 摘要並存入 Veil」。Veil 會開啟摘要頁；若已上鎖，先解鎖。確認來源與摘要語言後，按「開始本機摘要」，看過內容後按「加密存入記事本」。記事會附來源標題、網址與時間，按原設定加密備份及同步。
+
+預設繁中輸出。Chrome 摘要 API 未直接支援中文時，使用本機翻譯成英文後摘要，再翻回繁中；翻譯與摘要可能有誤，請對照原文。首次使用可能下載 Chrome 模型，需支援本機 AI 的電腦、Chrome 及足夠磁碟空間；不支援時會顯示說明，不會把頁面改送雲端。模型推論不需 API 金鑰。硬體與語言限制以 [Chrome 官方文件](https://developer.chrome.com/docs/ai/summarizer-api) 為準。
+
+只讀取目前頁面的可見文字，略過表單與隱藏元素，不包含其他分頁、跨來源框架、影片或圖片中的文字。每次最多 24,000 字元，超長會顯示前段摘要提示；請於十分鐘內完成。Chrome 內建頁、商店頁或受保護頁面可能無法擷取。手機版不提供產生功能，但能閱讀已存入的摘要記事。
