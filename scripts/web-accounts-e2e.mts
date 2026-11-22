@@ -365,7 +365,10 @@ try {
   await again.close();
   // Removing B removes B alone, including on another tab displaying B.
   await (await accountMenu(b)).getByRole("button", { name: /移除此帳戶$/ }).click();
-  await b.getByRole("button", { name: "確定移除此帳戶", exact: true }).click();
+  await Promise.all([
+    b.waitForEvent("domcontentloaded"),
+    b.getByRole("button", { name: "確定移除此帳戶", exact: true }).click(),
+  ]);
   await b.waitForFunction(() => !localStorage.getItem("veilAccount:B"));
   assert.equal(await readCache(b, "B"), undefined);
   assert((await readCache(legacy, "A")).a.id === "vault-A");
