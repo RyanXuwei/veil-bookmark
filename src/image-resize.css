@@ -1,0 +1,75 @@
+.veilImageResize {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  outline: 2px solid #19a9db;
+}
+.veilImageResize .veilImageHandle {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  min-width: 0;
+  min-height: 0;
+  margin: -12px 0 0 -12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #19a9db 0 5px,
+    white 5px 7px,
+    transparent 7px
+  );
+  pointer-events: auto;
+  touch-action: none;
+}
+.veilImageHandle.nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.veilImageHandle.n {
+  left: 50%;
+  top: 0;
+  cursor: ns-resize;
+}
+.veilImageHandle.ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.veilImageHandle.e {
+  left: 100%;
+  top: 50%;
+  cursor: ew-resize;
+}
+.veilImageHandle.se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.veilImageHandle.s {
+  left: 50%;
+  top: 100%;
+  cursor: ns-resize;
+}
+.veilImageHandle.sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.veilImageHandle.w {
+  left: 0;
+  top: 50%;
+  cursor: ew-resize;
+}
+.veilImageHandle:focus-visible {
+  outline: 2px solid #167ba1;
+}
+@media print {
+  .veilImageResize {
+    display: none !important;
+  }
+}

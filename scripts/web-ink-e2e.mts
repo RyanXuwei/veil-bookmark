@@ -47,7 +47,9 @@ const server = createServer(async (req, res) => {
   if (req.method !== "GET") return res.writeHead(405).end(); // like static hosting
   // A blank page (no CSP) to send the POST from, as Android's share sheet does.
   if (path === "/__share")
-    return res.writeHead(200, { "content-type": "text/html" }).end('<!doctype html><meta charset="utf-8"><body>');
+    return res
+      .writeHead(200, { "content-type": "text/html" })
+      .end('<!doctype html><meta charset="utf-8"><body>');
   let file = resolve(root, "web-dist", "." + path);
   if (path.endsWith("/")) file = resolve(file, "index.html");
   try {
@@ -72,7 +74,9 @@ keys = await setRecovery(dek, id, newRecoveryCode().bytes, keys);
 const seedV = emptyVault(id);
 const now = Date.now();
 import { cleanDrawing, cleanRecordings } from "../src/crypto";
-const remote = new Map<string, unknown>([["v-0", await seal(seedV, dek, keys)]]);
+const remote = new Map<string, unknown>([
+  ["v-0", await seal(seedV, dek, keys)],
+]);
 let next = 1;
 const current = async (): Promise<Vault> => {
   assert.equal(remote.size, 1);
@@ -85,9 +89,15 @@ const PNG = Buffer.from(
 );
 
 const browser = await chromium.launch({
-  args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+  args: [
+    "--use-fake-ui-for-media-stream",
+    "--use-fake-device-for-media-stream",
+  ],
 });
-const context = await browser.newContext({ ...devices["Pixel 7"], locale: "zh-TW" } as any);
+const context = await browser.newContext({
+  ...devices["Pixel 7"],
+  locale: "zh-TW",
+} as any);
 await context.addInitScript(() => {
   if (localStorage.getItem("veilTestSeeded")) return;
   localStorage.setItem("veilTestSeeded", "1");
@@ -114,7 +124,13 @@ await context.route("https://www.googleapis.com/**", async (route) => {
   const u = req.url();
   if (u.includes("/about?"))
     return route.fulfill({
-      json: { user: { permissionId: "share-user", emailAddress: "share@example.com", displayName: "Share" } },
+      json: {
+        user: {
+          permissionId: "share-user",
+          emailAddress: "share@example.com",
+          displayName: "Share",
+        },
+      },
     });
   if (req.method() === "POST") {
     const json = (req.postData() || "")
@@ -128,8 +144,13 @@ await context.route("https://www.googleapis.com/**", async (route) => {
   if (req.method() === "DELETE")
     return route.fulfill({ status: remote.delete(fid) ? 204 : 404, body: "" });
   if (u.includes("alt=media"))
-    return route.fulfill({ body: JSON.stringify(remote.get(fid)), contentType: "application/json" });
-  return route.fulfill({ json: { files: [...remote.keys()].map((id) => ({ id })) } });
+    return route.fulfill({
+      body: JSON.stringify(remote.get(fid)),
+      contentType: "application/json",
+    });
+  return route.fulfill({
+    json: { files: [...remote.keys()].map((id) => ({ id })) },
+  });
 });
 
 const page = await context.newPage();
@@ -143,7 +164,9 @@ const unlock = async () => {
 const memoOnDrive = async (title: string, ok: (m: any) => boolean) => {
   for (let i = 0; i < 80; i++) {
     try {
-      const m = (await current()).memos.find((x) => x.title === title && !x.deleted);
+      const m = (await current()).memos.find(
+        (x) => x.title === title && !x.deleted,
+      );
       if (m && ok(m)) return m;
     } catch {}
     await page.waitForTimeout(200);
@@ -154,7 +177,11 @@ async function stroke(x0: number, y0: number, dx: number, dy: number) {
   const box = (await page.locator(".memoEdit .nbDrawing").boundingBox())!;
   await page.mouse.move(box.x + x0, box.y + y0);
   await page.mouse.down();
-  for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + x0 + (dx * i) / 10, box.y + y0 + (dy * i) / 10);
+  for (let i = 1; i <= 10; i++)
+    await page.mouse.move(
+      box.x + x0 + (dx * i) / 10,
+      box.y + y0 + (dy * i) / 10,
+    );
   await page.mouse.up();
 }
 try {
@@ -183,18 +210,26 @@ try {
   // cannot show the real prompt, so the browser's answer is simulated): the
   // help explains how to allow it; after allowing, 重試 records.
   await page.evaluate(() => {
-    const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    const real = navigator.mediaDevices.getUserMedia.bind(
+      navigator.mediaDevices,
+    );
     (window as any).__denyMic = true;
     navigator.mediaDevices.getUserMedia = (c) =>
       (window as any).__denyMic
-        ? Promise.reject(new DOMException("Permission denied", "NotAllowedError"))
+        ? Promise.reject(
+            new DOMException("Permission denied", "NotAllowedError"),
+          )
         : real(c);
   });
   await page.getByRole("button", { name: "開始錄音" }).click();
   const help = page.getByRole("alertdialog", { name: "沒有麥克風權限。" });
   await help.waitFor();
-  assert((await help.textContent())!.includes("Android"), "help for this phone");
-  if (shot) await page.screenshot({ path: resolve(shot, "phone-mic-help.png") });
+  assert(
+    (await help.textContent())!.includes("Android"),
+    "help for this phone",
+  );
+  if (shot)
+    await page.screenshot({ path: resolve(shot, "phone-mic-help.png") });
   await context.grantPermissions(["microphone"]);
   await page.evaluate(() => ((window as any).__denyMic = false));
 
@@ -204,11 +239,23 @@ try {
   await page.waitForTimeout(2300);
   await page.getByRole("button", { name: "停止錄音" }).click();
   await page.locator(".memoEdit .nbAudioSticker audio").waitFor();
-  if (shot) await page.screenshot({ path: resolve(shot, "phone-ink-edit.png") });
-  const saved = await memoOnDrive("手寫錄音", (m) => m.drawing.length === 1 && m.recordings.length === 1);
+  if (shot)
+    await page.screenshot({ path: resolve(shot, "phone-ink-edit.png") });
+  const saved = await memoOnDrive(
+    "手寫錄音",
+    (m) => m.drawing.length === 1 && m.recordings.length === 1,
+  );
   assert.equal(saved.drawing[0].color, "#c0392b");
-  assert.deepEqual(cleanDrawing(saved.drawing), saved.drawing, "the extension accepts the drawing");
-  assert.equal(cleanRecordings(saved.recordings).length, 1, "the extension accepts the recording");
+  assert.deepEqual(
+    cleanDrawing(saved.drawing),
+    saved.drawing,
+    "the extension accepts the drawing",
+  );
+  assert.equal(
+    cleanRecordings(saved.recordings).length,
+    1,
+    "the extension accepts the recording",
+  );
   assert.match(saved.recordings[0].mime, /^audio\/(webm|mp4)/);
   assert(saved.recordings[0].duration >= 1);
   await page.getByRole("button", { name: "← 完成" }).click();
@@ -220,30 +267,113 @@ try {
   // The player gets the recording as a blob: URL, which the page's security
   // policy must allow for media (checked through a CSP report listener).
   const blocked: string[] = [];
-  page.on("console", (m) => /media-src|Refused to load media/.test(m.text()) && blocked.push(m.text()));
+  page.on(
+    "console",
+    (m) =>
+      /media-src|Refused to load media/.test(m.text()) &&
+      blocked.push(m.text()),
+  );
   await page.waitForFunction(() =>
-    (document.querySelector(".reader .nbAudioSticker audio") as HTMLAudioElement | null)?.src.startsWith("blob:"),
+    (
+      document.querySelector(
+        ".reader .nbAudioSticker audio",
+      ) as HTMLAudioElement | null
+    )?.src.startsWith("blob:"),
   );
   const src = await reader.locator(".nbAudioSticker audio").getAttribute("src");
   assert.match(src || "", /^blob:/);
-  const allowed = await page.evaluate(
-    () =>
-      document
-        .querySelector('meta[http-equiv="Content-Security-Policy"]')!
-        .getAttribute("content")!
-        .includes("media-src 'self' blob:"),
+  const allowed = await page.evaluate(() =>
+    document
+      .querySelector('meta[http-equiv="Content-Security-Policy"]')!
+      .getAttribute("content")!
+      .includes("media-src 'self' blob:"),
   );
   assert(allowed, "media from blob: URLs is allowed");
-  if (shot) await page.screenshot({ path: resolve(shot, "phone-ink-read.png") });
+  if (shot)
+    await page.screenshot({ path: resolve(shot, "phone-ink-read.png") });
 
   // Editing the text keeps the drawing and the recording.
   await reader.getByRole("button", { name: "編輯" }).click();
-  await page.locator(".memoBody[contenteditable=true]").click({ position: { x: 10, y: 8 } });
+  await page
+    .locator(".memoBody[contenteditable=true]")
+    .click({ position: { x: 10, y: 8 } });
   await page.keyboard.type("補一句文字");
-  await memoOnDrive("手寫錄音", (m) => m.body.includes("補一句文字") && m.drawing.length === 1 && m.recordings.length === 1);
+  await memoOnDrive(
+    "手寫錄音",
+    (m) =>
+      m.body.includes("補一句文字") &&
+      m.drawing.length === 1 &&
+      m.recordings.length === 1,
+  );
   assert.deepEqual(blocked, [], "no media blocked");
+  // Insert a landscape image and resize with touch pointer events.
+  const imageData = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 300;
+    canvas.getContext("2d")!.fillRect(0, 0, 600, 300);
+    return canvas.toDataURL("image/png").split(",")[1];
+  });
+  await page.locator('.memoEdit input[type="file"]').setInputFiles({
+    name: "resize.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(imageData, "base64"),
+  });
+  const picture = page.locator(".memoEdit img[data-veil-img]");
+  await picture.waitFor();
+  const initialPicture = (await picture.boundingBox())!;
+  await picture.tap({ position: { x: initialPicture.width - 12, y: initialPicture.height - 12 } });
+  const handle = page.locator(".veilImageHandle.e");
+  await handle.waitFor();
+  const box2 = (await handle.boundingBox())!;
+  const x = box2.x + box2.width / 2,
+    y = box2.y + box2.height / 2;
+  // Dispatch through Chromium's touch input, preserving native pointer capture.
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: x - 100, y }],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  const width = +(await picture.getAttribute("width"))!;
+  assert(width >= 32 && width < 350, "touch drag changes image width");
+  const geometry = await picture.boundingBox();
+  assert(
+    Math.abs(geometry!.width / geometry!.height - 2) < 0.02,
+    "touch resize keeps aspect ratio",
+  );
+  await memoOnDrive(
+    "手寫錄音",
+    (m) => m.body.includes(`width="${width}"`) && m.images.length === 1,
+  );
+  await page.getByRole("button", { name: "← 完成" }).click();
+  await page.locator("main").getByText("手寫錄音", { exact: true }).click();
+  await page.locator(".reader img[data-veil-img]").waitFor();
+  assert.equal(
+    +(await page.locator(".reader img[data-veil-img]").getAttribute("width"))!,
+    width,
+  );
+  await page.getByRole("button", { name: "編輯", exact: true }).click();
+  assert.equal(
+    +(await page
+      .locator(".memoEdit img[data-veil-img]")
+      .getAttribute("width"))!,
+    width,
+    "image width survives encrypted sync and reopening",
+  );
+  if (shot)
+    await page.screenshot({ path: resolve(shot, "image-resize-mobile.png") });
   assert.deepEqual(errors, []);
-  console.log("PASS phone handwriting and voice notes: microphone allowed by the site headers, refused permission explained with a retry, draw, undo, colour, erase, record, saved in the extension's formats, shown and playable in the reader, kept when the text is edited");
+  console.log(
+    "PASS phone handwriting and voice notes: microphone allowed by the site headers, refused permission explained with a retry, draw, undo, colour, erase, record, saved in the extension's formats, shown and playable in the reader, kept when the text is edited",
+  );
 } finally {
   await browser.close();
   server.close();

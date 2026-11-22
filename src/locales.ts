@@ -3881,5 +3881,11 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Could not add the bookmark. Check the URL and retry.",
   "ja": "ブックマークを追加できません。URLを確認してください",
   "ko": "북마크를 추가할 수 없습니다. URL을 확인하고 다시 시도하세요"
+ },
+ "調整圖片大小": {
+  "zh-CN": "调整图片大小",
+  "en": "Resize image",
+  "ja": "画像のサイズを変更",
+  "ko": "이미지 크기 조절"
  }
 };

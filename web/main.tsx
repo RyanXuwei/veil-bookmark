@@ -30,6 +30,7 @@ import {
 } from "../src/i18n";
 import { memoTitle } from "../src/memos";
 import { imageSrc, importImage } from "../src/ruled";
+import { ImageResize } from "../src/image-resize";
 import { DEFAULT_PAPER } from "../src/memo-ops";
 import {
   htmlToText,
@@ -2019,6 +2020,8 @@ function MemoEditor({
             );
           }}
         />
+          <ImageResize editor={body} enabled={mode === "text"}
+            documentKey={memo?.id || "new"} onChange={changed} />
           <DrawingLayer
             strokes={strokes}
             mode={mode}

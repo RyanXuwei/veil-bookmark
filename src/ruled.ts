@@ -107,6 +107,16 @@ export function layoutRuled(
     }
     const src = imageSrc(i);
     if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+    const requested = Number(img.getAttribute("width"));
+    if (Number.isInteger(requested) && requested >= 32 && requested <= 1600) {
+      const width = Math.min(requested, maxWidth);
+      const height = width * i.h / i.w;
+      img.style.width = `${width}px`;
+      img.style.height = `${height}px`;
+      img.style.marginBottom = `${Math.ceil(height / RULE) * RULE - height}px`;
+      continue;
+    }
+    img.style.marginBottom = "";
     let rows = Math.max(1, Math.round((Math.min(i.w, maxWidth) * i.h) / i.w / RULE));
     if ((rows * RULE * i.w) / i.h > maxWidth)
       rows = Math.max(1, Math.floor((maxWidth * i.h) / i.w / RULE));

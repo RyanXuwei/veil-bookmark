@@ -89,6 +89,9 @@ function clean(node: Node, doc: Document): Node | DocumentFragment | null {
     const img = doc.createElement("img");
     img.setAttribute("data-veil-img", id);
     img.setAttribute("alt", "");
+    const width = el.getAttribute("width") || "";
+    if (/^\d{1,4}$/.test(width) && +width >= 32 && +width <= 1600)
+      img.setAttribute("width", String(+width));
     return img;
   }
   const children = doc.createDocumentFragment();

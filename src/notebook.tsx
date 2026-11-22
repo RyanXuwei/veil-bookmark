@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./notebook.css";
+import { ImageResize } from "./image-resize";
 import { cleanDrawing, type Memo, type DrawingStroke } from "./crypto";
 import { ToolIcon } from "./tool-icon";
 import { DrawingLayer } from "./drawing";
@@ -1320,6 +1321,10 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                 }
               }}
             />
+            {mdHtml === null && (
+              <ImageResize editor={editor} enabled={unlocked && !switching && drawMode === "text"}
+                documentKey={current} onChange={changed} />
+            )}
             {mdHtml === null && (
             <DrawingLayer
               strokes={drawing}
