@@ -3845,5 +3845,41 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Open note",
   "ja": "メモを開く",
   "ko": "메모 열기"
+ },
+ "留空會自動取得網頁名稱，失敗時使用網域": {
+  "zh-CN": "留空会自动取得网页名称，失败时使用网域",
+  "en": "Leave blank to get the page title, or use the domain if unavailable.",
+  "ja": "空欄の場合はページ名を取得し、取得できなければドメイン名を使用します",
+  "ko": "비워 두면 페이지 제목을 가져오고 실패하면 도메인을 사용합니다"
+ },
+ "快速加入 Veil 書籤": {
+  "zh-CN": "快速加入 Veil 书签",
+  "en": "Quick save to Veil bookmarks",
+  "ja": "Veil ブックマークにすばやく追加",
+  "ko": "Veil 북마크에 빠르게 저장"
+ },
+ "解鎖後會把網址加入書籤": {
+  "zh-CN": "解锁后会把网址加入书签",
+  "en": "This URL will be bookmarked after unlocking.",
+  "ja": "ロック解除後にこのURLをブックマークに追加します",
+  "ko": "잠금 해제 후 이 URL을 북마크에 추가합니다"
+ },
+ "已加入書籤": {
+  "zh-CN": "已加入书签",
+  "en": "Bookmark added",
+  "ja": "ブックマークに追加しました",
+  "ko": "북마크를 추가했습니다"
+ },
+ "已收藏過此網址": {
+  "zh-CN": "已收藏过此网址",
+  "en": "This URL is already bookmarked.",
+  "ja": "このURLは登録済みです",
+  "ko": "이미 저장된 URL입니다"
+ },
+ "無法加入書籤，請確認網址後重試": {
+  "zh-CN": "无法加入书签，请确认网址后重试",
+  "en": "Could not add the bookmark. Check the URL and retry.",
+  "ja": "ブックマークを追加できません。URLを確認してください",
+  "ko": "북마크를 추가할 수 없습니다. URL을 확인하고 다시 시도하세요"
  }
 };

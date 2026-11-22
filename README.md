@@ -58,7 +58,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://g
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.17.0
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.18.0
 
 ## 功能
 
@@ -226,3 +226,11 @@ npm run build
 預設繁中輸出。Chrome 摘要 API 未直接支援中文時，使用本機翻譯成英文後摘要，再翻回繁中；翻譯與摘要可能有誤，請對照原文。首次使用可能下載 Chrome 模型，需支援本機 AI 的電腦、Chrome 及足夠磁碟空間；不支援時會顯示說明，不會把頁面改送雲端。模型推論不需 API 金鑰。硬體與語言限制以 [Chrome 官方文件](https://developer.chrome.com/docs/ai/summarizer-api) 為準。
 
 只讀取目前頁面的可見文字，略過表單與隱藏元素，不包含其他分頁、跨來源框架、影片或圖片中的文字。每次最多 24,000 字元，超長會顯示前段摘要提示；請於十分鐘內完成。Chrome 內建頁、商店頁或受保護頁面可能無法擷取。手機版不提供產生功能，但能閱讀已存入的摘要記事。
+
+### 右鍵快速收藏與自動命名
+
+在一般網頁空白處或連結上按右鍵，選「快速加入 Veil 書籤」。會直接收藏目前頁面或連結目標；優先使用可取得的分頁／網頁標題，取不到時以網域名稱保存。重複快速收藏不會覆蓋既有名稱、標籤與備註。無痕收藏會放入無痕專用資料夾。
+
+上鎖時先暫存在瀏覽器 session 記憶體（最多20筆、30分鐘），解鎖後才加密保存並依設定同步。逾時或關閉 Chrome，尚未保存的暫存會清除。
+
+手動新增書籤時，名稱可留空。儲存時先嘗試取得網頁名稱，失敗就使用網域；之後可自行改名。取得標題不帶登入 cookies，也不會繞過網站限制。跨來源存取、登入頁、需要 JavaScript 才顯示標題的網站或手機版網站安全政策，都可能讓標題無法取得而改用網域。此調整不影響既有書籤的自訂名稱。

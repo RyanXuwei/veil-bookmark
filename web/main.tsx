@@ -89,6 +89,7 @@ import { drawDiagrams, htmlText, markdownPreview } from "../src/md-preview";
 import { RecoveryKeyModal } from "../src/recovery";
 import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
+import { lookupBookmarkTitle } from "../src/bookmark-title";
 import { VERSION } from "../src/version";
 import { BobaSupport } from "../src/boba-support";
 import "./app.css";
@@ -1410,6 +1411,13 @@ function Editor({
   onSaved: (msg: string) => void;
 }) {
   const [d, setD] = useState(draft);
+  const alive = useRef(true);
+  useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   return (
@@ -1425,7 +1433,9 @@ function Editor({
           setBusy(true);
           setError("");
           try {
-            await saveEntry(d);
+            const title = d.title.trim() || (await lookupBookmarkTitle(d.url));
+            if (!alive.current) return;
+            await saveEntry({ ...d, title });
             onSaved(d.id ? "已更新書籤" : "已加密收藏");
           } catch (err) {
             setError((err as Error).message);
@@ -1442,7 +1452,8 @@ function Editor({
         <label>
           {t("名稱")}
           <input
-            required
+            placeholder={t("留空會自動取得網頁名稱，失敗時使用網域")}
+            disabled={busy}
             maxLength={300}
             value={d.title}
             onChange={(e) => setD({ ...d, title: e.target.value })}
@@ -1457,6 +1468,7 @@ function Editor({
             autoCapitalize="off"
             placeholder="https://"
             value={d.url}
+            disabled={busy}
             onChange={(e) => setD({ ...d, url: e.target.value })}
           />
         </label>

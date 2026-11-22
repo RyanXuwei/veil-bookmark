@@ -42,7 +42,8 @@ export function upsertEntry(
     revision: crypto.randomUUID(),
     deleted: false,
   };
-  if (!entry.title) throw Error("請填寫書籤名稱");
+  if (!entry.title)
+    entry.title = new URL(entry.url).hostname.replace(/^www\./i, "");
   v.entries = v.entries.filter((y) => y.id !== entry.id).concat(entry);
   return entry;
 }

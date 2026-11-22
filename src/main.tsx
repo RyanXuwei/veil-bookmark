@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { DRIVE_FULL, STORAGE_URL } from "./drive";
 import { TagInput } from "./tag-input";
 import { VERSION } from "./version";
+import { lookupBookmarkTitle, bookmarkDomain } from "./bookmark-title";
 import { BobaSupport } from "./boba-support";
 import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
@@ -298,7 +299,7 @@ function App() {
         );
       setEditor({
         ...empty,
-        title: capture.title || capture.url,
+        title: capture.title?.trim() || bookmarkDomain(capture.url),
         url: capture.url,
         incognito: !!status?.incognito,
         folder: status?.incognito ? PRIVATE_FOLDER : "",
@@ -1060,7 +1061,12 @@ function App() {
               onSubmit={(e) => {
                 e.preventDefault();
                 void run(async () => {
-                  await rpc("UPSERT", { entry: editor });
+                  const titleEpoch = viewEpoch.current;
+                  const title =
+                    editor.title.trim() ||
+                    (await lookupBookmarkTitle(editor.url));
+                  if (titleEpoch !== viewEpoch.current) return;
+                  await rpc("UPSERT", { entry: { ...editor, title } });
                   setEditor(null);
                   await refresh();
                 });
@@ -1069,8 +1075,9 @@ function App() {
               <label>
                 {t("名稱")}
                 <input
-                  autoFocus
-                  required
+                  autoFocus={!!editor.id}
+                  placeholder={t("留空會自動取得網頁名稱，失敗時使用網域")}
+                  disabled={busy}
                   maxLength={300}
                   value={editor.title}
                   onChange={(e) =>
@@ -1083,8 +1090,10 @@ function App() {
                 <input
                   type="url"
                   required
+                  autoFocus={!editor.id}
                   placeholder="https://"
                   value={editor.url}
+                  disabled={busy}
                   onChange={(e) =>
                     setEditor({ ...editor, url: e.target.value })
                   }

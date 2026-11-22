@@ -1,4 +1,5 @@
 import { captureSummary, SUMMARY_TTL } from "./summary-capture";
+import { bookmarkKey, lookupBookmarkTitle } from "./bookmark-title";
 import type { SummarySource } from "./local-summary";
 import {
   b64,
@@ -815,6 +816,7 @@ async function handle(m: any, sender: chrome.runtime.MessageSender) {
     if (o.sealed !== e) await writeVault(v, o.dek, o.sealed.keys); // v1 → v3
     await startSession({ ...o, v }, generation);
     await applyClips(v);
+    await applyBookmarkClips(v);
     void serialized(pruneMedia).catch(() => {});
     await requestSync(0);
     return v;
@@ -1238,6 +1240,21 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
     void menus();
   });
   chrome.alarms.onAlarm.addListener((a) => {
+    if (a.name === "veil-bookmark-expire") {
+      void serialized(async () => {
+        const { bookmarkClips = [] } = await chrome.storage.session.get<{
+          bookmarkClips?: PendingBookmark[];
+        }>("bookmarkClips");
+        const fresh = bookmarkClips.filter((x) => Date.now() - x.at < CLIP_TTL);
+        if (fresh.length) {
+          await chrome.storage.session.set({ bookmarkClips: fresh });
+          await chrome.alarms.create("veil-bookmark-expire", {
+            when: fresh[0].at + CLIP_TTL,
+          });
+        } else await chrome.storage.session.remove("bookmarkClips");
+      });
+      return;
+    }
     if (a.name.startsWith("veil-summary-expire:")) {
       void serialized(async () => {
         const { summaryJobs = {} } = await chrome.storage.session.get<{
@@ -1278,6 +1295,12 @@ type Pending = { at: number; clip: Clip };
 async function menus() {
   await loadLang();
   await chrome.contextMenus.removeAll();
+  chrome.contextMenus.create({
+    id: "veil-bookmark",
+    title: t("快速加入 Veil 書籤"),
+    contexts: ["page", "link"],
+    documentUrlPatterns: ["http://*/*", "https://*/*"],
+  });
   chrome.contextMenus.create({
     id: "veil-note-text",
     title: t("加入 Veil 記事本"),
@@ -1337,6 +1360,60 @@ async function onClip(
   info: chrome.contextMenus.OnClickData,
   tab?: chrome.tabs.Tab,
 ) {
+  if (info.menuItemId === "veil-bookmark") {
+    try {
+      await loadLang();
+      const url = safeUrl(info.linkUrl || info.pageUrl || tab?.url || "");
+      const title = await lookupBookmarkTitle(url, tab);
+      const entry: QuickBookmark = {
+        url,
+        title,
+        incognito: !!tab?.incognito,
+        folder: tab?.incognito ? PRIVATE_FOLDER : "",
+      };
+      const saved = await serialized(async () => {
+        let s: Session;
+        try {
+          s = await session();
+        } catch {
+          const { bookmarkClips = [] } = await chrome.storage.session.get<{
+            bookmarkClips?: PendingBookmark[];
+          }>("bookmarkClips");
+          const keep = bookmarkClips.filter(
+            (x) => Date.now() - x.at < CLIP_TTL,
+          );
+          if (
+            !keep.some(
+              (x) =>
+                bookmarkKey(x.entry.url) === bookmarkKey(url) &&
+                x.entry.incognito === entry.incognito,
+            )
+          )
+            keep.push({ at: Date.now(), entry });
+          await chrome.storage.session.set({ bookmarkClips: keep.slice(-20) });
+          await chrome.alarms.create("veil-bookmark-expire", {
+            when: keep.slice(-20)[0].at + CLIP_TTL,
+          });
+          badge(String(Math.min(20, keep.length)), t("解鎖後會把網址加入書籤"));
+          return false;
+        }
+        const v = await readVault(await keyOf(s), true);
+        const added = addQuickBookmark(v, entry);
+        if (added) await save(v, s, undefined, "entries");
+        await touch(s);
+        badge("✓", t(added ? "已加入書籤" : "已收藏過此網址"));
+        return true;
+      });
+      if (saved) void requestSync();
+      else
+        try {
+          await chrome.action.openPopup();
+        } catch {}
+    } catch {
+      badge("!", t("無法加入書籤，請確認網址後重試"));
+    }
+    return;
+  }
   if (info.menuItemId === "veil-summary") {
     try {
       if (tab?.id === undefined) throw Error();
@@ -1389,6 +1466,38 @@ async function onClip(
       } catch {}
     }
   })();
+}
+type QuickBookmark = {
+  url: string;
+  title: string;
+  incognito: boolean;
+  folder: string;
+};
+type PendingBookmark = { at: number; entry: QuickBookmark };
+function addQuickBookmark(v: Vault, entry: QuickBookmark) {
+  const key = bookmarkKey(entry.url);
+  const existing = v.entries.some(
+    (x) =>
+      !x.deleted &&
+      bookmarkKey(x.url) === key &&
+      !!x.incognito === entry.incognito &&
+      isPrivate(x.folder) === entry.incognito,
+  );
+  if (existing) return false;
+  upsertEntry(v, entry);
+  return true;
+}
+async function applyBookmarkClips(v: Vault) {
+  const { bookmarkClips = [] } = await chrome.storage.session.get<{
+    bookmarkClips?: PendingBookmark[];
+  }>("bookmarkClips");
+  const fresh = bookmarkClips.filter((x) => Date.now() - x.at < CLIP_TTL);
+  let added = false;
+  for (const { entry } of fresh) added = addQuickBookmark(v, entry) || added;
+  if (added) await save(v, await session(), undefined, "entries");
+  await chrome.storage.session.remove("bookmarkClips");
+  await chrome.alarms.clear("veil-bookmark-expire");
+  if (fresh.length) badge("✓", t(added ? "已加入書籤" : "已收藏過此網址"));
 }
 void chrome.alarms.get("veilmark-sync").then((alarm) => {
   if (!alarm)

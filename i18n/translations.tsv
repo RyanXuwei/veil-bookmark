@@ -639,3 +639,9 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 開始本機摘要|Start local summary|ローカル要約を開始|로컬 요약 시작
 加密存入記事本|Save encrypted note|暗号化してメモ帳に保存|암호화하여 메모에 저장
 開啟記事|Open note|メモを開く|메모 열기
+留空會自動取得網頁名稱，失敗時使用網域|Leave blank to get the page title, or use the domain if unavailable.|空欄の場合はページ名を取得し、取得できなければドメイン名を使用します|비워 두면 페이지 제목을 가져오고 실패하면 도메인을 사용합니다
+快速加入 Veil 書籤|Quick save to Veil bookmarks|Veil ブックマークにすばやく追加|Veil 북마크에 빠르게 저장
+解鎖後會把網址加入書籤|This URL will be bookmarked after unlocking.|ロック解除後にこのURLをブックマークに追加します|잠금 해제 후 이 URL을 북마크에 추가합니다
+已加入書籤|Bookmark added|ブックマークに追加しました|북마크를 추가했습니다
+已收藏過此網址|This URL is already bookmarked.|このURLは登録済みです|이미 저장된 URL입니다
+無法加入書籤，請確認網址後重試|Could not add the bookmark. Check the URL and retry.|ブックマークを追加できません。URLを確認してください|북마크를 추가할 수 없습니다. URL을 확인하고 다시 시도하세요
