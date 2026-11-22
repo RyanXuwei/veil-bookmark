@@ -3887,5 +3887,29 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Resize image",
   "ja": "画像のサイズを変更",
   "ko": "이미지 크기 조절"
+ },
+ "圖文模式": {
+  "zh-CN": "图文模式",
+  "en": "Inline mode",
+  "ja": "インラインモード",
+  "ko": "본문 배치 모드"
+ },
+ "自由模式": {
+  "zh-CN": "自由模式",
+  "en": "Free mode",
+  "ja": "自由配置モード",
+  "ko": "자유 배치 모드"
+ },
+ "移動圖片": {
+  "zh-CN": "移动图片",
+  "en": "Move image",
+  "ja": "画像を移動",
+  "ko": "이미지 이동"
+ },
+ "刪除圖片": {
+  "zh-CN": "删除图片",
+  "en": "Delete image",
+  "ja": "画像を削除",
+  "ko": "이미지 삭제"
  }
 };

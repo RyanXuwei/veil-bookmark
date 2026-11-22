@@ -647,3 +647,8 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 無法加入書籤，請確認網址後重試|Could not add the bookmark. Check the URL and retry.|ブックマークを追加できません。URLを確認してください|북마크를 추가할 수 없습니다. URL을 확인하고 다시 시도하세요
 
 調整圖片大小|Resize image|画像のサイズを変更|이미지 크기 조절
+
+圖文模式|Inline mode|インラインモード|본문 배치 모드
+自由模式|Free mode|自由配置モード|자유 배치 모드
+移動圖片|Move image|画像を移動|이미지 이동
+刪除圖片|Delete image|画像を削除|이미지 삭제

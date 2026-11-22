@@ -368,6 +368,40 @@ try {
     width,
     "image width survives encrypted sync and reopening",
   );
+  const freePicture = page.locator('.memoEdit img[data-veil-img]');
+  const freeBox = (await freePicture.boundingBox())!;
+  await freePicture.tap({ position: { x: freeBox.width - 10, y: 10 } });
+  await page.getByRole("button", { name: "自由模式", exact: true }).click();
+  const movePicture = (await page.getByRole("button", { name: "移動圖片", exact: true }).boundingBox())!;
+  const mx = movePicture.x + movePicture.width - 15, my = movePicture.y + 15;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: mx, y: my }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: mx - 25, y: my + 90 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  const freeY = await freePicture.getAttribute("data-veil-y");
+  assert(Number(freeY) > 0, "touch moves free picture");
+  await page.getByRole("button", { name: "手寫", exact: true }).click();
+  assert.equal(await page.locator(".veilImageResize").count(), 0, "picture controls leave the pen layer available");
+  const onPhoto = (await freePicture.boundingBox())!;
+  const px = onPhoto.x + onPhoto.width - 40, py = onPhoto.y + 20;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: px, y: py }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: px + 20, y: py + 25 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  assert.equal(await page.locator(".memoEdit .nbDrawing path").count(), 2, "pen can draw over the free image");
+  await page.getByRole("button", { name: "回到文字", exact: true }).click();
+  await memoOnDrive("手寫錄音", m => m.body.includes('data-veil-mode="free"') && m.body.includes(`data-veil-y="${freeY}"`));
+  await page.getByRole("button", { name: "← 完成" }).click();
+  await page.locator("main").getByText("手寫錄音", { exact: true }).click();
+  const readPicture = page.locator('.reader img[data-veil-img]');
+  await readPicture.waitFor();
+  assert.equal(await readPicture.getAttribute('data-veil-y'), freeY);
+  assert.equal(await readPicture.evaluate(el => getComputedStyle(el).position), "absolute");
+  if (shot) await page.screenshot({ path: resolve(shot, "image-free-mobile.png") });
+  await page.getByRole("button", { name: "編輯", exact: true }).click();
+  const again = page.locator('.memoEdit img[data-veil-img]');
+  const ab = (await again.boundingBox())!;
+  await again.tap({ position: { x: ab.width - 12, y: 12 } });
+  await page.getByRole("button", { name: "圖文模式", exact: true }).click();
+  assert.equal(await again.getAttribute("data-veil-mode"), null);
   if (shot)
     await page.screenshot({ path: resolve(shot, "image-resize-mobile.png") });
   assert.deepEqual(errors, []);

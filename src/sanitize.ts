@@ -92,6 +92,13 @@ function clean(node: Node, doc: Document): Node | DocumentFragment | null {
     const width = el.getAttribute("width") || "";
     if (/^\d{1,4}$/.test(width) && +width >= 32 && +width <= 1600)
       img.setAttribute("width", String(+width));
+    if (el.getAttribute("data-veil-mode") === "free") {
+      img.setAttribute("data-veil-mode", "free");
+      for (const [name, max] of [["data-veil-x", 794], ["data-veil-y", 16000]] as const) {
+        const value = el.getAttribute(name) || "0";
+        img.setAttribute(name, /^\d{1,5}$/.test(value) ? String(Math.min(max, +value)) : "0");
+      }
+    }
     return img;
   }
   const children = doc.createDocumentFragment();

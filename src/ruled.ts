@@ -4,6 +4,7 @@ import {
   IMAGE_TYPES,
   type MemoImage,
 } from "./crypto";
+import { freePosition, layoutFreeImages } from "./free-image";
 
 /** Height of one ruled line on the notebook paper, in CSS px. */
 export const RULE = 32;
@@ -107,6 +108,7 @@ export function layoutRuled(
     }
     const src = imageSrc(i);
     if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+    if (freePosition(img)) continue;
     const requested = Number(img.getAttribute("width"));
     if (Number.isInteger(requested) && requested >= 32 && requested <= 1600) {
       const width = Math.min(requested, maxWidth);
@@ -124,6 +126,7 @@ export function layoutRuled(
     img.style.height = `${height}px`;
     img.style.width = `${Math.min(maxWidth, (height * i.w) / i.h)}px`;
   }
+  layoutFreeImages(editor);
   for (const b of Array.from(editor.querySelectorAll<HTMLElement>(BLOCKS))) {
     let size = parseFloat(getComputedStyle(b).fontSize) || 0;
     for (const x of Array.from(b.querySelectorAll<HTMLElement>("*"))) {

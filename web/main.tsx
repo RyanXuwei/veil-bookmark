@@ -31,6 +31,7 @@ import {
 import { memoTitle } from "../src/memos";
 import { imageSrc, importImage } from "../src/ruled";
 import { ImageResize } from "../src/image-resize";
+import { layoutFreeImages, observeImageLayout } from "../src/free-image";
 import { DEFAULT_PAPER } from "../src/memo-ops";
 import {
   htmlToText,
@@ -1516,9 +1517,13 @@ function showImages(el: HTMLElement, images: Map<string, MemoImage>) {
     el.querySelectorAll<HTMLImageElement>("img[data-veil-img]"),
   )) {
     const i = images.get(img.dataset.veilImg || "");
-    if (i) img.src = imageSrc(i);
+    if (i) {
+      img.src = imageSrc(i);
+      img.onload = () => layoutFreeImages(el);
+    }
     else img.remove();
   }
+  layoutFreeImages(el);
 }
 
 function Reader({
@@ -1548,6 +1553,7 @@ function Reader({
       a.target = "_blank";
       a.rel = "noopener noreferrer";
     }
+    return observeImageLayout(el);
   }, [memo, md]);
   const strokes = cleanDrawing(memo.drawing);
   const voices = cleanRecordings(memo.recordings);
@@ -1817,6 +1823,7 @@ function MemoEditor({
   }, []);
 
   function changed() {
+    if (body.current) layoutFreeImages(body.current);
     dirty.current = true;
     setSaveState("dirty");
     setFailed(false);

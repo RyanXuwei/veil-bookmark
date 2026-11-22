@@ -317,6 +317,44 @@ try {
   await page.locator(".veilImageHandle.e").waitFor();
   await page.screenshot({ path: resolve(shots, "image-resize-desktop.png") });
 
+  await page.getByRole("button", { name: "自由模式", exact: true }).click();
+  assert.equal(await img.getAttribute("data-veil-mode"), "free");
+  const beforeFree = await img.boundingBox();
+  const mover = page.getByRole("button", { name: "移動圖片", exact: true });
+  const moveBox = await mover.boundingBox();
+  await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(moveBox.x + moveBox.width / 2 + 65, moveBox.y + moveBox.height / 2 + 90, { steps: 8 });
+  await page.mouse.up();
+  const afterFree = await img.boundingBox();
+  assert(Math.abs(afterFree.x - beforeFree.x - 65) < 2, "free picture moves horizontally");
+  assert(Math.abs(afterFree.y - beforeFree.y - 90) < 2, "free picture moves vertically without occupying text flow");
+  const freeX = await img.getAttribute("data-veil-x");
+  const freeY = await img.getAttribute("data-veil-y");
+  const originalFreeWidth = +(await img.getAttribute("width"));
+  await page.locator(".veilImageHandle.e").focus();
+  await page.keyboard.press("ArrowLeft");
+  assert(+(await img.getAttribute("width")) < originalFreeWidth, "free pictures can also be resized");
+  await poll(async ({ id, y }) => {
+    const v = await chrome.runtime.sendMessage({ type: "LIST" });
+    return v.data.memos.find(m => m.id === id && m.body.includes(`data-veil-y="${y}"`));
+  }, { id: memo.id, y: freeY });
+  await page.goto(`${base}?notes#${memo.id}`);
+  await img.waitFor();
+  assert.equal(await img.getAttribute("data-veil-mode"), "free");
+  assert.equal(await img.getAttribute("data-veil-x"), freeX);
+  assert.equal(await img.getAttribute("data-veil-y"), freeY);
+  await img.click();
+  await page.locator(".veilImageModes").waitFor();
+  await page.getByRole("button", { name: "移動圖片", exact: true }).hover();
+  assert.equal(await page.getByRole("button", { name: "移動圖片", exact: true })
+    .evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)", "move surface never covers the picture");
+  await page.screenshot({ path: resolve(shots, "image-free-desktop.png") });
+  await page.getByRole("button", { name: "圖文模式", exact: true }).click();
+  assert.equal(await img.getAttribute("data-veil-mode"), null);
+  assert.equal(await img.evaluate(el => getComputedStyle(el).position), "static");
+  assert.equal(await page.locator(".nbEditor img[data-veil-img]").count(), 1, "mode switching keeps one picture");
+
   await page.evaluate(() => {
     const src = document.querySelector(".nbEditor img[data-veil-img]").src;
     const ed = document.querySelector(".nbEditor");
