@@ -3911,5 +3911,71 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Delete image",
   "ja": "画像を削除",
   "ko": "이미지 삭제"
+ },
+ "在側邊欄開啟": {
+  "zh-CN": "在侧边栏打开",
+  "en": "Open in side panel",
+  "ja": "サイドパネルで開く",
+  "ko": "사이드 패널에서 열기"
+ },
+ "無法開啟側邊欄，請更新 Chrome 後重試": {
+  "zh-CN": "无法打开侧边栏，请更新 Chrome 后重试",
+  "en": "Could not open the side panel. Update Chrome and try again.",
+  "ja": "サイドパネルを開けませんでした。Chrome を更新してもう一度お試しください。",
+  "ko": "사이드 패널을 열 수 없습니다. Chrome을 업데이트한 후 다시 시도하세요."
+ },
+ "點工具列圖示時": {
+  "zh-CN": "点工具列图标时",
+  "en": "When you click the toolbar icon",
+  "ja": "ツールバーのアイコンをクリックしたとき",
+  "ko": "툴바 아이콘을 클릭하면"
+ },
+ "開啟浮框": {
+  "zh-CN": "打开浮框",
+  "en": "Open the popup",
+  "ja": "ポップアップを開く",
+  "ko": "팝업 열기"
+ },
+ "開啟側邊欄": {
+  "zh-CN": "打开侧边栏",
+  "en": "Open the side panel",
+  "ja": "サイドパネルを開く",
+  "ko": "사이드 패널 열기"
+ },
+ "側邊欄可以邊瀏覽網頁邊使用，內容與浮框相同；無痕視窗一律使用浮框。": {
+  "zh-CN": "侧边栏可以边浏览网页边使用，内容与浮框相同；无痕窗口一律使用浮框。",
+  "en": "The side panel stays open while you browse and shows the same content as the popup. Incognito windows always use the popup.",
+  "ja": "サイドパネルはブラウジング中も開いたままで、ポップアップと同じ内容を表示します。シークレット ウィンドウでは常にポップアップを使います。",
+  "ko": "사이드 패널은 웹을 탐색하는 동안 열린 상태로 유지되며 팝업과 같은 내용을 보여 줍니다. 시크릿 창에서는 항상 팝업을 사용합니다."
+ },
+ "設定儲存失敗，請重試": {
+  "zh-CN": "设置保存失败，请重试",
+  "en": "Could not save the setting. Please try again.",
+  "ja": "設定を保存できませんでした。もう一度お試しください。",
+  "ko": "설정을 저장하지 못했습니다. 다시 시도하세요."
+ },
+ "外觀": {
+  "zh-CN": "外观",
+  "en": "Appearance",
+  "ja": "外観",
+  "ko": "화면 모드"
+ },
+ "跟隨系統": {
+  "zh-CN": "跟随系统",
+  "en": "Match system",
+  "ja": "システムに合わせる",
+  "ko": "시스템 설정 따르기"
+ },
+ "淺色": {
+  "zh-CN": "浅色",
+  "en": "Light",
+  "ja": "ライト",
+  "ko": "라이트"
+ },
+ "深色": {
+  "zh-CN": "深色",
+  "en": "Dark",
+  "ja": "ダーク",
+  "ko": "다크"
  }
 };

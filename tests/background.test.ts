@@ -96,7 +96,11 @@ const store = (data: Record<string, any>) => ({
     getCurrent: async () => fakeWindows[0] || {},
     getAll: async () => fakeWindows,
   },
-  tabs: { create: async () => {} },
+  tabs: {
+    create: async () => {},
+    onCreated: event("tab-created"),
+    onUpdated: event("tab-updated"),
+  },
 };
 // Background quick-sync timers are captured instead of run, so tests decide
 // when they fire and no stray sync runs between tests.

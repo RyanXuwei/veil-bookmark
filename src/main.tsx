@@ -12,6 +12,13 @@ import { DriveConflict } from "./drive-conflict";
 import { PasswordChangeSection } from "./password-change";
 import { SummaryPage } from "./summary-page";
 import { SetupPage } from "./setup";
+import { applyTheme, isTheme, themePref, ThemePicker, type Theme } from "./theme";
+import {
+  getActionMode,
+  setActionMode,
+  sidePanelSupported,
+  type ActionMode,
+} from "./side-panel";
 import { Disclaimer } from "./disclaimer";
 import { RecoverForm, RecoveryKeyModal, RecoverySection } from "./recovery";
 import { MemoList } from "./memos";
@@ -30,7 +37,7 @@ const CREDITS = {
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
   version: VERSION,
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-22",
+  lastUpdatedDate: "2026-11-23",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -52,15 +59,37 @@ const isPopup = new URLSearchParams(location.search).has("popup");
 const isSetup = new URLSearchParams(location.search).has("setup");
 const isSummary = new URLSearchParams(location.search).has("summary");
 const isNotes = new URLSearchParams(location.search).has("notes");
+// The side panel shows the popup page with `&panel`; it stays open, so it
+// never closes itself after an action.
+const isPanel = isPopup && new URLSearchParams(location.search).has("panel");
+function closePopup() {
+  if (isPopup && !isPanel) window.close();
+}
+// Known before any click: sidePanel.open() must run inside the user gesture.
+let windowId: number | undefined;
+if (isPopup && globalThis.chrome?.windows)
+  void chrome.windows.getCurrent().then((w) => (windowId = w.id));
 async function openNotebook(id = "") {
   await chrome.tabs.create({
     url: chrome.runtime.getURL(`index.html?notes#${id || "new"}`),
   });
-  if (isPopup) window.close();
+  closePopup();
 }
 async function openSetup() {
   await chrome.tabs.create({ url: chrome.runtime.getURL("index.html?setup") });
-  if (isPopup) window.close();
+  closePopup();
+}
+if (isPanel) document.documentElement.dataset.panel = "";
+// Appearance: chrome.storage.local `uiTheme` is the source; every extension
+// page follows changes made in another page.
+if (globalThis.chrome?.storage) {
+  void chrome.storage.local
+    .get<{ uiTheme?: string }>("uiTheme")
+    .then(({ uiTheme }) => applyTheme(isTheme(uiTheme) ? uiTheme : "system"));
+  chrome.storage.onChanged.addListener((c, area) => {
+    if (area === "local" && c.uiTheme)
+      applyTheme(isTheme(c.uiTheme.newValue) ? c.uiTheme.newValue : "system");
+  });
 }
 document.documentElement.dataset.surface = isNotes
   ? "notes"
@@ -101,8 +130,21 @@ function App() {
   const [ack, setAck] = useState(false);
   const [recoveryShown, setRecoveryShown] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const [actionMode, setMode] = useState<ActionMode>("popup");
+  const [theme, setTheme] = useState<Theme>(themePref());
   useEffect(() => {
-    if (isPopup)
+    if (isPopup && globalThis.chrome?.storage)
+      void getActionMode().then(setMode);
+  }, []);
+  function openSidePanel() {
+    if (windowId === undefined) return;
+    chrome.sidePanel
+      .open({ windowId })
+      .then(() => window.close())
+      .catch(() => setError("無法開啟側邊欄，請更新 Chrome 後重試"));
+  }
+  useEffect(() => {
+    if (isPopup && !isPanel)
       document.documentElement.style.minHeight =
         editor ||
         deleting ||
@@ -320,7 +362,7 @@ function App() {
         targetTabId: !incognito && !newTab ? tab.id : undefined,
         sourceWindowId: tab.windowId,
       });
-      if (isPopup) window.close();
+      closePopup();
     });
   }
   function hoverText(x: Entry) {
@@ -595,6 +637,22 @@ function App() {
               ? t("無痕視窗 · 加密保護")
               : t("一般視窗 · 加密保護")}
           </span>
+          {isPopup &&
+            !isPanel &&
+            !status?.incognito &&
+            sidePanelSupported() && (
+              <button
+                className="sidePanelButton"
+                title={t("在側邊欄開啟")}
+                aria-label={t("在側邊欄開啟")}
+                onClick={openSidePanel}
+              >
+                <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+                  <rect x="1.5" y="2.5" width="13" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M10 3v10" stroke="currentColor" strokeWidth="1.4" />
+                </svg>
+              </button>
+            )}
           {vault && (
             <button
               onClick={() =>
@@ -1209,6 +1267,52 @@ function App() {
             </div>
             {panel === "settings" ? (
               <>
+                <h3>{t("外觀")}</h3>
+                <ThemePicker
+                  value={theme}
+                  onChange={(next) => {
+                    setTheme(next);
+                    applyTheme(next);
+                    chrome.storage.local
+                      .set({ uiTheme: next })
+                      .catch(() => setError("設定儲存失敗，請重試"));
+                  }}
+                />
+                <hr />
+                {sidePanelSupported() && (
+                  <>
+                    <h3>{t("點工具列圖示時")}</h3>
+                    <div className="modeChoice" role="radiogroup">
+                      {(
+                        [
+                          ["popup", t("開啟浮框")],
+                          ["panel", t("開啟側邊欄")],
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <label key={mode}>
+                          <input
+                            type="radio"
+                            name="actionMode"
+                            checked={actionMode === mode}
+                            onChange={() => {
+                              setMode(mode);
+                              setActionMode(mode).catch(() =>
+                                setError("設定儲存失敗，請重試"),
+                              );
+                            }}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <p className="small muted">
+                      {t(
+                        "側邊欄可以邊瀏覽網頁邊使用，內容與浮框相同；無痕視窗一律使用浮框。",
+                      )}
+                    </p>
+                    <hr />
+                  </>
+                )}
                 {!status?.allowed && (
                   <>
                     <h3>{t("在無痕視窗使用")}</h3>
@@ -1449,6 +1553,8 @@ else
     ),
   );
 import "./popup.css";
+import "./dark.css";
+import "./dark-extra.css";
 
 const MOBILE_URL = "https://veil-bookmark.bitingbox.win/";
 /** QR code that opens the mobile web app on a phone. */

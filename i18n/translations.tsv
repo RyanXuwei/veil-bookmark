@@ -652,3 +652,14 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 自由模式|Free mode|自由配置モード|자유 배치 모드
 移動圖片|Move image|画像を移動|이미지 이동
 刪除圖片|Delete image|画像を削除|이미지 삭제
+在側邊欄開啟|Open in side panel|サイドパネルで開く|사이드 패널에서 열기
+無法開啟側邊欄，請更新 Chrome 後重試|Could not open the side panel. Update Chrome and try again.|サイドパネルを開けませんでした。Chrome を更新してもう一度お試しください。|사이드 패널을 열 수 없습니다. Chrome을 업데이트한 후 다시 시도하세요.
+點工具列圖示時|When you click the toolbar icon|ツールバーのアイコンをクリックしたとき|툴바 아이콘을 클릭하면
+開啟浮框|Open the popup|ポップアップを開く|팝업 열기
+開啟側邊欄|Open the side panel|サイドパネルを開く|사이드 패널 열기
+側邊欄可以邊瀏覽網頁邊使用，內容與浮框相同；無痕視窗一律使用浮框。|The side panel stays open while you browse and shows the same content as the popup. Incognito windows always use the popup.|サイドパネルはブラウジング中も開いたままで、ポップアップと同じ内容を表示します。シークレット ウィンドウでは常にポップアップを使います。|사이드 패널은 웹을 탐색하는 동안 열린 상태로 유지되며 팝업과 같은 내용을 보여 줍니다. 시크릿 창에서는 항상 팝업을 사용합니다.
+設定儲存失敗，請重試|Could not save the setting. Please try again.|設定を保存できませんでした。もう一度お試しください。|설정을 저장하지 못했습니다. 다시 시도하세요.
+外觀|Appearance|外観|화면 모드
+跟隨系統|Match system|システムに合わせる|시스템 설정 따르기
+淺色|Light|ライト|라이트
+深色|Dark|ダーク|다크

@@ -94,7 +94,10 @@ import * as bio from "./biometric";
 import { lookupBookmarkTitle } from "../src/bookmark-title";
 import { VERSION } from "../src/version";
 import { BobaSupport } from "../src/boba-support";
+import { applyTheme, themePref, ThemePicker, type Theme } from "../src/theme";
 import "./app.css";
+import "./dark.css";
+import "./dark-extra.css";
 
 const GITHUB = "https://github.com/RyanXuwei/veil-bookmark";
 const IDLE_LOCK = 15 * 60 * 1000;
@@ -2285,6 +2288,8 @@ function Settings({
           )}
         </p>
         <BiometricSettings />
+        <h3>{t("外觀")}</h3>
+        <ThemeSetting />
         <h3>{t("語言")}</h3>
         <select
           aria-label={t("語言")}
@@ -2677,3 +2682,17 @@ async function boot() {
   }
 }
 void boot();
+
+/** Light / dark / follow the phone; kept in this browser only. */
+function ThemeSetting() {
+  const [theme, setTheme] = useState<Theme>(themePref());
+  return (
+    <ThemePicker
+      value={theme}
+      onChange={(next) => {
+        setTheme(next);
+        applyTheme(next);
+      }}
+    />
+  );
+}

@@ -1,0 +1,22 @@
+/* Hand-tuned dark theme details that the generated dark.css cannot infer. */
+html[data-theme="dark"] .nbTabs button[aria-selected="true"] {
+  background: hsl(90 8% 15%);
+  color: #dfe9e1;
+}
+/* Controls on the green title and status bars keep their light ink. */
+html[data-theme="dark"] .nbTbBtn,
+html[data-theme="dark"] .nbLang {
+  background: transparent;
+  color: #f1eedc;
+  border-color: rgba(241, 238, 220, 0.4);
+}
+html[data-theme="dark"] .nbTbBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+html[data-theme="dark"] .nbLang option {
+  color: #e6ebe7;
+  background: #232723;
+}
+html[data-theme="dark"] .nbTitle::placeholder {
+  color: rgba(241, 238, 220, 0.6);
+}

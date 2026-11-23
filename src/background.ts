@@ -1,4 +1,5 @@
 import { captureSummary, SUMMARY_TTL } from "./summary-capture";
+import { getActionMode, POPUP_PATH, sidePanelSupported } from "./side-panel";
 import { bookmarkKey, lookupBookmarkTitle } from "./bookmark-title";
 import type { SummarySource } from "./local-summary";
 import {
@@ -1318,10 +1319,51 @@ async function menus() {
     documentUrlPatterns: ["http://*/*", "https://*/*"],
   });
 }
-chrome.runtime.onInstalled.addListener(() => void menus());
+chrome.runtime.onInstalled.addListener(() => {
+  void menus();
+  void applyActionMode();
+});
 chrome.storage.onChanged.addListener((c, area) => {
   if (area === "local" && c.uiLang) void menus();
+  if (area === "local" && c.actionMode) void applyActionMode();
 });
+/**
+ * Toolbar icon: popup (default) or side panel. Incognito tabs always keep the
+ * popup (tab-level popup wins over the side panel behaviour), so private
+ * windows work the same as before.
+ */
+async function applyActionMode() {
+  if (!sidePanelSupported()) return;
+  try {
+    const panel = (await getActionMode()) === "panel";
+    await chrome.action.setPopup({ popup: panel ? "" : POPUP_PATH });
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: panel });
+    for (const tab of await chrome.tabs.query({ windowType: "normal" }))
+      if (tab.incognito && tab.id !== undefined) privatePopup(tab.id);
+  } catch {}
+}
+function privatePopup(tabId: number) {
+  void chrome.action.setPopup({ tabId, popup: POPUP_PATH }).catch(() => {});
+}
+chrome.tabs.onCreated.addListener((tab) => {
+  if (tab.incognito && tab.id !== undefined) privatePopup(tab.id);
+});
+chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+  if (tab.incognito && change.status === "loading") privatePopup(tabId);
+});
+void applyActionMode();
+/** Shows the Veil page after a right-click while locked (popup or panel). */
+async function showUi(tab?: chrome.tabs.Tab) {
+  try {
+    if (
+      tab?.windowId !== undefined &&
+      !tab.incognito &&
+      (await getActionMode()) === "panel"
+    )
+      await chrome.sidePanel.open({ windowId: tab.windowId });
+    else await chrome.action.openPopup();
+  } catch {}
+}
 function badge(text: string, title: string) {
   void chrome.action.setBadgeBackgroundColor({ color: "#335a49" });
   void chrome.action.setBadgeText({ text });
@@ -1405,10 +1447,7 @@ async function onClip(
         return true;
       });
       if (saved) void requestSync();
-      else
-        try {
-          await chrome.action.openPopup();
-        } catch {}
+      else await showUi(tab);
     } catch {
       badge("!", t("無法加入書籤，請確認網址後重試"));
     }
@@ -1461,9 +1500,7 @@ async function onClip(
       ].slice(-20);
       await chrome.storage.session.set({ clips: keep });
       badge(String(keep.length), t("解鎖後會把選取的內容加入記事本"));
-      try {
-        await chrome.action.openPopup();
-      } catch {}
+      await showUi(tab);
     }
   })();
 }

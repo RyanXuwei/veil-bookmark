@@ -1,13 +1,14 @@
 {
   "name": "veil-bookmark",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "i18n": "node scripts/build-i18n.mjs",
-    "build": "node scripts/check-version.mjs && node scripts/check-i18n.mjs && tsc --noEmit && vite build && node scripts/package.mjs",
-    "build:web": "node scripts/check-version.mjs && node scripts/check-i18n.mjs && tsc --noEmit && vite build -c vite.web.config.ts",
+    "dark-css": "node scripts/build-dark-css.mjs",
+    "build": "node scripts/check-version.mjs && node scripts/check-i18n.mjs && node scripts/build-dark-css.mjs && tsc --noEmit && vite build && node scripts/package.mjs",
+    "build:web": "node scripts/check-version.mjs && node scripts/check-i18n.mjs && node scripts/build-dark-css.mjs && tsc --noEmit && vite build -c vite.web.config.ts",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {

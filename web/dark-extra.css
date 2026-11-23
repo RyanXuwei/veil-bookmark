@@ -1,0 +1,10 @@
+/* Hand-tuned dark theme details for the phone that dark.css cannot infer:
+   the note paper keeps its light colour, so its text keeps the light ink. */
+html[data-theme="dark"] .paper,
+html[data-theme="dark"] .editPaper {
+  color: #243b38;
+}
+html[data-theme="dark"] .paper a,
+html[data-theme="dark"] .editPaper a {
+  color: #335a49;
+}

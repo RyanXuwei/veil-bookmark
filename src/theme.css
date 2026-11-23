@@ -1,0 +1,20 @@
+/* Radio rows for appearance and toolbar settings (extension and mobile). */
+.modeChoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 4px 0 6px;
+}
+.modeChoice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: normal;
+  cursor: pointer;
+}
+.modeChoice input {
+  width: auto;
+  margin: 0;
+}

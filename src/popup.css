@@ -789,3 +789,41 @@ html[data-surface="popup"] {
   font-weight: 500;
   margin: 2px 0 10px;
 }
+
+/* Header shortcut: open the same page in Chrome's side panel. */
+[data-surface="popup"] .headerRight .sidePanelButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 7px;
+  color: #4f6a57;
+}
+/* Side panel: same page as the popup, sized to the panel. */
+html[data-panel],
+[data-panel] body,
+[data-panel] .app {
+  width: 100%;
+  min-width: 0;
+}
+html[data-panel],
+[data-panel] body {
+  height: 100%;
+}
+[data-panel] .app {
+  height: 100vh;
+  min-height: 0;
+  max-height: none;
+}
+[data-panel] .app > main {
+  flex: 1;
+  min-height: 0;
+}
+[data-panel] .welcome {
+  overflow: auto;
+}
+[data-panel] .quickList {
+  flex: 1;
+  max-height: none;
+}
+[data-panel] .modal {
+  max-height: none;
+}
