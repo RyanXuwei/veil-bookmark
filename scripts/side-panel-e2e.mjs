@@ -116,6 +116,48 @@ try {
   await notes.close();
   assert.equal(await panel.evaluate(() => globalThis.__closed), 0, "panel stays open");
 
+  // 「收藏目前網頁」 in the panel reads the tab the user is on, without the
+  // popup: Chrome's one-time "tabs" permission prompt is answered by a stub
+  // (headless Chrome cannot show it), and the active tab is faked.
+  await panel.locator(".viewTabs").getByRole("tab", { name: "書籤" }).click();
+  await panel.evaluate(() => {
+    globalThis.__asked = 0;
+    globalThis.__answer = false;
+    chrome.permissions.request = async (p) => {
+      globalThis.__asked++;
+      globalThis.__askedFor = p;
+      return globalThis.__answer;
+    };
+    globalThis.__tab = { title: "目前分頁", url: "https://example.net/current" };
+    chrome.tabs.query = async (q) =>
+      q.active && q.currentWindow ? [globalThis.__tab] : [];
+  });
+  // Refused → explained, nothing opened.
+  await panel.locator(".quickCapture").click();
+  await panel.getByRole("alert").filter({ hasText: "快速加入 Veil 書籤" }).waitFor();
+  assert.deepEqual(await panel.evaluate(() => globalThis.__askedFor), { permissions: ["tabs"] });
+  assert.equal(await panel.locator(".modal").count(), 0);
+  // Allowed → editor prefilled with the current tab; asked only once.
+  await panel.evaluate(() => (globalThis.__answer = true));
+  await panel.locator(".quickCapture").click();
+  const editor = panel.getByRole("dialog", { name: "書籤編輯" });
+  await editor.waitFor();
+  assert.equal(await editor.getByLabel("網址").inputValue(), "https://example.net/current");
+  assert.equal(await editor.getByLabel("名稱").inputValue(), "目前分頁");
+  await editor.getByRole("button", { name: "加密儲存 →" }).click();
+  await panel.locator(".quickRow", { hasText: "目前分頁" }).waitFor();
+  // The user switched tabs: the next save takes the new one, no new prompt.
+  await panel.evaluate(() => (globalThis.__tab = { title: "第二個分頁", url: "https://example.net/second" }));
+  await panel.locator(".quickCapture").click();
+  await editor.waitFor();
+  assert.equal(await editor.getByLabel("網址").inputValue(), "https://example.net/second");
+  assert.equal(await panel.evaluate(() => globalThis.__asked), 2, "asked again only after a refusal");
+  await editor.getByRole("button", { name: "關閉" }).click();
+  // A non-web tab gets a panel-specific hint.
+  await panel.evaluate(() => (globalThis.__tab = { title: "設定", url: "chrome://settings/" }));
+  await panel.locator(".quickCapture").click();
+  await panel.getByRole("alert").filter({ hasText: "目前分頁不是 HTTP / HTTPS 網頁" }).waitFor();
+
   // Lock elsewhere → the open panel shows the unlock screen.
   await rpc("LOCK");
   await panel.locator("input[type=password]").first().waitFor();

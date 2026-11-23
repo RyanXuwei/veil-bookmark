@@ -132,6 +132,13 @@ function App() {
   const input = useRef<HTMLInputElement>(null);
   const [actionMode, setMode] = useState<ActionMode>("popup");
   const [theme, setTheme] = useState<Theme>(themePref());
+  const tabsGranted = useRef(false);
+  useEffect(() => {
+    if (isPanel && globalThis.chrome?.permissions)
+      void chrome.permissions
+        .contains({ permissions: ["tabs"] })
+        .then((ok) => (tabsGranted.current = ok));
+  }, []);
   useEffect(() => {
     if (isPopup && globalThis.chrome?.storage)
       void getActionMode().then(setMode);
@@ -321,7 +328,21 @@ function App() {
     void rpc("TOUCH").catch(() => refresh());
   }
   async function addCurrent() {
+    // The side panel gets no activeTab grant for the page the user is on, so
+    // reading it needs the optional "tabs" permission. Chrome asks once; the
+    // request must start inside this click.
+    const asking =
+      isPanel && !tabsGranted.current
+        ? chrome.permissions
+            .request({ permissions: ["tabs"] })
+            .then((ok) => (tabsGranted.current = ok))
+            .catch(() => false)
+        : null;
     await run(async () => {
+      if (asking && !(await asking))
+        throw Error(
+          "側邊欄需要「讀取分頁」權限才能收藏目前網頁；也可以在網頁上按右鍵「快速加入 Veil 書籤」",
+        );
       let capture: { title?: string; url?: string } | undefined;
       if (isPopup) {
         const [tab] = await chrome.tabs.query({
@@ -337,7 +358,9 @@ function App() {
         ).capture;
       if (!capture?.url || !/^https?:/.test(capture.url))
         throw Error(
-          "請在想收藏的 HTTP / HTTPS 網頁上開啟工具列浮框，再按收藏目前網頁",
+          isPanel
+            ? "目前分頁不是 HTTP / HTTPS 網頁，請切換到想收藏的網頁再按收藏目前網頁"
+            : "請在想收藏的 HTTP / HTTPS 網頁上開啟工具列浮框，再按收藏目前網頁",
         );
       setEditor({
         ...empty,

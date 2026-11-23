@@ -3977,5 +3977,17 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Dark",
   "ja": "ダーク",
   "ko": "다크"
+ },
+ "側邊欄需要「讀取分頁」權限才能收藏目前網頁；也可以在網頁上按右鍵「快速加入 Veil 書籤」": {
+  "zh-CN": "侧边栏需要「读取分页」权限才能收藏目前网页；也可以在网页上按右键「快速加入 Veil 书签」",
+  "en": "The side panel needs the \"Read tabs\" permission to save the current page. You can also right-click the page and choose \"Quick save to Veil bookmarks\".",
+  "ja": "サイドパネルで現在のページを保存するには「タブの読み取り」権限が必要です。ページを右クリックして「Veil ブックマークにすばやく追加」を使うこともできます。",
+  "ko": "사이드 패널에서 현재 페이지를 저장하려면 '탭 읽기' 권한이 필요합니다. 페이지를 마우스 오른쪽 버튼으로 클릭해 'Veil 북마크에 빠르게 저장'을 사용할 수도 있습니다."
+ },
+ "目前分頁不是 HTTP / HTTPS 網頁，請切換到想收藏的網頁再按收藏目前網頁": {
+  "zh-CN": "目前分页不是 HTTP / HTTPS 网页，请切换到想收藏的网页再按收藏目前网页",
+  "en": "The current tab is not an HTTP / HTTPS page. Switch to the page you want to save, then click Save current page.",
+  "ja": "現在のタブは HTTP / HTTPS ページではありません。保存したいページに切り替えてから「現在のページを保存」を押してください。",
+  "ko": "현재 탭은 HTTP / HTTPS 페이지가 아닙니다. 저장할 페이지로 전환한 다음 '현재 페이지 저장'을 누르세요."
  }
 };
