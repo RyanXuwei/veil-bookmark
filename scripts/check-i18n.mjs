@@ -12,6 +12,7 @@ for (const f of [
   "src/recovery.tsx",
   "src/password-change.tsx",
   "src/notebook.tsx",
+  "src/page-flip.tsx",
   "src/recorder.tsx",
   "src/background.ts",
   "src/crypto.ts",

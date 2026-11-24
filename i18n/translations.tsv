@@ -665,3 +665,21 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 深色|Dark|ダーク|다크
 側邊欄需要「讀取分頁」權限才能收藏目前網頁；也可以在網頁上按右鍵「快速加入 Veil 書籤」|The side panel needs the "Read tabs" permission to save the current page. You can also right-click the page and choose "Quick save to Veil bookmarks".|サイドパネルで現在のページを保存するには「タブの読み取り」権限が必要です。ページを右クリックして「Veil ブックマークにすばやく追加」を使うこともできます。|사이드 패널에서 현재 페이지를 저장하려면 '탭 읽기' 권한이 필요합니다. 페이지를 마우스 오른쪽 버튼으로 클릭해 'Veil 북마크에 빠르게 저장'을 사용할 수도 있습니다.
 目前分頁不是 HTTP / HTTPS 網頁，請切換到想收藏的網頁再按收藏目前網頁|The current tab is not an HTTP / HTTPS page. Switch to the page you want to save, then click Save current page.|現在のタブは HTTP / HTTPS ページではありません。保存したいページに切り替えてから「現在のページを保存」を押してください。|현재 탭은 HTTP / HTTPS 페이지가 아닙니다. 저장할 페이지로 전환한 다음 '현재 페이지 저장'을 누르세요.
+頁數已達上限|This note has reached the page limit.|ページ数が上限に達しました。|페이지 수가 한도에 도달했습니다.
+上一頁|Previous page|前のページ|이전 페이지
+下一頁|Next page|次のページ|다음 페이지
+新增頁面|Add page|ページを追加|페이지 추가
+刪除此頁|Delete this page|このページを削除|이 페이지 삭제
+頁面|Pages|ページ|페이지
+刪除第 {page} 頁？|Delete page {page}?|{page} ページ目を削除しますか？|{page}페이지를 삭제할까요?
+這一頁的文字、圖片、手寫和錄音會一起刪除。|The text, pictures, handwriting and voice notes on this page will be deleted with it.|このページの文字、画像、手書き、録音もすべて削除されます。|이 페이지의 텍스트, 사진, 손글씨, 녹음이 함께 삭제됩니다.
+到底後繼續往上拉，可翻到下一頁|At the end of a page, keep pulling up to turn to the next page.|ページの最後でさらに上へ引くと、次のページへめくれます。|페이지 끝에서 계속 위로 끌어올리면 다음 페이지로 넘어갑니다.
+拍照插入|Take photo|写真を撮って挿入|사진 찍어 넣기
+放開以新增第 {page} 頁|Release to add page {page}|指を離すと {page} ページ目を追加|손을 떼면 {page}페이지 추가
+繼續往上拉，新增第 {page} 頁|Keep pulling up to add page {page}|さらに上へ引くと {page} ページ目を追加|계속 위로 끌면 {page}페이지 추가
+繼續往下捲動，新增第 {page} 頁|Keep scrolling down to add page {page}|さらに下へスクロールすると {page} ページ目を追加|계속 아래로 스크롤하면 {page}페이지 추가
+放開以翻到第 {page} 頁|Release to go to page {page}|指を離すと {page} ページ目へ|손을 떼면 {page}페이지로 이동
+繼續往上拉，翻到第 {page} 頁|Keep pulling up for page {page}|さらに上へ引くと {page} ページ目へ|계속 위로 끌면 {page}페이지로 이동
+繼續往下捲動，翻到第 {page} 頁|Keep scrolling down for page {page}|さらに下へスクロールすると {page} ページ目へ|계속 아래로 스크롤하면 {page}페이지로 이동
+繼續往下拉，回到第 {page} 頁|Keep pulling down to go back to page {page}|さらに下へ引くと {page} ページ目に戻る|계속 아래로 끌면 {page}페이지로 돌아가기
+繼續往上捲動，回到第 {page} 頁|Keep scrolling up to go back to page {page}|さらに上へスクロールすると {page} ページ目に戻る|계속 위로 스크롤하면 {page}페이지로 돌아가기

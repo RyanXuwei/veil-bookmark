@@ -314,7 +314,7 @@ try {
     canvas.getContext("2d")!.fillRect(0, 0, 600, 300);
     return canvas.toDataURL("image/png").split(",")[1];
   });
-  await page.locator('.memoEdit input[type="file"]').setInputFiles({
+  await page.locator('.memoEdit input[type="file"]:not([capture])').setInputFiles({
     name: "resize.png",
     mimeType: "image/png",
     buffer: Buffer.from(imageData, "base64"),

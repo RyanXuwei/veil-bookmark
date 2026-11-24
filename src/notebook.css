@@ -639,6 +639,79 @@
   font-size: 14px;
   padding: 0 2px;
 }
+.nbPager {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.nbPagerBtn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #f1eedc;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.nbPagerBtn:hover:not(:disabled) {
+  background: #ffffff26;
+}
+.nbPagerBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.nbPagerBtn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+/* Hint while pulling past the end of a page (see page-flip.tsx). */
+.flipHint {
+  position: fixed;
+  left: 50%;
+  bottom: 44px;
+  z-index: 40;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+  padding: 8px 16px 10px;
+  border-radius: 999px;
+  background: #2f3b30e6;
+  color: #f6f1de;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: 0 6px 20px #0000003d;
+  pointer-events: none;
+}
+.flipHint.prev {
+  top: 120px;
+  bottom: auto;
+}
+.flipHint i {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: #f1d27a;
+  transform-origin: left;
+}
+.flipHint.ready {
+  background: #4d6b3ff0;
+}
+/* Pages copied for "Save as PDF"; the live page is hidden meanwhile. */
+.nbPrintPage {
+  margin-bottom: 28px;
+}
+.nbPage.nbPrinting {
+  display: none;
+}
 .nbZoom {
   min-width: 38px;
   text-align: right;
@@ -785,6 +858,16 @@
   }
   .nbBinding,
   .nbPage::after {
+    display: none;
+  }
+  .nbPrintPage {
+    margin: 0;
+    break-after: page;
+  }
+  .nbPrintPage:has(+ .nbPrinting) {
+    break-after: auto;
+  }
+  .flipHint {
     display: none;
   }
 }

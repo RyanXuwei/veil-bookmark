@@ -3989,5 +3989,113 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "The current tab is not an HTTP / HTTPS page. Switch to the page you want to save, then click Save current page.",
   "ja": "現在のタブは HTTP / HTTPS ページではありません。保存したいページに切り替えてから「現在のページを保存」を押してください。",
   "ko": "현재 탭은 HTTP / HTTPS 페이지가 아닙니다. 저장할 페이지로 전환한 다음 '현재 페이지 저장'을 누르세요."
+ },
+ "頁數已達上限": {
+  "zh-CN": "页数已达上限",
+  "en": "This note has reached the page limit.",
+  "ja": "ページ数が上限に達しました。",
+  "ko": "페이지 수가 한도에 도달했습니다."
+ },
+ "上一頁": {
+  "zh-CN": "上一页",
+  "en": "Previous page",
+  "ja": "前のページ",
+  "ko": "이전 페이지"
+ },
+ "下一頁": {
+  "zh-CN": "下一页",
+  "en": "Next page",
+  "ja": "次のページ",
+  "ko": "다음 페이지"
+ },
+ "新增頁面": {
+  "zh-CN": "添加页面",
+  "en": "Add page",
+  "ja": "ページを追加",
+  "ko": "페이지 추가"
+ },
+ "刪除此頁": {
+  "zh-CN": "删除此页",
+  "en": "Delete this page",
+  "ja": "このページを削除",
+  "ko": "이 페이지 삭제"
+ },
+ "頁面": {
+  "zh-CN": "页面",
+  "en": "Pages",
+  "ja": "ページ",
+  "ko": "페이지"
+ },
+ "刪除第 {page} 頁？": {
+  "zh-CN": "删除第 {page} 页？",
+  "en": "Delete page {page}?",
+  "ja": "{page} ページ目を削除しますか？",
+  "ko": "{page}페이지를 삭제할까요?"
+ },
+ "這一頁的文字、圖片、手寫和錄音會一起刪除。": {
+  "zh-CN": "这一页的文字、图片、手写和录音会一起删除。",
+  "en": "The text, pictures, handwriting and voice notes on this page will be deleted with it.",
+  "ja": "このページの文字、画像、手書き、録音もすべて削除されます。",
+  "ko": "이 페이지의 텍스트, 사진, 손글씨, 녹음이 함께 삭제됩니다."
+ },
+ "到底後繼續往上拉，可翻到下一頁": {
+  "zh-CN": "到底后继续往上拉，可翻到下一页",
+  "en": "At the end of a page, keep pulling up to turn to the next page.",
+  "ja": "ページの最後でさらに上へ引くと、次のページへめくれます。",
+  "ko": "페이지 끝에서 계속 위로 끌어올리면 다음 페이지로 넘어갑니다."
+ },
+ "拍照插入": {
+  "zh-CN": "拍照插入",
+  "en": "Take photo",
+  "ja": "写真を撮って挿入",
+  "ko": "사진 찍어 넣기"
+ },
+ "放開以新增第 {page} 頁": {
+  "zh-CN": "放开以添加第 {page} 页",
+  "en": "Release to add page {page}",
+  "ja": "指を離すと {page} ページ目を追加",
+  "ko": "손을 떼면 {page}페이지 추가"
+ },
+ "繼續往上拉，新增第 {page} 頁": {
+  "zh-CN": "继续往上拉，添加第 {page} 页",
+  "en": "Keep pulling up to add page {page}",
+  "ja": "さらに上へ引くと {page} ページ目を追加",
+  "ko": "계속 위로 끌면 {page}페이지 추가"
+ },
+ "繼續往下捲動，新增第 {page} 頁": {
+  "zh-CN": "继续往下卷动，添加第 {page} 页",
+  "en": "Keep scrolling down to add page {page}",
+  "ja": "さらに下へスクロールすると {page} ページ目を追加",
+  "ko": "계속 아래로 스크롤하면 {page}페이지 추가"
+ },
+ "放開以翻到第 {page} 頁": {
+  "zh-CN": "放开以翻到第 {page} 页",
+  "en": "Release to go to page {page}",
+  "ja": "指を離すと {page} ページ目へ",
+  "ko": "손을 떼면 {page}페이지로 이동"
+ },
+ "繼續往上拉，翻到第 {page} 頁": {
+  "zh-CN": "继续往上拉，翻到第 {page} 页",
+  "en": "Keep pulling up for page {page}",
+  "ja": "さらに上へ引くと {page} ページ目へ",
+  "ko": "계속 위로 끌면 {page}페이지로 이동"
+ },
+ "繼續往下捲動，翻到第 {page} 頁": {
+  "zh-CN": "继续往下卷动，翻到第 {page} 页",
+  "en": "Keep scrolling down for page {page}",
+  "ja": "さらに下へスクロールすると {page} ページ目へ",
+  "ko": "계속 아래로 스크롤하면 {page}페이지로 이동"
+ },
+ "繼續往下拉，回到第 {page} 頁": {
+  "zh-CN": "继续往下拉，回到第 {page} 页",
+  "en": "Keep pulling down to go back to page {page}",
+  "ja": "さらに下へ引くと {page} ページ目に戻る",
+  "ko": "계속 아래로 끌면 {page}페이지로 돌아가기"
+ },
+ "繼續往上捲動，回到第 {page} 頁": {
+  "zh-CN": "继续往上卷动，回到第 {page} 页",
+  "en": "Keep scrolling up to go back to page {page}",
+  "ja": "さらに上へスクロールすると {page} ページ目に戻る",
+  "ko": "계속 위로 스크롤하면 {page}페이지로 돌아가기"
  }
 };

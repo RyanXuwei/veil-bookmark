@@ -18,6 +18,17 @@ import {
 import { folderNames, ordered } from "./sortable";
 import { baseName, depthOf, pathLabel, within } from "./folders";
 import { ConfirmDelete, itemDeleteDetail } from "./confirm";
+import {
+  joinPages,
+  MEMO_PAGES_MAX,
+  onPage,
+  pageOf,
+  replacePage,
+  removePageItems,
+  splitPages,
+  storedPages,
+} from "./memo-pages";
+import { FlipHint, usePageFlip } from "./page-flip";
 import { IMPORT_ACCEPT, importFile } from "./import-doc";
 import { type Folder } from "./crypto";
 import { importHtmlImages, importImage, layoutRuled, RULE } from "./ruled";
@@ -33,7 +44,6 @@ import {
 
 type Rpc = (type: string, data?: Record<string, unknown>) => Promise<any>;
 type Tab = "home" | "insert" | "view";
-const PAGE_HEIGHT = 1123; // A4 at 96 dpi
 const DEFAULT_PAPER = "#fff4be";
 const PAPER_COLORS = [
   "#fff4be",
@@ -88,12 +98,23 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     setRecordings(next);
     changed();
   }
+  // Pages of the open document: the editor shows one; the others are kept
+  // here as sanitized HTML (the shown one is refreshed from the editor).
+  const pages = useRef<string[]>(["<p><br></p>"]);
+  const pageNow = useRef(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [askPageDelete, setAskPageDelete] = useState(false);
+  const otherWords = useRef({ words: 0, chars: 0 });
+  const [printPages, setPrintPages] = useState<string[] | null>(null);
+  const canvas = useRef<HTMLElement>(null);
   const [drawMode, setDrawMode] = useState<"text" | "pen" | "eraser">("text");
   const [penColor, setPenColor] = useState("#384739");
   const [penWidth, setPenWidth] = useState(2);
+  // The drawing layer edits the shown page's strokes only.
   function drawChanged(next: DrawingStroke[]) {
-    ink.current = next;
-    setDrawing(next);
+    ink.current = replacePage(ink.current, pageNow.current, next);
+    setDrawing(ink.current);
     changed();
   }
   const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving">(
@@ -146,6 +167,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     saving.current = null;
     state.current = { current: "", title: "", dirty: false };
     if (editor.current) editor.current.innerHTML = "";
+    pages.current = ["<p><br></p>"];
+    pageNow.current = 0;
+    setPageIndex(0);
+    setPageCount(1);
+    setAskPageDelete(false);
+    otherWords.current = { words: 0, chars: 0 };
     images.current = new Map();
     savedImages.current = "";
     setStatus((s: any) => (s ? { ...s, unlocked: false } : s));
@@ -189,13 +216,106 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   function updateCounts() {
     const el = editor.current;
     if (!el) return;
+    // Words of the whole document: the shown page plus the others.
     const c = countWords(el.innerText || "");
-    // Content height plus the 1-inch top/bottom margins; ignore sub-pixel
-    // rounding so a document that exactly fills one page stays at one page.
-    const contentHeight = el.scrollHeight + 192;
-    const pages = Math.max(1, Math.ceil((contentHeight - 2) / PAGE_HEIGHT));
-    setCounts({ ...c, pages });
+    setCounts({
+      words: c.words + otherWords.current.words,
+      chars: c.chars + otherWords.current.chars,
+      pages: pages.current.length,
+    });
   }
+  function countOthers() {
+    otherWords.current = countWords(
+      pages.current
+        .filter((_, i) => i !== pageNow.current)
+        .map((p) => htmlToText(p))
+        .join("\n"),
+    );
+  }
+
+  /** The whole document as stored: every page, the shown one up to date. */
+  function documentHtml() {
+    if (editor.current)
+      pages.current[pageNow.current] = sanitizeHtml(editor.current.innerHTML);
+    return joinPages(storedPages(pages.current, ink.current, audio.current));
+  }
+
+  /** Shows page n (0-based); one past the last adds a blank page. */
+  function showPage(n: number, at: "top" | "bottom" = "top") {
+    const el = editor.current;
+    if (!el || switching || n < 0 || mdHtml !== null) return;
+    if (recording || pendingAudio) {
+      setError("請先停止錄音並放置播放貼紙");
+      return;
+    }
+    if (n === pageNow.current) return;
+    pages.current[pageNow.current] = sanitizeHtml(el.innerHTML);
+    if (n >= pages.current.length) {
+      if (pages.current.length >= MEMO_PAGES_MAX) {
+        setError("頁數已達上限");
+        return;
+      }
+      n = pages.current.length;
+      pages.current.push("<p><br></p>");
+    }
+    // Blank pages left behind at the end are dropped.
+    const keep = Math.max(
+      n + 1,
+      storedPages(pages.current, ink.current, audio.current).length,
+    );
+    pages.current = pages.current.slice(0, keep);
+    pageNow.current = n;
+    setPageIndex(n);
+    setPageCount(pages.current.length);
+    el.innerHTML = pages.current[n] || "<p><br></p>";
+    layoutRuled(el, images.current);
+    countOthers();
+    updateCounts();
+    setError("");
+    const box = canvas.current;
+    if (box) box.scrollTop = at === "top" ? 0 : box.scrollHeight;
+    el.focus({ preventScroll: true });
+  }
+
+  async function deletePage() {
+    setAskPageDelete(false);
+    const el = editor.current;
+    if (!el || switching || pages.current.length <= 1) return;
+    if (recording || pendingAudio) {
+      setError("請先停止錄音並放置播放貼紙");
+      return;
+    }
+    const n = pageNow.current;
+    pages.current.splice(n, 1);
+    ink.current = removePageItems(ink.current, n);
+    audio.current = removePageItems(audio.current, n);
+    setDrawing(ink.current);
+    setRecordings(audio.current);
+    const next = Math.min(n, pages.current.length - 1);
+    pageNow.current = next;
+    setPageIndex(next);
+    setPageCount(pages.current.length);
+    el.innerHTML = pages.current[next] || "<p><br></p>";
+    layoutRuled(el, images.current);
+    countOthers();
+    if (canvas.current) canvas.current.scrollTop = 0;
+    changed();
+  }
+  // Pull past the bottom of the page for the next one (a new page after the
+  // last), past the top for the previous one.
+  const pull = usePageFlip(canvas, {
+    enabled:
+      unlocked &&
+      !switching &&
+      mdHtml === null &&
+      !recording &&
+      !pendingAudio &&
+      !askPageDelete &&
+      !printPages,
+    canPrev: pageIndex > 0,
+    onNext: () => showPage(pageNow.current + 1, "top"),
+    onPrev: () => showPage(pageNow.current - 1, "bottom"),
+  });
 
   function load(m: Memo | null) {
     const el = editor.current;
@@ -207,9 +327,14 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       title: m?.title || "",
       dirty: false,
     };
-    el.innerHTML = m ? memoHtml(m) : "<p><br></p>";
+    pages.current = m ? splitPages(memoHtml(m)) : ["<p><br></p>"];
+    pageNow.current = 0;
+    setPageIndex(0);
+    setPageCount(pages.current.length);
+    setAskPageDelete(false);
+    el.innerHTML = pages.current[0] || "<p><br></p>";
     images.current = new Map(cleanImages(m?.images).map((i) => [i.id, i]));
-    savedImages.current = usedImages(el.innerHTML).join(",");
+    savedImages.current = usedImages(pages.current.join("")).join(",");
     layoutRuled(el, images.current);
     setCurrent(m?.id || "");
     setTitle(m?.title || "");
@@ -224,6 +349,8 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     setRecording(false);
     setDrawing(ink.current);
     setDrawMode("text");
+    countOthers();
+    if (canvas.current) canvas.current.scrollTop = 0;
     setSavedAt(m?.updated || 0);
     setSaveState("saved");
     history.replaceState(null, "", `#${m?.id || "new"}`);
@@ -244,7 +371,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           editor.current &&
           saveEpoch === epoch.current
         ) {
-          const body = sanitizeHtml(editor.current.innerHTML);
+          const body = documentHtml();
           const used = usedImages(body);
           const imageKey = used.join(",");
           const titleNow = state.current.title;
@@ -556,7 +683,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     sel?.addRange(range);
   }
   function roomFor(added: MemoImage[]) {
-    const used = usedImages(editor.current?.innerHTML || "").map((x) =>
+    const used = usedImages(documentHtml()).map((x) =>
       images.current.get(x)!,
     );
     if (used.length + added.length > MEMO_IMAGES_MAX)
@@ -625,8 +752,24 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       window.removeEventListener("afterprint", restore);
     };
     window.addEventListener("afterprint", restore);
-    window.print();
+    // Every page of the note, each on its own sheet.
+    const all = splitPages(documentHtml());
+    if (all.length > 1) setPrintPages(all);
+    else window.print();
   }
+  useEffect(() => {
+    if (!printPages) return;
+    const done = () => setPrintPages(null);
+    window.addEventListener("afterprint", done, { once: true });
+    // Let the pages lay out before Chrome takes the snapshot.
+    const frame = requestAnimationFrame(() =>
+      requestAnimationFrame(() => window.print()),
+    );
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("afterprint", done);
+    };
+  }, [printPages]);
 
   function insertLink() {
     const url = prompt(t("輸入連結網址（https://）"), "https://");
@@ -780,8 +923,29 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             })
           : t("已加密儲存");
 
+  const paperStyle = {
+    "--paper-color": paperColor,
+    "--paper-ink":
+      (parseInt(paperColor.slice(1, 3), 16) * 299 +
+        parseInt(paperColor.slice(3, 5), 16) * 587 +
+        parseInt(paperColor.slice(5, 7), 16) * 114) /
+        1000 <
+      128
+        ? "#fff9e9"
+        : "#30372d",
+  } as React.CSSProperties;
+
   return (
     <div className="nb">
+      {askPageDelete && (
+        <ConfirmDelete
+          title={t("刪除第 {page} 頁？", { page: pageIndex + 1 })}
+          detail={t("這一頁的文字、圖片、手寫和錄音會一起刪除。")}
+          busy={switching}
+          onCancel={() => setAskPageDelete(false)}
+          onConfirm={() => void deletePage()}
+        />
+      )}
       {askDelete && (
         <ConfirmDelete
           title={t("刪除「{title}」？", {
@@ -1098,10 +1262,12 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               <button
                 type="button"
                 className="rb"
-                disabled={switching || !drawing.length}
+                disabled={switching || !onPage(drawing, pageIndex).length}
                 title={t("復原筆畫")}
                 aria-label={t("復原筆畫")}
-                onClick={() => drawChanged(ink.current.slice(0, -1))}
+                onClick={() =>
+                  drawChanged(onPage(ink.current, pageNow.current).slice(0, -1))
+                }
               >
                 <ToolIcon name="undo" />
               </button>
@@ -1214,22 +1380,24 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             )}
           </aside>
         )}
-        <main className="nbCanvas">
+        <main className="nbCanvas" ref={canvas}>
+          <FlipHint pull={pull} page={pageIndex} pages={pageCount} />
+          {printPages?.map((html, i) => (
+            <PrintPage
+              key={i}
+              html={html}
+              images={images.current}
+              strokes={onPage(drawing, i)}
+              style={paperStyle}
+            />
+          ))}
           <div
-            className="nbPage"
+            className={"nbPage" + (printPages ? " nbPrinting" : "")}
             ref={page}
             style={
               {
+                ...paperStyle,
                 zoom: zoom / 100,
-                "--paper-color": paperColor,
-                "--paper-ink":
-                  (parseInt(paperColor.slice(1, 3), 16) * 299 +
-                    parseInt(paperColor.slice(3, 5), 16) * 587 +
-                    parseInt(paperColor.slice(5, 7), 16) * 114) /
-                    1000 <
-                  128
-                    ? "#fff9e9"
-                    : "#30372d",
               } as React.CSSProperties
             }
           >
@@ -1323,11 +1491,11 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             />
             {mdHtml === null && (
               <ImageResize editor={editor} enabled={unlocked && !switching && drawMode === "text"}
-                documentKey={current} onChange={changed} />
+                documentKey={current + ":" + pageIndex} onChange={changed} />
             )}
             {mdHtml === null && (
             <DrawingLayer
-              strokes={drawing}
+              strokes={onPage(drawing, pageIndex)}
               mode={switching ? "text" : drawMode}
               color={penColor}
               width={penWidth}
@@ -1335,7 +1503,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
             />
             )}
             <div className="nbAudioLayer" hidden={mdHtml !== null}>
-              {recordings.map((r) => (
+              {onPage(recordings, pageIndex).map((r) => (
                 <AudioSticker
                   key={r.id}
                   recording={r}
@@ -1368,7 +1536,15 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
                       0,
                       Math.min(0.9, (e.clientY - box.top) / box.height),
                     );
-                  audioChanged([...audio.current, { ...pendingAudio, x, y }]);
+                  audioChanged([
+                    ...audio.current,
+                    {
+                      ...pendingAudio,
+                      x,
+                      y,
+                      ...(pageNow.current ? { page: pageNow.current } : {}),
+                    },
+                  ]);
                   setPendingAudio(null);
                   setError("");
                 }}
@@ -1379,8 +1555,43 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
       </div>
 
       <footer className="nbStatus">
-        <span>
-          {t("第 {page} 頁，共 {pages} 頁", { page: 1, pages: counts.pages })}
+        <span className="nbPager">
+          <button
+            type="button"
+            className="nbPagerBtn"
+            aria-label={t("上一頁")}
+            title={t("上一頁")}
+            disabled={switching || pageIndex === 0}
+            onClick={() => showPage(pageIndex - 1)}
+          >
+            ‹
+          </button>
+          <span>
+            {t("第 {page} 頁，共 {pages} 頁", {
+              page: pageIndex + 1,
+              pages: pageCount,
+            })}
+          </span>
+          <button
+            type="button"
+            className="nbPagerBtn"
+            aria-label={pageIndex + 1 >= pageCount ? t("新增頁面") : t("下一頁")}
+            title={pageIndex + 1 >= pageCount ? t("新增頁面") : t("下一頁")}
+            disabled={switching}
+            onClick={() => showPage(pageIndex + 1)}
+          >
+            {pageIndex + 1 >= pageCount ? "+" : "›"}
+          </button>
+          <button
+            type="button"
+            className="nbPagerBtn nbPageDelete"
+            aria-label={t("刪除此頁")}
+            title={t("刪除此頁")}
+            disabled={switching || pageCount <= 1}
+            onClick={() => setAskPageDelete(true)}
+          >
+            <ToolIcon name="trash" />
+          </button>
         </span>
         <span>{t("{count} 個字", { count: counts.words })}</span>
         <span>{t("{count} 個字元", { count: counts.chars })}</span>
@@ -1427,6 +1638,42 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
         </button>
         <span className="nbZoom">{zoom}%</span>
       </footer>
+    </div>
+  );
+}
+
+/** One page of the note for "Save as PDF" (all pages are printed). */
+function PrintPage({
+  html,
+  images,
+  strokes,
+  style,
+}: {
+  html: string;
+  images: Map<string, MemoImage>;
+  strokes: DrawingStroke[];
+  style: React.CSSProperties;
+}) {
+  const body = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = body.current;
+    if (!el) return;
+    el.innerHTML = html || "<p><br></p>";
+    layoutRuled(el, images);
+  }, [html]);
+  return (
+    <div
+      className="nbPage nbPrintPage"
+      style={style}
+    >
+      <div ref={body} className="nbEditor" />
+      <DrawingLayer
+        strokes={strokes}
+        mode="text"
+        color=""
+        width={0}
+        onChange={() => {}}
+      />
     </div>
   );
 }

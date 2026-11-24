@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -88,6 +89,16 @@ import {
 import * as shareInbox from "./share-inbox";
 import { AccountMenu } from "./account-menu";
 import { drawDiagrams, htmlText, markdownPreview } from "../src/md-preview";
+import {
+  joinPages,
+  MEMO_PAGES_MAX,
+  onPage,
+  removePageItems,
+  replacePage,
+  splitPages,
+  storedPages,
+} from "../src/memo-pages";
+import { FlipHint, usePageFlip } from "../src/page-flip";
 import { RecoveryKeyModal } from "../src/recovery";
 import { removeAccount } from "./accounts";
 import * as bio from "./biometric";
@@ -1543,28 +1554,16 @@ function Reader({
   const [md, setMd] = useState(false);
   useLayoutEffect(() => {
     const el = body.current;
-    if (!el) return;
-    if (md) {
-      el.innerHTML = markdownPreview(htmlText(memoHtml(memo)));
-      void drawDiagrams(el);
-      return;
-    }
-    el.innerHTML = memoHtml(memo);
-    showImages(el, new Map((memo.images || []).map((i) => [i.id, i])));
-    // Links in notes open outside the app without a referrer.
-    for (const a of Array.from(el.querySelectorAll("a"))) {
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-    }
-    return observeImageLayout(el);
+    if (!el || !md) return;
+    el.innerHTML = markdownPreview(htmlText(memoHtml(memo)));
+    void drawDiagrams(el);
   }, [memo, md]);
   const strokes = cleanDrawing(memo.drawing);
   const voices = cleanRecordings(memo.recordings);
-  const area = useRef<HTMLDivElement>(null);
-  const inkHeight = useInkHeight(
-    area,
-    strokes,
-    !md && (strokes.length > 0 || voices.length > 0),
+  const pages = useMemo(() => splitPages(memoHtml(memo)), [memo]);
+  const images = useMemo(
+    () => new Map((memo.images || []).map((i) => [i.id, i])),
+    [memo],
   );
   return (
     <div
@@ -1595,27 +1594,84 @@ function Reader({
         style={{ background: memo.paperColor || DEFAULT_PAPER }}
       >
         <h1>{memoTitle(memo)}</h1>
-        <div className="inkArea" ref={area} style={{ minHeight: inkHeight }}>
-          <div className={md ? "memoBody mdPreview" : "memoBody"} ref={body} />
-          {!md && (
-            <DrawingLayer
-              strokes={strokes}
-              mode="text"
-              color=""
-              width={0}
-              onChange={() => {}}
+        {md ? (
+          <div className="memoBody mdPreview" ref={body} />
+        ) : (
+          // Every page in turn, each with its own handwriting and voice notes.
+          pages.map((html, i) => (
+            <ReaderPage
+              key={i}
+              html={html}
+              images={images}
+              strokes={onPage(strokes, i)}
+              voices={onPage(voices, i)}
+              label={
+                pages.length > 1
+                  ? t("第 {page} 頁，共 {pages} 頁", {
+                      page: i + 1,
+                      pages: pages.length,
+                    })
+                  : ""
+              }
             />
-          )}
-          {!md && (
-            <div className="nbAudioLayer">
-              {voices.map((r) => (
-                <VoicePlayer key={r.id} recording={r} />
-              ))}
-            </div>
-          )}
-        </div>
+          ))
+        )}
       </article>
     </div>
+  );
+}
+
+function ReaderPage({
+  html,
+  images,
+  strokes,
+  voices,
+  label,
+}: {
+  html: string;
+  images: Map<string, MemoImage>;
+  strokes: DrawingStroke[];
+  voices: MemoRecording[];
+  label: string;
+}) {
+  const body = useRef<HTMLDivElement>(null);
+  const area = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = body.current;
+    if (!el) return;
+    el.innerHTML = html;
+    showImages(el, images);
+    // Links in notes open outside the app without a referrer.
+    for (const a of Array.from(el.querySelectorAll("a"))) {
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    }
+    return observeImageLayout(el);
+  }, [html, images]);
+  const inkHeight = useInkHeight(
+    area,
+    strokes,
+    strokes.length > 0 || voices.length > 0,
+  );
+  return (
+    <>
+      {label && <div className="readerPageLabel">{label}</div>}
+      <div className="inkArea" ref={area} style={{ minHeight: inkHeight }}>
+        <div className="memoBody" ref={body} />
+        <DrawingLayer
+          strokes={strokes}
+          mode="text"
+          color=""
+          width={0}
+          onChange={() => {}}
+        />
+        <div className="nbAudioLayer">
+          {voices.map((r) => (
+            <VoicePlayer key={r.id} recording={r} />
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -1679,6 +1735,7 @@ const TOOLS: {
   icon: React.ReactNode;
   value?: string;
 }[] = [
+  { cmd: "camera", label: "拍照插入", icon: "📷" },
   { cmd: "bold", label: "粗體", icon: <b>B</b> },
   { cmd: "italic", label: "斜體", icon: <i>I</i> },
   { cmd: "underline", label: "底線", icon: <u>U</u> },
@@ -1726,6 +1783,14 @@ function MemoEditor({
   const [keyboard, setKeyboard] = useState(0);
   const body = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  // Pages of the note: the editor shows one; the others wait here as HTML.
+  const pages = useRef<string[]>(memo ? splitPages(memoHtml(memo)) : [""]);
+  const pageNow = useRef(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageCount, setPageCount] = useState(pages.current.length);
+  const [askPageDelete, setAskPageDelete] = useState(false);
   const id = useRef(memo?.id || "");
   const images = useRef(new Map((memo?.images || []).map((i) => [i.id, i])));
   const dirty = useRef(false);
@@ -1750,14 +1815,17 @@ function MemoEditor({
   const audio = useRef(voices);
   audio.current = voices;
   const area = useRef<HTMLDivElement>(null);
+  const pageStrokes = onPage(strokes, pageIndex);
+  const pageVoices = onPage(voices, pageIndex);
   const inkHeight = useInkHeight(
     area,
-    strokes,
-    mode !== "text" || strokes.length > 0 || voices.length > 0,
+    pageStrokes,
+    mode !== "text" || pageStrokes.length > 0 || pageVoices.length > 0,
   );
+  // The drawing layer edits the shown page's strokes only.
   function drawChanged(next: DrawingStroke[]) {
-    setStrokes(next);
-    ink.current = next;
+    ink.current = replacePage(ink.current, pageNow.current, next);
+    setStrokes(ink.current);
     changed();
   }
   function voicesChanged(next: MemoRecording[]) {
@@ -1768,7 +1836,7 @@ function MemoEditor({
 
   useLayoutEffect(() => {
     const el = body.current!;
-    el.innerHTML = memo ? memoHtml(memo) : "";
+    el.innerHTML = pages.current[0];
     showImages(el, images.current);
     document.execCommand("defaultParagraphSeparator", false, "p");
   }, []);
@@ -1841,7 +1909,7 @@ function MemoEditor({
       const el = body.current;
       if (!dirty.current || !el) return true;
       dirty.current = false;
-      const html = sanitizeHtml(el.innerHTML);
+      const html = documentHtml();
       const used = imageIds(html).filter((x) => images.current.has(x));
       const now = latest.current;
       if (
@@ -1882,6 +1950,75 @@ function MemoEditor({
     return chain.current;
   }
 
+  /** The whole note as stored: every page, the shown one up to date. */
+  function documentHtml() {
+    if (body.current)
+      pages.current[pageNow.current] = sanitizeHtml(body.current.innerHTML);
+    return joinPages(storedPages(pages.current, ink.current, audio.current));
+  }
+
+  /** Shows page n (0-based); one past the last adds a blank page. */
+  function showPage(n: number, at: "top" | "bottom" = "top") {
+    const el = body.current;
+    if (!el || n < 0 || n === pageNow.current || recording) return;
+    pages.current[pageNow.current] = sanitizeHtml(el.innerHTML);
+    if (n >= pages.current.length) {
+      if (pages.current.length >= MEMO_PAGES_MAX) {
+        setError("頁數已達上限");
+        return;
+      }
+      n = pages.current.length;
+      pages.current.push("");
+    }
+    // Blank pages left behind at the end are dropped.
+    pages.current = pages.current.slice(
+      0,
+      Math.max(
+        n + 1,
+        storedPages(pages.current, ink.current, audio.current).length,
+      ),
+    );
+    pageNow.current = n;
+    setPageIndex(n);
+    setPageCount(pages.current.length);
+    range.current = null;
+    el.innerHTML = pages.current[n];
+    showImages(el, images.current);
+    setError("");
+    const box = scroller.current;
+    if (box) box.scrollTop = at === "top" ? 0 : box.scrollHeight;
+  }
+
+  function deletePage() {
+    setAskPageDelete(false);
+    const el = body.current;
+    if (!el || pages.current.length <= 1 || recording) return;
+    const n = pageNow.current;
+    pages.current.splice(n, 1);
+    ink.current = removePageItems(ink.current, n);
+    audio.current = removePageItems(audio.current, n);
+    setStrokes(ink.current);
+    setVoices(audio.current);
+    const next = Math.min(n, pages.current.length - 1);
+    pageNow.current = next;
+    setPageIndex(next);
+    setPageCount(pages.current.length);
+    range.current = null;
+    el.innerHTML = pages.current[next];
+    showImages(el, images.current);
+    if (scroller.current) scroller.current.scrollTop = 0;
+    changed();
+  }
+
+  // At the end of a page, keep pulling up for the next page (a new one
+  // after the last); at the top, pull down for the previous page.
+  const pull = usePageFlip(scroller, {
+    enabled: mode === "text" && !recording && !more && !askPageDelete,
+    canPrev: pageIndex > 0,
+    onNext: () => showPage(pageNow.current + 1, "top"),
+    onPrev: () => showPage(pageNow.current - 1, "bottom"),
+  });
+
   async function back() {
     if (failed) return onClose(); // Second tap: leave without saving.
     const isNew = !id.current;
@@ -1905,6 +2042,7 @@ function MemoEditor({
 
   function exec(cmd: string, value?: string) {
     if (cmd === "image") return picker.current?.click();
+    if (cmd === "camera") return camera.current?.click();
     restore();
     if (cmd === "heading" || cmd === "quote") {
       const tag = cmd === "heading" ? "h2" : "blockquote";
@@ -1961,6 +2099,7 @@ function MemoEditor({
 
   return (
     <div
+      ref={scroller}
       className="reader memoEdit"
       role="dialog"
       aria-modal="true"
@@ -2031,16 +2170,16 @@ function MemoEditor({
           }}
         />
           <ImageResize editor={body} enabled={mode === "text"}
-            documentKey={memo?.id || "new"} onChange={changed} />
+            documentKey={(memo?.id || "new") + ":" + pageIndex} onChange={changed} />
           <DrawingLayer
-            strokes={strokes}
+            strokes={pageStrokes}
             mode={mode}
             color={penColor}
             width={INK_WIDTH}
             onChange={drawChanged}
           />
           <div className="nbAudioLayer">
-            {voices.map((r) => (
+            {pageVoices.map((r) => (
               <AudioSticker
                 key={r.id}
                 recording={r}
@@ -2056,12 +2195,50 @@ function MemoEditor({
             ))}
           </div>
         </div>
+        <nav className="pageBar" aria-label={t("頁面")}>
+          <button
+            type="button"
+            aria-label={t("上一頁")}
+            disabled={pageIndex === 0}
+            onClick={() => showPage(pageIndex - 1)}
+          >
+            ‹
+          </button>
+          <span>
+            {t("第 {page} 頁，共 {pages} 頁", {
+              page: pageIndex + 1,
+              pages: pageCount,
+            })}
+          </span>
+          <button
+            type="button"
+            aria-label={pageIndex + 1 >= pageCount ? t("新增頁面") : t("下一頁")}
+            onClick={() => showPage(pageIndex + 1)}
+          >
+            {pageIndex + 1 >= pageCount ? "+" : "›"}
+          </button>
+          <button
+            type="button"
+            className="pageDelete"
+            aria-label={t("刪除此頁")}
+            disabled={pageCount <= 1}
+            onClick={() => setAskPageDelete(true)}
+          >
+            🗑
+          </button>
+        </nav>
+        <p className="pageHint">{t("到底後繼續往上拉，可翻到下一頁")}</p>
       </article>
+      <FlipHint pull={pull} page={pageIndex} pages={pageCount} touch />
       <div
         className="tools"
         role="toolbar"
         aria-label={t("格式工具列")}
-        style={{ bottom: keyboard }}
+        // Out of the way of the option and delete-page sheets.
+        style={{
+          bottom: keyboard,
+          visibility: more || askPageDelete ? "hidden" : undefined,
+        }}
       >
         {recording || voices.length < 5 ? (
           <div className="inkRecorder">
@@ -2074,7 +2251,15 @@ function MemoEditor({
                 const y = box
                   ? Math.max(0, Math.min(0.9, (innerHeight * 0.3 - box.top) / box.height))
                   : 0.1;
-                voicesChanged([...audio.current, { ...r, x: 0.04, y }]);
+                voicesChanged([
+                  ...audio.current,
+                  {
+                    ...r,
+                    x: 0.04,
+                    y,
+                    ...(pageNow.current ? { page: pageNow.current } : {}),
+                  },
+                ]);
               }}
             />
           </div>
@@ -2118,8 +2303,10 @@ function MemoEditor({
               type="button"
               aria-label={t("復原最後一筆")}
               title={t("復原最後一筆")}
-              disabled={!strokes.length}
-              onClick={() => drawChanged(ink.current.slice(0, -1))}
+              disabled={!pageStrokes.length}
+              onClick={() =>
+                drawChanged(onPage(ink.current, pageNow.current).slice(0, -1))
+              }
             >
               ↺
             </button>
@@ -2159,6 +2346,43 @@ function MemoEditor({
           e.target.value = "";
         }}
       />
+      {/* Quick snap: opens the phone's camera; the photo is inserted at the
+          caret and encrypted like any other picture. */}
+      <input
+        ref={camera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        data-testid="camera-input"
+        onChange={(e) => {
+          void addImages(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {askPageDelete && (
+        <Sheet
+          title={t("刪除第 {page} 頁？", { page: pageIndex + 1 })}
+          onClose={() => setAskPageDelete(false)}
+        >
+          <section className="settings">
+            <p className="muted">
+              {t("這一頁的文字、圖片、手寫和錄音會一起刪除。")}
+            </p>
+            <div className="pageDeleteRow">
+              <button
+                className="secondary"
+                onClick={() => setAskPageDelete(false)}
+              >
+                {t("取消")}
+              </button>
+              <button className="danger" onClick={deletePage}>
+                {t("刪除此頁")}
+              </button>
+            </div>
+          </section>
+        </Sheet>
+      )}
       {more && (
         <Sheet title={t("記事選項")} onClose={() => setMore(false)}>
           <section className="settings">

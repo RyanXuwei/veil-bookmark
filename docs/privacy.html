@@ -15,7 +15,7 @@
     <main>
       <article id="zh" lang="zh-Hant">
         <h1>隱私權政策</h1>
-        <p class="meta">生效日期：2026-11-23（最後更新：側邊欄模式與暗黑模式）　適用版本：0.2.0 起</p>
+        <p class="meta">生效日期：2026-11-24（最後更新：記事多頁與手機拍照插入）　適用版本：0.2.0 起</p>
 
         <h2>摘要</h2>
         <p>
@@ -38,6 +38,7 @@
 
         <h2>Google 使用者資料</h2>
         <p>0.2.4 起，記事也可包含紙張配色、手繪筆畫與錄音播放貼紙的位置。只有按「開始錄音」並允許麥克風後才會錄音；停止或上鎖會關閉麥克風。完成並放置的錄音隨記事加密保存在本機，啟用 Drive 同步時才隨加密保險庫上傳。不提供語音辨識，也不把原始聲音傳給開發者。可個別刪除錄音。</p>
+        <p>1.22.0 起，記事可分成多頁（每頁的文字、手寫與錄音仍在同一則記事中加密保存）。手機版的「拍照插入」只是開啟手機內建的相機程式：拍好的照片和其他插入的圖片一樣，在手機上縮小、重新編碼（不保留拍攝地點等中繼資料）並加密保存。網頁不直接存取相機（網站的 <code>Permissions-Policy</code> 仍為 <code>camera=()</code>），也不會在你按下按鈕以外的時間拍照。</p>
         <p>啟用 Google Drive 同步時，擴充功能只請求一項權限：</p>
         <ul>
           <li><code>https://www.googleapis.com/auth/drive.appdata</code>：在你的 Google Drive「應用程式資料」隱藏資料夾中建立、讀取與刪除本擴充功能自己的檔案。</li>
@@ -109,7 +110,7 @@
 
       <article id="en" lang="en">
         <h1>Privacy Policy</h1>
-        <p class="meta">Effective date: 2026-11-23 (last updated: side panel and dark mode) · Applies to version 0.2.0 and later</p>
+        <p class="meta">Effective date: 2026-11-24 (last updated: note pages and taking photos on the phone) · Applies to version 0.2.0 and later</p>
 
         <h2>Summary</h2>
         <p>
@@ -122,6 +123,7 @@
 <p>From 1.18.0, quick bookmarking or saving a bookmark with a blank name attempts to read the selected URL title, without login cookies or a third-party proxy. If unavailable, its domain is used. Bookmarks captured while locked stay only in session memory, up to 20 items for 30 minutes, and are encrypted and synced only after unlocking.</p>
 <p>From 1.17.0, choosing the local-summary context menu reads visible text from the current page, excluding forms and hidden elements, up to 24,000 characters. Captures stay in session memory and expire after ten minutes or on lock. Chrome may download models and language packs; inference and translation run locally with no cloud-AI fallback. After confirmation, the summary and source link are encrypted as a note and follow your Drive sync settings.</p>
         <p>From version 0.2.4, notes can include paper colors, drawings and positioned audio stickers. Recording starts only when you select Record and grant microphone access. Stopping or locking closes the microphone. Completed and placed clips are encrypted with the note locally, and included in encrypted vault sync only if you enable Drive. There is no speech recognition or transmission of raw audio to the developer. You can delete clips individually.</p>
+        <p>From 1.22.0, notes can have several pages (each page's text, drawings and audio stay encrypted within the same note). On the phone, "Take photo" only opens the phone's own camera app: the photo is resized and re-encoded on the phone (location and other metadata are not kept) and encrypted like any other inserted picture. The web app never accesses the camera directly (the site's <code>Permissions-Policy</code> remains <code>camera=()</code>) and never takes pictures unless you tap the button.</p>
         <ul>
           <li><strong>Bookmark and note content</strong> (title, URL, folder, tags, notes, note titles and text): encrypted with AES-256-GCM and stored in Chrome's extension storage on your computer. Your master password is never stored or transmitted.</li>
           <li><strong>Recovery key</strong>: shown on screen once when created and never stored or transmitted; the vault only keeps the data key encrypted with it.</li>

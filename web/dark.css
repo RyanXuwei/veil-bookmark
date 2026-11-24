@@ -248,6 +248,16 @@ html[data-theme="dark"] .or {
 html[data-theme="dark"] .ghost.strong {
   color: var(--green)
 }
+html[data-theme="dark"] .flipHint {
+  background: hsl(125 11% 74% / 0.922);
+  color: hsl(47 31% 19%)
+}
+html[data-theme="dark"] .flipHint i {
+  background: hsl(44 81% 35%)
+}
+html[data-theme="dark"] .flipHint.ready {
+  background: #4d6b3ff0
+}
 html[data-theme="dark"] .memoTitle {
   border: 0;
   border-bottom: 1px dashed hsl(107 14% 28%);

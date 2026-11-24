@@ -22,7 +22,15 @@ export type MemoRecording = {
   created: number;
   x: number;
   y: number;
+  // Notebook page (0-based); left out on the first page.
+  page?: number;
 };
+// Notebook pages: the body holds them split by <hr data-veil-page="">.
+export const MEMO_PAGES_MAX = 100;
+const cleanPage = (n: unknown) =>
+  Number.isInteger(n) && (n as number) > 0 && (n as number) < MEMO_PAGES_MAX
+    ? { page: n as number }
+    : {};
 export function cleanRecordings(value: unknown): MemoRecording[] {
   if (!Array.isArray(value)) return [];
   let bytes = 0;
@@ -59,6 +67,7 @@ export function cleanRecordings(value: unknown): MemoRecording[] {
             created: r.created,
             x: Math.max(0, Math.min(0.95, r.x)),
             y: Math.max(0, Math.min(0.95, r.y)),
+            ...cleanPage(r.page),
           },
         ]
       : [];
@@ -115,6 +124,7 @@ export type DrawingStroke = {
   color: string;
   width: number;
   points: [number, number][];
+  page?: number;
 };
 export function cleanDrawing(value: unknown): DrawingStroke[] {
   if (!Array.isArray(value)) return [];
@@ -143,7 +153,14 @@ export function cleanDrawing(value: unknown): DrawingStroke[] {
       );
     remaining -= points.length;
     return points.length
-      ? [{ color: s.color, width: Math.max(1, Math.min(12, s.width)), points }]
+      ? [
+          {
+            color: s.color,
+            width: Math.max(1, Math.min(12, s.width)),
+            points,
+            ...cleanPage(s.page),
+          },
+        ]
       : [];
   });
 }

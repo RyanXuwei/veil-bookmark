@@ -75,7 +75,11 @@ function cleanStyle(el: HTMLElement) {
   return keep.join("; ");
 }
 
-function clean(node: Node, doc: Document): Node | DocumentFragment | null {
+function clean(
+  node: Node,
+  doc: Document,
+  pages = false,
+): Node | DocumentFragment | null {
   if (node.nodeType === Node.TEXT_NODE)
     return doc.createTextNode(node.textContent || "");
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
@@ -103,7 +107,7 @@ function clean(node: Node, doc: Document): Node | DocumentFragment | null {
   }
   const children = doc.createDocumentFragment();
   for (const c of Array.from(el.childNodes)) {
-    const x = clean(c, doc);
+    const x = clean(c, doc, pages);
     if (x) children.appendChild(x);
   }
   if (!KEEP.has(el.tagName)) return children; // unwrap unknown elements
@@ -127,18 +131,22 @@ function clean(node: Node, doc: Document): Node | DocumentFragment | null {
       out.setAttribute("rel", "noopener noreferrer");
     }
   }
+  // Page breaks between notebook pages (kept only when reading a whole
+  // stored document; pasted content never adds pages).
+  if (pages && el.tagName === "HR" && el.hasAttribute("data-veil-page"))
+    out.setAttribute("data-veil-page", "");
   out.appendChild(children);
   return out;
 }
 
-export function sanitizeHtml(html: string): string {
+export function sanitizeHtml(html: string, pages = false): string {
   const doc = new DOMParser().parseFromString(
     `<!doctype html><body>${html}`,
     "text/html",
   );
   const box = doc.createElement("div");
   for (const c of Array.from(doc.body.childNodes)) {
-    const x = clean(c, doc);
+    const x = clean(c, doc, pages);
     if (x) box.appendChild(x);
   }
   return box.innerHTML;
@@ -181,9 +189,10 @@ export function htmlToText(html: string) {
   return (doc.body.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/** Body of a memo as safe HTML, whatever format it was stored in. */
+/** Body of a memo as safe HTML, whatever format it was stored in. Pages are
+ *  joined by <hr data-veil-page=""> (see memo-pages.ts). */
 export function memoHtml(m: { body: string; format?: string }) {
-  return m.format === "html" ? sanitizeHtml(m.body) : textToHtml(m.body);
+  return m.format === "html" ? sanitizeHtml(m.body, true) : textToHtml(m.body);
 }
 export function memoText(m: { body: string; format?: string }) {
   return m.format === "html" ? htmlToText(m.body) : m.body;

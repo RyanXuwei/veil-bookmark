@@ -638,6 +638,16 @@ html[data-theme="dark"] .nbZoomBtn {
   background: transparent;
   color: hsl(51 24% 20%)
 }
+html[data-theme="dark"] .flipHint {
+  background: hsl(125 11% 74% / 0.902);
+  color: hsl(47 31% 19%)
+}
+html[data-theme="dark"] .flipHint i {
+  background: hsl(44 81% 35%)
+}
+html[data-theme="dark"] .flipHint.ready {
+  background: #4d6b3ff0
+}
 html[data-theme="dark"] .nbLang {
   background: transparent;
   color: hsl(51 24% 20%);

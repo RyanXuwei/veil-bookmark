@@ -745,7 +745,98 @@ select:focus {
   margin: 14px 0 6px;
 }
 .memoEdit {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 78px);
+  /* Pulling past the end turns the page; never scroll the app behind. */
+  overscroll-behavior: contain;
+}
+/* Notebook pages: the bar under the paper, the pull hint, the reader's
+   page labels. */
+.paper .pageBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px dashed #00000026;
+  color: #4b5146;
+  font-size: 14px;
+}
+.paper .pageBar button {
+  min-width: 44px;
+  min-height: 40px;
+  border: 1px solid #00000020;
+  border-radius: 10px;
+  background: #ffffff8c;
+  color: #30372d;
+  font-size: 20px;
+  line-height: 1;
+}
+.paper .pageBar button:disabled {
+  opacity: 0.35;
+}
+.paper .pageBar .pageDelete {
+  margin-left: 8px;
+  font-size: 17px;
+}
+.paper .pageHint {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #00000066;
+}
+.paper .readerPageLabel {
+  margin: 18px 0 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #00000026;
+  font-size: 12px;
+  color: #00000080;
+  text-align: center;
+}
+.paper .readerPageLabel:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.pageDeleteRow {
+  display: flex;
+  gap: 10px;
+}
+.pageDeleteRow button {
+  flex: 1;
+  min-height: 46px;
+}
+.flipHint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 92px);
+  z-index: 17;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  min-width: 230px;
+  padding: 9px 18px 11px;
+  border-radius: 999px;
+  background: #2f3b30eb;
+  color: #f6f1de;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 6px 20px #0000003d;
+  pointer-events: none;
+}
+.flipHint.prev {
+  top: 70px;
+  bottom: auto;
+}
+.flipHint i {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: #f1d27a;
+  transform-origin: left;
+}
+.flipHint.ready {
+  background: #4d6b3ff0;
 }
 .editPaper {
   min-height: 60dvh;
@@ -797,13 +888,13 @@ select:focus {
 }
 .tools button {
   flex: none;
-  min-width: 44px;
-  min-height: 40px;
-  padding: 0 8px;
+  min-width: 52px;
+  min-height: 50px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: none;
-  font-size: 17px;
+  font-size: 22px;
 }
 .tools button[aria-pressed="true"] {
   background: var(--green-soft);
@@ -1197,8 +1288,8 @@ select:focus {
 }
 .tools .inkSwatch span {
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 2px solid #ffffff;
   box-shadow: 0 0 0 1px #00000030;
@@ -1223,8 +1314,8 @@ select:focus {
   display: none;
 }
 .inkRecorder .rb {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 52px;
+  min-height: 50px;
   border: 0;
   border-radius: 10px;
   background: none;
@@ -1232,8 +1323,8 @@ select:focus {
   place-items: center;
 }
 .inkRecorder .rb svg {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;

@@ -1,4 +1,4 @@
-# 測試報告 · Veil Bookmark 1.21.1
+# 測試報告 · Veil Bookmark 1.22.0
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 
@@ -423,3 +423,12 @@
 ### 側邊欄測試附註
 
 - 測試把 `chrome.idle` 偵測間隔調長，避免電腦閒置時自動上鎖干擾；上鎖規則本身由其他測試涵蓋。真實側邊欄面板的開啟（需要使用者手勢）與無痕視窗沿用浮框需要在真實 Chrome 確認。
+
+## 1.22.0 記事多頁與手機拍照插入
+
+- 單元測試 `tests/memo-pages.test.ts`（`npm test` 共 39 項全部通過）：頁面切分與合併、最後的空白頁不保存但中間空白頁保留、手寫與錄音隨頁移動（刪除頁後後面的頁往前）、`cleanDrawing`／`cleanRecordings`／`upsertMemo` 保留頁碼並拒絕無效頁碼。
+- 電腦版 `scripts/notebook-pages-e2e.mjs`：最底部短暫捲動只出現提示、停下後消失；繼續捲動新增第 2 頁並顯示空白頁、翻頁後殘餘慣性不會把新頁捲走；頁首往上捲回到第 1 頁；狀態列上一頁／下一頁；「列印／另存 PDF」每頁各一張；儲存空間無明文、重新整理後兩頁都在；刪除此頁先確認，取消保留、確認後剩 1 頁，只剩一頁時不能刪。
+- 手機版 `scripts/web-pages-e2e.mts`（Pixel 7 觸控模擬）：工具列按鈕 ≥ 50×48；輕拉只顯示提示；用力上拉新增第 2 頁；手寫存在第 2 頁（Drive 上 `page: 1`，擴充功能可讀）；拉到第 3 頁空白頁再往回拉時空白頁被丟棄；「拍照插入」開啟 `capture="environment"` 的相機選擇器、照片插入第 1 頁並加密上傳；閱讀模式分頁顯示且手寫在正確頁；刪除此頁先確認。
+- 回歸：notebook、notebook-save、notebook-grid、markdown、theme、side-panel、web-ink、web-markdown、web-memo-delete、web-theme、web-private 全部通過。
+- 已知、與本版無關：`popup-e2e` 在 1.21.0 原始碼上同樣失敗（同一錯誤）；`web-e2e` 仍停在雲端 headless Chromium 不支援的生物辨識提示（舊問題）。
+- 尚需真機確認：iPhone／Android 上用力上拉翻頁的手感、相機程式實際開啟、電腦觸控板慣性。
