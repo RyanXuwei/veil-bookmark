@@ -58,7 +58,7 @@ Made by [Ryan Hsu](https://github.com/RyanXuwei) · [BitingBox Studio](https://g
 
 </div>
 
-Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.21.1
+Made by [Ryan Hsu](https://github.com/RyanXuwei) · BitingBox Studio　｜　[隱私權政策](https://ryanxuwei.github.io/veil-bookmark/privacy.html)　｜　目前版本：1.22.1
 
 ## 功能
 
