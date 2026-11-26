@@ -683,3 +683,6 @@ Android：點網址列左側的設定圖示 › 權限 › 麥克風 › 允許�
 繼續往下捲動，翻到第 {page} 頁|Keep scrolling down for page {page}|さらに下へスクロールすると {page} ページ目へ|계속 아래로 스크롤하면 {page}페이지로 이동
 繼續往下拉，回到第 {page} 頁|Keep pulling down to go back to page {page}|さらに下へ引くと {page} ページ目に戻る|계속 아래로 끌면 {page}페이지로 돌아가기
 繼續往上捲動，回到第 {page} 頁|Keep scrolling up to go back to page {page}|さらに上へスクロールすると {page} ページ目に戻る|계속 위로 스크롤하면 {page}페이지로 돌아가기
+目前資料夾：{folder}|In folder: {folder}|現在のフォルダー：{folder}|현재 폴더: {folder}
+回最上層|Back to top|最上位へ|최상위로
+‹ 上一層|‹ Up one level|‹ 一つ上へ|‹ 상위 폴더

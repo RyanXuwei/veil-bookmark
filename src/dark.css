@@ -288,6 +288,17 @@ html[data-theme="dark"] .quickTools .quickCapture {
   border-color: hsl(96 14% 22%);
   color: hsl(135 22% 66%)
 }
+html[data-theme="dark"] .currentFolder {
+  color: hsl(135 22% 66%);
+  background: hsl(90 17% 16%);
+  border-bottom: 1px solid hsl(82 12% 19%)
+}
+html[data-theme="dark"] .quickFolder.current > summary {
+  background: hsl(96 16% 18%)
+}
+html[data-theme="dark"] .quickFolder.current > summary strong {
+  color: hsl(135 22% 66%)
+}
 html[data-theme="dark"] .quickFolder summary {
   color: hsl(137 15% 65%)
 }

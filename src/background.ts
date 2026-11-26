@@ -83,6 +83,8 @@ async function lock() {
     "capture",
     "passwordProof",
     "summaryJobs",
+    "currentFolder",
+    "currentFolderIncognito",
   ]);
   await chrome.alarms.clear("veilmark-lock");
 }

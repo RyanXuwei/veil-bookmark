@@ -4097,5 +4097,23 @@ export const LOCALES: Record<string, Record<"zh-CN" | "en" | "ja" | "ko", string
   "en": "Keep scrolling up to go back to page {page}",
   "ja": "さらに上へスクロールすると {page} ページ目に戻る",
   "ko": "계속 위로 스크롤하면 {page}페이지로 돌아가기"
+ },
+ "目前資料夾：{folder}": {
+  "zh-CN": "目前文件夹：{folder}",
+  "en": "In folder: {folder}",
+  "ja": "現在のフォルダー：{folder}",
+  "ko": "현재 폴더: {folder}"
+ },
+ "回最上層": {
+  "zh-CN": "回最上层",
+  "en": "Back to top",
+  "ja": "最上位へ",
+  "ko": "최상위로"
+ },
+ "‹ 上一層": {
+  "zh-CN": "‹ 上一层",
+  "en": "‹ Up one level",
+  "ja": "‹ 一つ上へ",
+  "ko": "‹ 상위 폴더"
  }
 };

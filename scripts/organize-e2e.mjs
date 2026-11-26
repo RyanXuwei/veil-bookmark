@@ -61,8 +61,9 @@ try {
   await page.waitForTimeout(300);
   assert.deepEqual(await titles(workItems), ["Charlie", "Bravo", "Alpha", "Delta"]);
   // Order survives a reload (stored encrypted).
+  // The popup reopens in the folder last opened (Work), already expanded.
   await page.reload();
-  await page.locator(".quickFolder summary", { hasText: "Work" }).click();
+  await page.locator(".quickFolder.current:not(.collapsed) summary", { hasText: "Work" }).waitFor();
   assert.deepEqual(await titles(workItems), ["Charlie", "Bravo", "Alpha", "Delta"]);
   // Drag back out of the folder to Unfiled.
   // The Unfiled drop zone appears once dragging starts.
@@ -85,7 +86,8 @@ try {
   await page.waitForTimeout(300);
   assert.deepEqual(await titles(workItems), ["Charlie", "Delta", "Bravo"]);
 
-  // New empty folder, then drag it above Work.
+  // New empty folder at the top level (leave Work first), then drag it above Work.
+  await page.getByRole("button", { name: "回最上層" }).click();
   await page.getByRole("button", { name: "新增資料夾" }).click();
   await page.getByRole("textbox", { name: "資料夾名稱" }).fill("Home");
   await page.getByRole("button", { name: "建立", exact: true }).click();
@@ -138,7 +140,8 @@ try {
   assert(nested.folders.some((f) => f.name === "Home/Later" && !f.deleted), "dragged into Home");
   await page.screenshot({ path: resolve(shots, "57-nested-folders.png") });
   // "Move to folder" → top level.
-  await page.locator(".quickFolder summary", { hasText: "Home" }).first().click();
+  // Home is open already: it became the current folder with 新增子資料夾.
+  await page.locator(".quickFolder.current:not(.collapsed) summary", { hasText: "Home" }).first().waitFor();
   await page.getByRole("button", { name: "資料夾操作：Later" }).click();
   await page.getByRole("button", { name: "移到資料夾" }).click();
   await page.getByRole("combobox", { name: "移到資料夾" }).selectOption("");

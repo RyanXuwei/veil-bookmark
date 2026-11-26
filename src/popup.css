@@ -175,6 +175,35 @@ html[data-surface="popup"] {
   border-color: #e0e9da;
   color: #3e6147;
 }
+/* Where new bookmarks, notes and folders go (the last folder opened). */
+.currentFolder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #3e6147;
+  background: #f5f8f2;
+  border-bottom: 1px solid #edf0e8;
+}
+.currentFolder span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.currentFolder button {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+.quickFolder.current > summary {
+  background: #edf3e9;
+}
+.quickFolder.current > summary strong {
+  font-weight: 600;
+  color: #3e6147;
+}
 .quickList {
   overflow: auto;
   max-height: 345px;

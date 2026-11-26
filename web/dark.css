@@ -121,6 +121,15 @@ html[data-theme="dark"] .chips button[aria-pressed="true"] {
 html[data-theme="dark"] .groupTitle {
   color: var(--muted)
 }
+html[data-theme="dark"] .groupTitle .groupLink {
+  color: inherit
+}
+html[data-theme="dark"] .groupTitle .groupLink:active {
+  color: var(--green)
+}
+html[data-theme="dark"] .folderTrail {
+  color: var(--muted)
+}
 html[data-theme="dark"] .row {
   background: var(--card);
   border: 1px solid var(--line)

@@ -1,5 +1,17 @@
-import { FolderPlusIcon, FolderTree, folderNames, ordered } from "./sortable";
-import { pathLabel, within, isPrivate, PRIVATE_FOLDER } from "./folders";
+import {
+  CurrentFolderBar,
+  FolderPlusIcon,
+  FolderTree,
+  folderNames,
+  ordered,
+} from "./sortable";
+import {
+  pathLabel,
+  within,
+  isPrivate,
+  newEntryFolder as entryFolderFor,
+  PRIVATE_FOLDER,
+} from "./folders";
 import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
@@ -70,9 +82,11 @@ function closePopup() {
 let windowId: number | undefined;
 if (isPopup && globalThis.chrome?.windows)
   void chrome.windows.getCurrent().then((w) => (windowId = w.id));
-async function openNotebook(id = "") {
+async function openNotebook(id = "", folder = "") {
+  // A new note goes into the folder the user is in (see notebook.tsx).
+  const where = !id && folder ? "&folder=" + encodeURIComponent(folder) : "";
   await chrome.tabs.create({
-    url: chrome.runtime.getURL(`index.html?notes#${id || "new"}`),
+    url: chrome.runtime.getURL(`index.html?notes${where}#${id || "new"}`),
   });
   closePopup();
 }
@@ -127,6 +141,33 @@ function App() {
   const [uiLang, setUiLang] = useState<Lang>(lang());
   const [menuId, setMenuId] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
+  // The folder the user is in (bookmarks and notes): new bookmarks, notes and
+  // folders go there. Kept for the browser session in chrome.storage.session
+  // (memory only) so the next popup opens where the last one was; locking
+  // clears it. Incognito windows keep their own.
+  const [here, setHere] = useState({ entry: "", memo: "" });
+  const hereKey = "currentFolder" + (status?.incognito ? "Incognito" : "");
+  const hereLoaded = useRef("");
+  useEffect(() => {
+    if (!status?.unlocked || hereLoaded.current === hereKey) return;
+    hereLoaded.current = hereKey;
+    void chrome.storage?.session
+      ?.get<Record<string, { entry?: string; memo?: string }>>(hereKey)
+      .then((r) => {
+        const v = r?.[hereKey];
+        if (v) setHere({ entry: v.entry || "", memo: v.memo || "" });
+      })
+      .catch(() => {});
+  }, [status?.unlocked, hereKey]);
+  function goTo(kind: "entry" | "memo", folder: string) {
+    setHere((h) => {
+      const next = { ...h, [kind]: folder };
+      void chrome.storage?.session
+        ?.set({ [hereKey]: next })
+        .catch(() => {});
+      return next;
+    });
+  }
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
   const [ack, setAck] = useState(false);
   const [recoveryShown, setRecoveryShown] = useState<string | null>(null);
@@ -190,6 +231,8 @@ function App() {
       setEditor(null);
       setQuery("");
       setFolder(ALL);
+      setHere({ entry: "", memo: "" });
+      hereLoaded.current = "";
       setDeleting(null);
     }
   }
@@ -213,6 +256,8 @@ function App() {
         setDeleting(null);
         setMenuId(null);
         setPassword("");
+        setHere({ entry: "", memo: "" });
+        hereLoaded.current = "";
         void refresh();
       } else if (
         area === "local" &&
@@ -382,7 +427,7 @@ function App() {
         title: capture.title?.trim() || bookmarkDomain(capture.url),
         url: capture.url,
         incognito: !!status?.incognito,
-        folder: status?.incognito ? PRIVATE_FOLDER : "",
+        folder: newEntryFolder,
       });
       await chrome.storage.session.remove("capture");
     });
@@ -614,6 +659,10 @@ function App() {
     entries,
   );
   const byPosition = ordered(entries, (a, b) => a.title.localeCompare(b.title));
+  // The current folder, if it still exists (it may have been deleted or
+  // renamed on another device).
+  const hereEntry = folders.includes(here.entry) ? here.entry : "";
+  const newEntryFolder = entryFolderFor(hereEntry, privateView);
   const visible = entries
     .filter(
       (x) =>
@@ -1019,7 +1068,9 @@ function App() {
               memos={vault.memos || []}
               folderRecords={vault.folders}
               busy={busy}
-              onOpen={(m) => void openNotebook(m.id)}
+              onOpen={(m, folder) => void openNotebook(m.id, folder)}
+              current={here.memo}
+              onCurrent={(f) => goTo("memo", f)}
               onMeta={(id, meta) => void apply("MEMO_META", { id, ...meta })}
               onDelete={(id) => void apply("MEMO_DELETE", { id })}
               organize={organize}
@@ -1046,7 +1097,7 @@ function App() {
                     setEditor({
                       ...empty,
                       incognito: !!status?.incognito,
-                      folder: status?.incognito ? PRIVATE_FOLDER : "",
+                      folder: newEntryFolder,
                     })
                   }
                 >
@@ -1061,6 +1112,12 @@ function App() {
                   <FolderPlusIcon />
                 </button>
               </div>
+              {!query && (
+                <CurrentFolderBar
+                  folder={hereEntry}
+                  onTop={() => goTo("entry", "")}
+                />
+              )}
               <div className="quickList" aria-label={t("私人書籤清單")}>
                 {query ? (
                   <>
@@ -1099,6 +1156,8 @@ function App() {
                       creating={creatingFolder}
                       onCreate={(n) => void organize.create("entry", n)}
                       onCancelCreate={() => setCreatingFolder(false)}
+                      current={hereEntry}
+                      onCurrent={(f) => goTo("entry", f)}
                     />
                   </>
                 )}

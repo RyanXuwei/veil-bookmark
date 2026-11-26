@@ -695,6 +695,8 @@ function Library({
   const [view, setView] = useState<"bookmarks" | "memos">("bookmarks");
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState(ALL);
+  // Notes have their own current folder; new notes and imports go there.
+  const [memoFolder, setMemoFolder] = useState(ALL);
   // The incognito-only folder: grey until the user opens it (each time the
   // app is unlocked); the phone cannot open bookmarks in incognito.
   const [showPrivate, setShowPrivate] = useState(false);
@@ -702,7 +704,10 @@ function Library({
   const [editing, setEditing] = useState<Draft | null>(null);
   const [actions, setActions] = useState<Entry | null>(null);
   const [reading, setReading] = useState<Memo | null>(null);
-  const [writing, setWriting] = useState<{ memo: Memo | null } | null>(null);
+  const [writing, setWriting] = useState<{
+    memo: Memo | null;
+    folder?: string;
+  } | null>(null);
   const [memoActions, setMemoActions] = useState<Memo | null>(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
@@ -726,6 +731,7 @@ function Library({
           body: r.html,
           format: "html",
           images: r.images,
+          folder: newMemoFolder,
         });
         done++;
       } catch (e) {
@@ -838,11 +844,20 @@ function Library({
     entries,
   );
   const hasUnfiled = entries.some((x) => !x.folder);
+  // A chosen folder that was deleted or renamed meanwhile: back to "All".
+  // (The incognito-only folder is always offered, also when empty.)
+  const at =
+    folder === ALL ||
+    folder === UNFILED ||
+    folders.includes(folder) ||
+    (showPrivate && isPrivate(folder))
+      ? folder
+      : ALL;
   const shown = ordered(
     entries.filter(
       (x) =>
-        (folder === ALL ||
-          (folder === UNFILED ? !x.folder : within(x.folder, folder))) &&
+        (at === ALL ||
+          (at === UNFILED ? !x.folder : within(x.folder, at))) &&
         (!q ||
           `${x.title} ${x.url} ${x.tags.join(" ")} ${x.notes}`
             .toLowerCase()
@@ -851,38 +866,57 @@ function Library({
     (a, b) => b.updated - a.updated,
   );
   // Grouped by folder in the extension's (tree) order: everything under
-  // "All", or the chosen top-level folder and its subfolders.
+  // "All", or the chosen folder and its subfolders.
   const topFolders = folders.filter((f) => !parentOf(f));
   const groups =
-    (folder === ALL || (folder !== UNFILED && folders.includes(folder))) && !q
+    (at === ALL || (at !== UNFILED && folders.includes(at))) && !q
       ? [
           ...folders
-            .filter((f) => folder === ALL || within(f, folder))
+            .filter((f) => at === ALL || within(f, at))
             .map((f) => ({
               name: f,
               items: shown.filter((x) => x.folder === f),
             })),
-          ...(folder === ALL
+          ...(at === ALL
             ? [{ name: "", items: shown.filter((x) => !x.folder) }]
             : []),
         ].filter((g) => g.items.length)
       : [{ name: null as string | null, items: shown }];
+  // New bookmarks go into the folder the user is in.
+  const newEntryFolder = at === ALL || at === UNFILED ? "" : at;
   const memoFolders = folderNames("memo", v.folders, memos);
+  // A chosen folder that was deleted or renamed meanwhile: back to "All".
+  const memoAt =
+    memoFolder === ALL ||
+    memoFolder === UNFILED ||
+    memoFolders.includes(memoFolder)
+      ? memoFolder
+      : ALL;
+  const newMemoFolder = memoAt === ALL || memoAt === UNFILED ? "" : memoAt;
   const memoShown = ordered(
     memos.filter(
-      (m) => !q || `${m.title} ${memoText(m)}`.toLowerCase().includes(q),
+      (m) =>
+        (memoAt === ALL ||
+          (memoAt === UNFILED ? !m.folder : within(m.folder || "", memoAt))) &&
+        (!q || `${m.title} ${memoText(m)}`.toLowerCase().includes(q)),
     ),
     (a, b) => b.updated - a.updated,
   );
-  const memoGroups = q
-    ? [{ name: null as string | null, items: memoShown }]
-    : [
-        ...memoFolders.map((f) => ({
-          name: f,
-          items: memoShown.filter((m) => m.folder === f),
-        })),
-        { name: "", items: memoShown.filter((m) => !m.folder) },
-      ].filter((g) => g.items.length);
+  const memoGroups =
+    q || memoAt === UNFILED
+      ? [{ name: null as string | null, items: memoShown }]
+      : [
+          ...memoFolders
+            .filter((f) => memoAt === ALL || within(f, memoAt))
+            .map((f) => ({
+              name: f,
+              items: memoShown.filter((m) => m.folder === f),
+            })),
+          ...(memoAt === ALL
+            ? [{ name: "", items: memoShown.filter((m) => !m.folder) }]
+            : []),
+        ].filter((g) => g.items.length);
+  const memoHasUnfiled = memos.some((m) => !m.folder);
 
   return (
     <div className="library">
@@ -953,7 +987,7 @@ function Library({
           {(folders.length > 0 || hasUnfiled || hasPrivate) && (
             <div className="chips" role="toolbar" aria-label={t("資料夾")}>
               <button
-                aria-pressed={folder === ALL}
+                aria-pressed={at === ALL}
                 onClick={() => setFolder(ALL)}
               >
                 {t("全部")}
@@ -961,7 +995,7 @@ function Library({
               {hasPrivate && (
                 <button
                   className={showPrivate ? "privChip" : "privChip off"}
-                  aria-pressed={showPrivate && folder === PRIVATE_FOLDER}
+                  aria-pressed={showPrivate && isPrivate(at)}
                   onClick={() =>
                     showPrivate
                       ? setFolder(PRIVATE_FOLDER)
@@ -981,7 +1015,9 @@ function Library({
               ].map(([key, name]) => (
                 <button
                   key={key}
-                  aria-pressed={folder === key}
+                  aria-pressed={
+                    at === key || (key !== UNFILED && within(at, key))
+                  }
                   onClick={() => setFolder(key)}
                 >
                   {name}
@@ -989,16 +1025,24 @@ function Library({
               ))}
             </div>
           )}
+          {!q && (
+            <FolderTrail
+              folder={at}
+              label={(f) => f.replace(PRIVATE_FOLDER, t(PRIVATE_FOLDER))}
+              onGo={setFolder}
+            />
+          )}
           <main className="list">
             {groups.map((g) => (
               <section key={g.name ?? "*"}>
                 {g.name !== null && folders.length > 0 && (
                   <h2 className="groupTitle">
-                    {g.name
-                      ? pathLabel(
-                          g.name.replace(PRIVATE_FOLDER, t(PRIVATE_FOLDER)),
-                        )
-                      : t("未分類")}
+                    <GroupLink
+                      name={g.name}
+                      current={at}
+                      label={(f) => f.replace(PRIVATE_FOLDER, t(PRIVATE_FOLDER))}
+                      onGo={(f) => setFolder(f || UNFILED)}
+                    />
                   </h2>
                 )}
                 <ul>
@@ -1017,7 +1061,7 @@ function Library({
                 <p>
                   {q
                     ? t("沒有符合的書籤")
-                    : folder === PRIVATE_FOLDER
+                    : at === PRIVATE_FOLDER
                       ? t("無痕專用資料夾還是空的")
                       : t("還沒有私人書籤")}
                 </p>
@@ -1035,7 +1079,7 @@ function Library({
             onClick={() =>
               setEditing({
                 ...emptyDraft,
-                folder: folder === ALL || folder === UNFILED ? "" : folder,
+                folder: newEntryFolder,
               })
             }
           >
@@ -1070,11 +1114,40 @@ function Library({
               {importError}
             </p>
           )}
+          {memoFolders.length > 0 && (
+            <div className="chips memoChips" role="toolbar" aria-label={t("資料夾")}>
+              <button
+                aria-pressed={memoAt === ALL}
+                onClick={() => setMemoFolder(ALL)}
+              >
+                {t("全部")}
+              </button>
+              {[
+                ...memoFolders.filter((f) => !parentOf(f)).map((f) => [f, f]),
+                ...(memoHasUnfiled ? [[UNFILED, t("未分類")]] : []),
+              ].map(([key, name]) => (
+                <button
+                  key={key}
+                  aria-pressed={
+                    memoAt === key || (key !== UNFILED && within(memoAt, key))
+                  }
+                  onClick={() => setMemoFolder(key)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          )}
+          {!q && <FolderTrail folder={memoAt} onGo={setMemoFolder} />}
           {memoGroups.map((g) => (
             <section key={g.name ?? "*"}>
               {g.name !== null && memoFolders.length > 0 && (
                 <h2 className="groupTitle">
-                  {g.name ? pathLabel(g.name) : t("未分類")}
+                  <GroupLink
+                    name={g.name}
+                    current={memoAt}
+                    onGo={(f) => setMemoFolder(f || UNFILED)}
+                  />
                 </h2>
               )}
               <ul>
@@ -1119,7 +1192,7 @@ function Library({
           <button
             className="fab"
             aria-label={t("新增記事")}
-            onClick={() => setWriting({ memo: null })}
+            onClick={() => setWriting({ memo: null, folder: newMemoFolder })}
           >
             ＋
           </button>
@@ -1194,6 +1267,7 @@ function Library({
       {writing && (
         <MemoEditor
           memo={writing.memo}
+          initialFolder={writing.folder}
           folders={memoFolders}
           onClose={(msg) => {
             setWriting(null);
@@ -1756,12 +1830,57 @@ const TOOLS: {
   { cmd: "redo", label: "取消復原", icon: "↷" },
 ];
 
+/** Inside a subfolder: a button back up one level, then the path. */
+function FolderTrail({
+  folder,
+  label = (f) => f,
+  onGo,
+}: {
+  folder: string;
+  label?: (f: string) => string;
+  onGo: (f: string) => void;
+}) {
+  if (folder === ALL || folder === UNFILED || !parentOf(folder)) return null;
+  return (
+    <div className="folderTrail" role="status">
+      <button className="ghost" onClick={() => onGo(parentOf(folder))}>
+        {t("‹ 上一層")}
+      </button>
+      <span>{pathLabel(label(folder))}</span>
+    </div>
+  );
+}
+
+/** A folder heading in the list: tap to go into that folder. */
+function GroupLink({
+  name,
+  current,
+  label = (f) => f,
+  onGo,
+}: {
+  name: string;
+  current: string;
+  label?: (f: string) => string;
+  onGo: (f: string) => void;
+}) {
+  const text = name ? pathLabel(label(name)) : t("未分類");
+  if (name === current || (!name && current === UNFILED)) return <>{text}</>;
+  return (
+    <button className="groupLink" onClick={() => onGo(name)}>
+      {text} ›
+    </button>
+  );
+}
+
 function MemoEditor({
   memo,
+  initialFolder = "",
   folders,
   onClose,
 }: {
   memo: Memo | null;
+  /** A new note's folder: the one the user is in. */
+  initialFolder?: string;
   folders: string[];
   onClose: (msg?: string) => void;
 }) {
@@ -1771,7 +1890,9 @@ function MemoEditor({
       ? memo!.paperColor!
       : DEFAULT_PAPER,
   );
-  const [folder, setFolder] = useState(memo?.folder || "");
+  const [folder, setFolder] = useState(
+    memo ? memo.folder || "" : initialFolder,
+  );
   const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving">(
     "saved",
   );

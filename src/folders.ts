@@ -11,6 +11,12 @@ export const PRIVATE_FOLDER = "🕶 無痕專用";
 export const isPrivate = (path: string | undefined) =>
   !!path && (path === PRIVATE_FOLDER || path.startsWith(PRIVATE_FOLDER + "/"));
 
+/** Where a new bookmark goes: the folder the user is in. Incognito windows
+ *  keep using the incognito-only folder unless the user is in one of its
+ *  subfolders, so a bookmark saved there never lands in a normal folder. */
+export const newEntryFolder = (current: string, incognito: boolean) =>
+  incognito ? (isPrivate(current) ? current : PRIVATE_FOLDER) : current;
+
 export const parentOf = (path: string) =>
   path.includes(SEP) ? path.slice(0, path.lastIndexOf(SEP)) : "";
 export const baseName = (path: string) =>

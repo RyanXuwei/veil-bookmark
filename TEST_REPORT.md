@@ -1,4 +1,6 @@
-# 測試報告 · Veil Bookmark 1.22.2
+# 測試報告 · Veil Bookmark 1.23.0
+
+1.23.0（2026-11-26）目前資料夾：新增 `tests/current-folder.test.ts`（無痕視窗新增書籤的資料夾規則）、`scripts/current-folder-e2e.mjs`（浮框進出資料夾、手動新增與儲存、子資料夾建立、重新開啟浮框沿用、重新命名跟隨、收起與回最上層、上鎖清除、記事資料夾新增記事與子資料夾）、`scripts/web-current-folder-e2e.mts`（手機版進入子資料夾、上一層、新增書籤與記事放進目前資料夾）全部通過；`organize-e2e` 依新行為調整後通過；incognito、side-panel、notebook-save、notebook-pages、quick-bookmark、tags、notepad、popup-lock、web-private、web-share、web-pages、web-memo-delete、web-bookmark-title 重跑通過；單元測試 41 項通過。
 
 測試日期：2026-11-17。所有測試使用合成資料與隔離的瀏覽器設定檔，不讀取真實的 Chrome 書籤、設定或帳號；測試網站由本機暫時伺服器提供。
 

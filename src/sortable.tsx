@@ -1,5 +1,5 @@
 // Popup folder tree with drag-and-drop ordering, shared by bookmarks and notes.
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { Folder, FolderKind } from "./crypto";
 import { t } from "./i18n";
 import {
@@ -65,6 +65,8 @@ export function FolderTree<T extends Orderable>({
   creating,
   onCreate,
   onCancelCreate,
+  current = "",
+  onCurrent,
 }: {
   kind: FolderKind;
   folders: string[]; // full paths in tree order (folderNames)
@@ -81,6 +83,10 @@ export function FolderTree<T extends Orderable>({
   creating: boolean;
   onCreate: (name: string) => void;
   onCancelCreate: () => void;
+  /** The folder the user is in ("" = top level): the last folder opened.
+   *  New items and new folders go there. */
+  current?: string;
+  onCurrent?: (folder: string) => void;
 }) {
   const drag = useRef<Drag | null>(null);
   const [dragging, setDragging] = useState<Drag | null>(null);
@@ -93,6 +99,16 @@ export function FolderTree<T extends Orderable>({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const openTimer = useRef(0);
   void kind;
+  // A current folder chosen elsewhere (restored, or renamed) shows open.
+  useEffect(() => {
+    if (current) openPath(current);
+  }, [current]);
+  /** Keeps the current folder pointing at the same place after `from`
+   *  became `to` (renamed or moved). */
+  const follow = (from: string, to: string) => {
+    if (onCurrent && within(current, from))
+      onCurrent(to + current.slice(from.length));
+  };
   const inFolder = (f: string) => items.filter((x) => (x.folder || "") === f);
   const children = (parent: string) =>
     folders.filter((f) => parentOf(f) === parent);
@@ -159,6 +175,7 @@ export function FolderTree<T extends Orderable>({
     else {
       if (folders.includes(to)) return; // a sibling has the same name
       onMoveFolder(from, to, siblings);
+      follow(from, to);
       if (open.has(from)) openPath(to);
     }
   }
@@ -243,6 +260,7 @@ export function FolderTree<T extends Orderable>({
         className={
           "quickFolder" +
           (isOpen ? "" : " collapsed") +
+          (current === f ? " current" : "") +
           h +
           (dragging?.type === "folder" && dragging.name === f
             ? " dragging"
@@ -257,6 +275,7 @@ export function FolderTree<T extends Orderable>({
           menu === f ||
           renaming === f ||
           creatingIn === f ||
+          (creating && current === f) ||
           moving === f
         }
       >
@@ -265,9 +284,19 @@ export function FolderTree<T extends Orderable>({
           onClick={(e) => {
             e.preventDefault();
             if (renaming === f) return;
+            // An open folder you are not in: go into it (a second click
+            // closes it).
+            if (open.has(f) && onCurrent && !within(current, f))
+              return onCurrent(f);
             const next = new Set(open);
-            if (next.has(f)) next.delete(f);
-            else next.add(f);
+            if (next.has(f)) {
+              next.delete(f);
+              // Closing the folder you are in (or one around it) goes up.
+              if (onCurrent && within(current, f)) onCurrent(parentOf(f));
+            } else {
+              next.add(f);
+              onCurrent?.(f);
+            }
             setOpen(next);
           }}
           onDragStart={(e) => start(e, { type: "folder", name: f })}
@@ -317,6 +346,7 @@ export function FolderTree<T extends Orderable>({
                 setRenaming(null);
                 const to = joinPath(parentOf(f), cleanSegment(name));
                 if (open.has(f)) openPath(to);
+                follow(f, to);
                 onRenameFolder(f, to);
               }}
               onCancel={() => setRenaming(null)}
@@ -356,6 +386,7 @@ export function FolderTree<T extends Orderable>({
               onClick={() => {
                 setMenu(null);
                 openPath(f);
+                onCurrent?.(f);
                 setCreatingIn(f);
               }}
             >
@@ -414,8 +445,16 @@ export function FolderTree<T extends Orderable>({
             </button>
           </div>
         )}
-        {(isOpen || creatingIn === f) && (
+        {(isOpen || creatingIn === f || (creating && current === f)) && (
           <div className="quickSub">
+            {creating && current === f && creatingIn !== f && (
+              <NameForm
+                placeholder={t("子資料夾名稱")}
+                submit={t("建立")}
+                onSubmit={(name) => onCreate(joinPath(f, cleanSegment(name)))}
+                onCancel={onCancelCreate}
+              />
+            )}
             {creatingIn === f && (
               <NameForm
                 placeholder={t("子資料夾名稱")}
@@ -446,7 +485,7 @@ export function FolderTree<T extends Orderable>({
     dragging?.type === "folder" ? dragging.name : null;
   return (
     <>
-      {creating && (
+      {creating && !folders.includes(current) && (
         <NameForm
           placeholder={t("資料夾名稱")}
           submit={t("建立")}
@@ -500,11 +539,35 @@ export function FolderTree<T extends Orderable>({
           onConfirm={() => {
             const f = confirmDelete;
             setConfirmDelete(null);
+            if (onCurrent && within(current, f)) onCurrent(parentOf(f));
             onDeleteFolder(f);
           }}
         />
       )}
     </>
+  );
+}
+
+/** Where new items go: "📂 Work › Projects", with a way back to the top. */
+export function CurrentFolderBar({
+  folder,
+  onTop,
+}: {
+  folder: string;
+  onTop: () => void;
+}) {
+  if (!folder) return null;
+  return (
+    <div className="currentFolder" role="status">
+      <span title={pathLabel(folder)}>
+        {t("目前資料夾：{folder}", {
+          folder: pathLabel(folder).replace(PRIVATE_FOLDER, t(PRIVATE_FOLDER)),
+        })}
+      </span>
+      <button type="button" onClick={onTop}>
+        {t("回最上層")}
+      </button>
+    </div>
   );
 }
 

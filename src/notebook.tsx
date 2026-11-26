@@ -151,6 +151,11 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
   const [switching, setSwitching] = useState(false);
   // Document to show once the editor is mounted (undefined = nothing pending).
   const pending = useRef<Memo | null | undefined>(undefined);
+  // Folder for a new note: the one the popup was in when it opened this page,
+  // then the folder of the note being viewed.
+  const newFolder = useRef(
+    new URLSearchParams(location.search).get("folder") || "",
+  );
   const pick = (list: Memo[] | null) => {
     const id = location.hash.slice(1);
     pending.current =
@@ -337,6 +342,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
     savedImages.current = usedImages(pages.current.join("")).join(",");
     layoutRuled(el, images.current);
     setCurrent(m?.id || "");
+    if (m) newFolder.current = m.folder || "";
     setTitle(m?.title || "");
     paper.current = /^#[0-9a-f]{6}$/i.test(m?.paperColor || "")
       ? m!.paperColor!
@@ -393,6 +399,9 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
           const memo: Memo = await rpc("MEMO_UPSERT", {
             memo: {
               id,
+              // A new note starts in the current folder; later saves keep
+              // wherever it has been moved since.
+              ...(id ? {} : { folder: newFolder.current }),
               title: titleNow,
               body,
               format: "html",
@@ -584,6 +593,7 @@ export function NotebookPage({ rpc }: { rpc: Rpc }) {
               body: r.html,
               format: "html",
               images: r.images,
+              folder: newFolder.current,
             },
           });
         } catch (e) {

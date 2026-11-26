@@ -5,6 +5,7 @@ import { lang, t } from "./i18n";
 import { baseName, depthOf } from "./folders";
 import { ConfirmDelete, itemDeleteDetail } from "./confirm";
 import {
+  CurrentFolderBar,
   FolderPlusIcon,
   FolderTree,
   NameForm,
@@ -42,14 +43,19 @@ export function MemoList({
   onMeta,
   onDelete,
   organize,
+  current = "",
+  onCurrent,
 }: {
   memos: Memo[];
   folderRecords?: Folder[];
   busy: boolean;
-  onOpen: (m: MemoDraft) => void;
+  /** `folder`: where a new note goes (the current folder). */
+  onOpen: (m: MemoDraft, folder?: string) => void;
   onMeta: (id: string, meta: { title?: string; folder?: string }) => void;
   onDelete: (id: string) => void;
   organize: Organize;
+  current?: string;
+  onCurrent?: (folder: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -62,6 +68,7 @@ export function MemoList({
     (a, b) => b.updated - a.updated,
   );
   const folders = folderNames("memo", folderRecords, live);
+  const here = folders.includes(current) ? current : "";
   const q = query.toLowerCase();
   const shown = live.filter((m) =>
     `${m.title} ${memoText(m)}`.toLowerCase().includes(q),
@@ -170,11 +177,11 @@ export function MemoList({
       <div className="quickTools">
         <button
           className="quickCapture"
-          onClick={() => onOpen({ ...emptyMemo })}
+          onClick={() => onOpen({ ...emptyMemo }, here)}
         >
           {t("＋ 新增記事")}
         </button>
-        <button onClick={() => onOpen({ ...emptyMemo })}>
+        <button onClick={() => onOpen({ ...emptyMemo }, here)}>
           {t("開啟記事本 ↗")}
         </button>
         <button
@@ -186,6 +193,9 @@ export function MemoList({
           <FolderPlusIcon />
         </button>
       </div>
+      {!query && (
+        <CurrentFolderBar folder={here} onTop={() => onCurrent?.("")} />
+      )}
       <div className="quickList" aria-label={t("加密記事清單")}>
         {query ? (
           <ul>
@@ -213,6 +223,8 @@ export function MemoList({
               void organize.create("memo", n);
             }}
             onCancelCreate={() => setCreating(false)}
+            current={here}
+            onCurrent={onCurrent}
           />
         )}
         {deleting && (

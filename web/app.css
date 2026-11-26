@@ -327,6 +327,37 @@ select:focus {
   letter-spacing: 0.04em;
   color: var(--muted);
 }
+.groupTitle .groupLink {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.groupTitle .groupLink:active {
+  color: var(--green);
+}
+/* Inside a subfolder: back one level and where new items go. */
+.folderTrail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.folderTrail button {
+  flex: none;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.folderTrail span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .row {
   display: flex;
   align-items: stretch;
