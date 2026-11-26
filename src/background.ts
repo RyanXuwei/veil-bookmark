@@ -1,5 +1,5 @@
 import { captureSummary, SUMMARY_TTL } from "./summary-capture";
-import { getActionMode, POPUP_PATH, sidePanelSupported } from "./side-panel";
+import { applyActionMode as applyMode, getActionMode, privatePopup } from "./side-panel";
 import { bookmarkKey, lookupBookmarkTitle } from "./bookmark-title";
 import type { SummarySource } from "./local-summary";
 import {
@@ -1239,6 +1239,7 @@ chrome.runtime.onMessage.addListener((m, sender, respond) => {
   chrome.runtime.onStartup.addListener(() => {
     void lock();
     void menus();
+    void applyActionMode();
   });
   chrome.alarms.onAlarm.addListener((a) => {
     if (a.name === "veil-bookmark-expire") {
@@ -1327,24 +1328,7 @@ chrome.storage.onChanged.addListener((c, area) => {
   if (area === "local" && c.uiLang) void menus();
   if (area === "local" && c.actionMode) void applyActionMode();
 });
-/**
- * Toolbar icon: popup (default) or side panel. Incognito tabs always keep the
- * popup (tab-level popup wins over the side panel behaviour), so private
- * windows work the same as before.
- */
-async function applyActionMode() {
-  if (!sidePanelSupported()) return;
-  try {
-    const panel = (await getActionMode()) === "panel";
-    await chrome.action.setPopup({ popup: panel ? "" : POPUP_PATH });
-    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: panel });
-    for (const tab of await chrome.tabs.query({ windowType: "normal" }))
-      if (tab.incognito && tab.id !== undefined) privatePopup(tab.id);
-  } catch {}
-}
-function privatePopup(tabId: number) {
-  void chrome.action.setPopup({ tabId, popup: POPUP_PATH }).catch(() => {});
-}
+// Toolbar icon: popup (default) or side panel (see applyActionMode).
 chrome.tabs.onCreated.addListener((tab) => {
   if (tab.incognito && tab.id !== undefined) privatePopup(tab.id);
 });
@@ -1352,6 +1336,10 @@ chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
   if (tab.incognito && change.status === "loading") privatePopup(tabId);
 });
 void applyActionMode();
+function applyActionMode() {
+  return applyMode().catch(() => {});
+}
+(globalThis as any).veilApplyActionMode = applyActionMode;
 /** Shows the Veil page after a right-click while locked (popup or panel). */
 async function showUi(tab?: chrome.tabs.Tab) {
   try {

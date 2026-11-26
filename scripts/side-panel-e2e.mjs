@@ -76,6 +76,17 @@ try {
   const [opened] = await popup.evaluate(() => globalThis.__opened);
   const windowId = await popup.evaluate(async () => (await chrome.windows.getCurrent()).id);
   assert.deepEqual(opened, { windowId });
+  // …and makes the side panel what the icon opens from now on, so clicking
+  // the icon again toggles the panel instead of opening this popup over it.
+  for (let i = 0; i < 50 && (await state()).behavior !== true; i++)
+    await popup.waitForTimeout(100);
+  assert.deepEqual(await state(), { popup: "", behavior: true });
+  // Back to the popup to test the setting itself.
+  await worker.evaluate(() => chrome.storage.local.set({ actionMode: "popup" }));
+  for (let i = 0; i < 50 && (await state()).behavior !== false; i++)
+    await popup.waitForTimeout(100);
+  assert.match((await state()).popup, /index\.html\?popup$/);
+  await popup.reload();
 
   // Setting: icon opens the side panel → popup cleared, panel behaviour on.
   await popup.getByRole("button", { name: "同步與備份" }).click();
@@ -88,6 +99,19 @@ try {
   await popup.reload();
   await popup.getByRole("button", { name: "同步與備份" }).click();
   assert.equal(await popup.getByRole("radio", { name: "開啟側邊欄" }).isChecked(), true);
+  // Chrome lost the cleared popup (e.g. after a restart) while the panel
+  // behaviour stayed on, so the icon showed the popup over the panel: the
+  // popup notices and lines Chrome up again for the next click.
+  await worker.evaluate(() => chrome.action.setPopup({ popup: "index.html?popup" }));
+  assert.match((await state()).popup, /index\.html\?popup$/);
+  await popup.reload();
+  for (let i = 0; i < 50 && (await state()).popup !== ""; i++)
+    await popup.waitForTimeout(100);
+  assert.deepEqual(await state(), { popup: "", behavior: true });
+  // The service worker does the same whenever it starts.
+  await worker.evaluate(() => chrome.action.setPopup({ popup: "index.html?popup" }));
+  await worker.evaluate(() => globalThis.veilApplyActionMode());
+  assert.deepEqual(await state(), { popup: "", behavior: true });
 
   // The panel page: fills the panel, no shortcut button, does not close.
   const panel = await context.newPage();

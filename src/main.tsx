@@ -14,6 +14,7 @@ import { SummaryPage } from "./summary-page";
 import { SetupPage } from "./setup";
 import { applyTheme, isTheme, themePref, ThemePicker, type Theme } from "./theme";
 import {
+  applyActionMode,
   getActionMode,
   setActionMode,
   sidePanelSupported,
@@ -37,7 +38,7 @@ const CREDITS = {
   privacy: "https://ryanxuwei.github.io/veil-bookmark/privacy.html",
   version: VERSION,
   productionDate: "2026-11-15",
-  lastUpdatedDate: "2026-11-23",
+  lastUpdatedDate: "2026-11-26",
   copyrightYear: "2026",
   copyrightHolder: "Ryan Hsu",
 };
@@ -141,12 +142,26 @@ function App() {
   }, []);
   useEffect(() => {
     if (isPopup && globalThis.chrome?.storage)
-      void getActionMode().then(setMode);
+      void getActionMode().then((mode) => {
+        setMode(mode);
+        // The icon opened this popup although the side panel is the chosen
+        // mode (Chrome reset the popup): line Chrome up again so the next
+        // click opens the panel. Incognito windows always use the popup.
+        if (mode === "panel" && !isPanel)
+          void chrome.windows
+            .getCurrent()
+            .then((w) => (w.incognito ? undefined : applyActionMode()))
+            .catch(() => {});
+      });
   }, []);
   function openSidePanel() {
     if (windowId === undefined) return;
     chrome.sidePanel
       .open({ windowId })
+      // Choosing the side panel here also makes it what the icon opens, so
+      // the next click toggles the panel instead of showing this popup on top
+      // of it (switch back under 同步與備份).
+      .then(() => setActionMode("panel"))
       .then(() => window.close())
       .catch(() => setError("無法開啟側邊欄，請更新 Chrome 後重試"));
   }
